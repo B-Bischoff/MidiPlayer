@@ -1,0 +1,13 @@
+out
+build
+release
+*.o
+*.a
+*.out
+*.ini
+
+.dir-locals.el
+*~
+*#
+
+bibliography/*
