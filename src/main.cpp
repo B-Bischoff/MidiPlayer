@@ -1,6 +1,7 @@
 #include <iostream>
 #include <alsa/asoundlib.h>
 #include <math.h>
+#include <pthread.h>
 #include <vector>
 
 void exitError(const char* str)
@@ -9,20 +10,12 @@ void exitError(const char* str)
 	exit(1);
 }
 
-// Function to generate a sine wave for a given frequency and duration
-void generate_sine_wave(double frequency, double duration, char *buffer, int sample_rate)
-{
-	int num_frames = duration * sample_rate;
-	double angular_frequency = 2.0 * M_PI * frequency / sample_rate;
-
-	for (int i = 0; i < num_frames; ++i)
-	{
-		double t = (double)i / sample_rate;
-		double sample = sin(angular_frequency * t);
-		int16_t pcm_value = (int16_t)(32767.0 * sample);  // 16-bit PCM value
-		buffer[i * 2] = pcm_value & 0xFF;
-		buffer[i * 2 + 1] = (pcm_value >> 8) & 0xFF;
+short *sine_wave(short *buffer, size_t sample_count, int freq) {
+	for (int i = 0; i < sample_count; i++) {
+		buffer[i] = 10000 * sinf(2 * M_PI * freq * ((float)i / 44100.0f));
+		buffer[i] *= 0.2f;
 	}
+	return buffer;
 }
 
 std::string getDevicePort(snd_seq_t* sequencer)
@@ -67,7 +60,7 @@ std::string getDevicePort(snd_seq_t* sequencer)
 		std::cout << std::endl << "Select Id to use " << std::endl << ">> ";
 		std::cin >> selectedId;
 
-		try 
+		try
 		{
 			selectedPort = clientsPort.at(selectedId - 1);
 		}
@@ -84,30 +77,28 @@ std::string getDevicePort(snd_seq_t* sequencer)
 
 int main(void)
 {
-	// Define variables
-	snd_pcm_t *pcm_handle;
-	snd_pcm_hw_params_t *params;
-	unsigned int sample_rate = 44100;
-	int channels = 2;
-	snd_pcm_format_t format = SND_PCM_FORMAT_S16_LE;  // 16-bit little-endian
-	snd_pcm_uframes_t buffer_size = 1024;
-
-	/*
 	// ----------------- PLAY SOUND TEST CODE ----------------
+	snd_pcm_t *pcm_handle;
+	unsigned int sample_rate = 44100;
+	const int channels = 1;
+	const snd_pcm_format_t format = SND_PCM_FORMAT_S16_LE;  // 16-bit little-endian
+
 	// Open PCM device
 	if (snd_pcm_open(&pcm_handle, "default", SND_PCM_STREAM_PLAYBACK, 0) < 0) {
 		fprintf(stderr, "Error opening PCM device\n");
 		return 1;
 	}
 
-	// Allocate and initialize parameters object
+	snd_pcm_hw_params_t *params;
+
 	snd_pcm_hw_params_alloca(&params);
 	snd_pcm_hw_params_any(pcm_handle, params);
 	snd_pcm_hw_params_set_access(pcm_handle, params, SND_PCM_ACCESS_RW_INTERLEAVED);
 	snd_pcm_hw_params_set_format(pcm_handle, params, format);
 	snd_pcm_hw_params_set_channels(pcm_handle, params, channels);
-	snd_pcm_hw_params_set_rate_near(pcm_handle, params, &sample_rate, 0);
-	snd_pcm_hw_params_set_buffer_size_near(pcm_handle, params, &buffer_size);
+	snd_pcm_hw_params_set_rate(pcm_handle, params, sample_rate, 0);
+	snd_pcm_hw_params_set_periods(pcm_handle, params, 10, 0);
+	snd_pcm_hw_params_set_period_time(pcm_handle, params, 100000, 0); // 0.1 seconds
 
 	// Apply parameters to PCM device
 	if (snd_pcm_hw_params(pcm_handle, params) < 0) {
@@ -115,29 +106,18 @@ int main(void)
 		return 1;
 	}
 
-	// Write PCM data to the device (replace with your own audio data)
-	// For simplicity, this example writes silence
-	char buffer[sample_rate];  // 2 channels, 16-bit per sample
+	short buffer[44100];
 	memset(buffer, 0, sizeof(buffer));
 
 
-	// Generate and play the C major scale
-	double frequencies[] = {261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25};  // C4 to C5
-	double duration = 0.5;  // seconds
+	sine_wave(buffer, sample_rate, 440);
 
-	while (1)
-	for (int i = 0; i < 8; ++i) {
-		generate_sine_wave(frequencies[i], duration, buffer, sample_rate);
+	if (snd_pcm_writei(pcm_handle, buffer, 44100) < 0)
+		exitError("Error writing to PCM device");
 
-		// Write PCM data to the device
-		if (snd_pcm_writei(pcm_handle, buffer, buffer_size) < 0) {
-			fprintf(stderr, "Error writing to PCM device\n");
-			break;
-		}
-	}
-	// Close PCM device
+	snd_pcm_drain(pcm_handle); // Block until buffer is empty
 	snd_pcm_close(pcm_handle);
-	*/
+	// -----------------------------------------------------
 
 	snd_seq_t* sequencer;
 
@@ -162,11 +142,24 @@ int main(void)
 
 	while (1)
 	{
+		/*
+		 * note on/off : ev.type ==  6/7
+		 * 10 : potentiometer
+		 * 67 : device disconnected
+		*/
 		if (snd_seq_event_input_pending(sequencer, 0) <= 0)
 		{
-			std::cout << "reading event" << std::endl;
-
+			//std::cout << (int)ev->type << std::endl;
 			snd_seq_event_input(sequencer, &ev);
+
+			if (ev->type == 6) // note on
+			{
+				std::cout << (int)ev->data.note.note << " " << (int)ev->data.note.velocity << std::endl;
+			}
+			else if (ev->type == 10) // potentiometer
+			{
+				std::cout << ev->data.control.channel << "value : " << ev->data.control.value << std::endl;
+			}
 		}
 	}
 }
