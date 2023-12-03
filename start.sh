@@ -21,6 +21,7 @@ fi
 make -C $BUILD_DIRECTORY;
 if [ "$?" == 0 ]
 then
+	clear
 	./$BUILD_DIRECTORY/$BIN_NAME
 else
 	printf "\033[31m-------------------- COMPILATION FAILED --------------------\033[0m\n";
