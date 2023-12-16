@@ -1,13 +1,57 @@
+#include <asm-generic/errno-base.h>
 #include <iostream>
 #include <alsa/asoundlib.h>
 #include <math.h>
-#include <pthread.h>
+#include <thread>
 #include <vector>
 #include <chrono>
 
 struct RingBuffer {
-
+	short buffer[44100];
+	unsigned int cursor;
 };
+
+void task(snd_pcm_t* pcm_handle, RingBuffer& ringBuffer)
+{
+	float dt = 0.0f;
+	float sum = 0.0f;
+	float timeElapsed = 0.0f;
+
+	auto startTime = std::chrono::high_resolution_clock::now();
+	while (1)
+	{
+		if (sum >= 1.0f / 60.0f)
+		{
+			sum = 0;
+			//std::cout << "time sing start : " << timeElapsed << std::endl;
+			//std::cout << "frames available : " << snd_strerror(snd_pcm_avail(pcm_handle)) << std::endl;
+			int writeReturn = snd_pcm_writei(pcm_handle, ringBuffer.buffer + ringBuffer.cursor, 44100.0f / 60.0f);
+			ringBuffer.cursor = std::fmod(ringBuffer.cursor + 44100.0f / 60.0f, 44100.0f);
+			if (writeReturn == -EPIPE)
+			{
+				std::cout << "Underrun occured" << std::endl;
+				// [TODO] check prepare return value
+				snd_pcm_prepare(pcm_handle);
+			}
+			else if (writeReturn < 0)
+			{
+				// [TODO] handle write error
+			}
+			else
+			{
+				//std::cout << "written: " << writeReturn << std::endl;
+				//std::cout << "frames available : " << snd_pcm_avail(pcm_handle) << std::endl;
+				//std::cout << "--------------------" << std::endl;
+			}
+		}
+
+		float newTimeElapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - startTime).count() / 1000000000.0f;
+
+		dt = newTimeElapsed - timeElapsed;
+		sum += dt;
+		timeElapsed = newTimeElapsed;
+	}
+}
 
 void exitError(const char* str)
 {
@@ -105,8 +149,9 @@ int main(void)
 	snd_pcm_hw_params_set_format(pcm_handle, params, format);
 	snd_pcm_hw_params_set_channels(pcm_handle, params, channels);
 	snd_pcm_hw_params_set_rate(pcm_handle, params, sample_rate, 0); // use near variant
-	snd_pcm_hw_params_set_periods(pcm_handle, params, 10, 0);
+	snd_pcm_hw_params_set_periods(pcm_handle, params, 2, 0);
 	snd_pcm_hw_params_set_period_time(pcm_handle, params, 100000, 0); // 0.1 seconds
+	snd_pcm_hw_params_set_buffer_time(pcm_handle, params, 1, 0);
 
 	// Apply parameters to PCM device
 	if (snd_pcm_hw_params(pcm_handle, params) < 0) {
@@ -131,14 +176,14 @@ int main(void)
 	snd_pcm_hw_params_get_buffer_time(params, &val, &dir);
 	std::cout << "buffer time: " << (val / 1000000.0f) << " seconds" << std::endl;
 
-	short buffer[44100];
-	memset(buffer, 0, sizeof(buffer));
 
+	RingBuffer ringBuffer = {};
 
-	sine_wave(buffer, sample_rate, 440);
+	std::cout << snd_pcm_writei(pcm_handle, ringBuffer.buffer, 44100) << std::endl;
 	std::cout << "frames available : " << snd_pcm_avail(pcm_handle) << std::endl;
 	//std::cout << snd_pcm_writei(pcm_handle, buffer, 44100) << std::endl;
-	//std::cout << "frames available : " << snd_pcm_avail(pcm_handle) << std::endl;
+	std::cout << "frames available : " << snd_pcm_avail(pcm_handle) << std::endl;
+	sine_wave(ringBuffer.buffer, sample_rate, 440);
 	//std::cout << snd_pcm_writei(pcm_handle, buffer, 44100) << std::endl;
 	//std::cout << "frames available : " << snd_pcm_avail(pcm_handle) << std::endl;
 
@@ -147,9 +192,10 @@ int main(void)
 	//snd_pcm_close(pcm_handle);
 	// -----------------------------------------------------
 
+	std::thread t1(task, pcm_handle, std::ref(ringBuffer));
+
 	snd_seq_t* sequencer;
 
-	/*
 	if (snd_seq_open(&sequencer, "default", SND_SEQ_OPEN_INPUT, 0) < 0)
 		exitError("snd_seq_open");
 
@@ -168,71 +214,35 @@ int main(void)
 
 	snd_seq_event_t* ev;
 	snd_seq_event_input(sequencer, &ev);
-	*/
 
-	float dt = 0.0f;
-	float sum = 0.0f;
-	float timeElapsed = 0.0f;
-
-	auto startTime = std::chrono::high_resolution_clock::now();
 	while (1)
 	{
-		//std::cout << "frames available : " << snd_pcm_avail(pcm_handle) << std::endl;
-		//static int test = 0;
-		//if (test == 0)
-		//	std::cout << snd_pcm_writei(pcm_handle, buffer, 44100) << std::endl;
-		//std::cout << "test:" << test << std::endl;
-
-		//test++;
-		//if (test >= 200000)
-		//	test = 0;
-
 		/*
 		 * note on/off : ev.type ==  6/7
 		 * 10 : potentiometer
 		 * 67 : device disconnected
 		*/
-		//if (snd_seq_event_input_pending(sequencer, 0) <= 0)
-		//{
-		//	//std::cout << (int)ev->type << std::endl;
-		//	snd_seq_event_input(sequencer, &ev);
-
-		//	if (ev->type == 6) // note on
-		//	{
-		//		std::cout << (int)ev->data.note.note << " " << (int)ev->data.note.velocity << std::endl;
-
-        //        // Generate sine wave samples dynamically
-        //        sine_wave(buffer, 44100, 440);
-
-        //        // Write sine wave samples to ALSA audio buffer
-		//		std::cout << snd_pcm_writei(pcm_handle, buffer, 44100) << std::endl;
-		//		snd_pcm_drain(pcm_handle);
-		//	}
-		//	else if (ev->type == 10) // potentiometer
-		//	{
-		//		std::cout << ev->data.control.channel << "value : " << ev->data.control.value << std::endl;
-		//	}
-		//}
-
-		//std::cout << sum << std::endl;
-		//if (sum >= 1.0f / 60.0f)
-		//std::cout << sum << std::endl;
-
-		if (sum >= 1.0f / 60.0f)
+		if (snd_seq_event_input_pending(sequencer, 0) <= 0)
 		{
-			sum = 0;
-			std::cout << "time sing start : " << timeElapsed << std::endl;
-			std::cout << "frames available : " << snd_pcm_avail(pcm_handle) << std::endl;
-			std::cout << "written: " << snd_pcm_writei(pcm_handle, buffer, 44100.0f / 60.0f) << std::endl;
-			std::cout << "frames available : " << snd_pcm_avail(pcm_handle) << std::endl;
-			std::cout << "--------------------" << std::endl;
+			//std::cout << (int)ev->type << std::endl;
+			snd_seq_event_input(sequencer, &ev);
+
+			if (ev->type == SND_SEQ_EVENT_NOTEOFF)
+			{
+				std::cout << (int)ev->data.note.note << " " << (int)ev->data.note.velocity << std::endl;
+
+				// Generate sine wave samples dynamically
+				sine_wave(ringBuffer.buffer, 44100, 660);
+			}
+			else if (ev->type == SND_SEQ_EVENT_NOTEOFF)
+			{
+				sine_wave(ringBuffer.buffer, 44100, 440);
+			}
+			else if (ev->type == 10) // potentiometer
+			{
+				std::cout << ev->data.control.channel << "value : " << ev->data.control.value << std::endl;
+			}
 		}
-
-		float newTimeElapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - startTime).count() / 1000000000.0f;
-
-		dt = newTimeElapsed - timeElapsed;
-		sum += dt;
-		timeElapsed = newTimeElapsed;
 		//std::cout << timeElapsed << std::endl;
 	}
 }
