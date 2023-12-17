@@ -36,9 +36,14 @@ void task(snd_pcm_t* pcm_handle, RingBuffer& ringBuffer)
 			else if (writeReturn < 0)
 			{
 				// [TODO] handle write error
+				std::cout << "Alsa buffer upload error" << std::endl;
 			}
 			else
 			{
+				if (writeReturn != 44100.0f / 60.0f)
+				{
+					std::cout << "[WARNING] : written " << writeReturn << std::endl;
+				}
 				//std::cout << "written: " << writeReturn << std::endl;
 				//std::cout << "frames available : " << snd_pcm_avail(pcm_handle) << std::endl;
 				//std::cout << "--------------------" << std::endl;
@@ -139,7 +144,7 @@ int main(void)
 		return 1;
 	}
 
-	snd_pcm_nonblock(pcm_handle, 1);
+	//snd_pcm_nonblock(pcm_handle, 1);
 
 	snd_pcm_hw_params_t *params;
 
@@ -149,8 +154,8 @@ int main(void)
 	snd_pcm_hw_params_set_format(pcm_handle, params, format);
 	snd_pcm_hw_params_set_channels(pcm_handle, params, channels);
 	snd_pcm_hw_params_set_rate(pcm_handle, params, sample_rate, 0); // use near variant
-	snd_pcm_hw_params_set_periods(pcm_handle, params, 2, 0);
-	//snd_pcm_hw_params_set_period_size(pcm_handle, params, 735, 0);
+	//snd_pcm_hw_params_set_periods(pcm_handle, params, 2, 0);
+	//snd_pcm_hw_params_set_period_size(pcm_handle, params, 1, 0);
 	//snd_pcm_hw_params_set_period_time(pcm_handle, params, 100000, 0); // 0.1 seconds
 	snd_pcm_hw_params_set_buffer_size(pcm_handle, params, 735 * 2.0f);
 
