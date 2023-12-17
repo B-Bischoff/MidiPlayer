@@ -63,7 +63,7 @@ short *sine_wave(short *buffer, size_t sample_count, int freq) {
 	for (int i = 0; i < sample_count; i++)
 	{
 		buffer[i] = 10000 * sinf(2 * M_PI * freq * ((float)i / 44100.0f));
-		buffer[i] *= 0.2f;
+		buffer[i] *= 0.1f;
 	}
 	return buffer;
 }
@@ -150,8 +150,9 @@ int main(void)
 	snd_pcm_hw_params_set_channels(pcm_handle, params, channels);
 	snd_pcm_hw_params_set_rate(pcm_handle, params, sample_rate, 0); // use near variant
 	snd_pcm_hw_params_set_periods(pcm_handle, params, 2, 0);
-	snd_pcm_hw_params_set_period_time(pcm_handle, params, 100000, 0); // 0.1 seconds
-	snd_pcm_hw_params_set_buffer_time(pcm_handle, params, 1, 0);
+	//snd_pcm_hw_params_set_period_size(pcm_handle, params, 735, 0);
+	//snd_pcm_hw_params_set_period_time(pcm_handle, params, 100000, 0); // 0.1 seconds
+	snd_pcm_hw_params_set_buffer_size(pcm_handle, params, 735 * 2.0f);
 
 	// Apply parameters to PCM device
 	if (snd_pcm_hw_params(pcm_handle, params) < 0) {
@@ -227,7 +228,7 @@ int main(void)
 			//std::cout << (int)ev->type << std::endl;
 			snd_seq_event_input(sequencer, &ev);
 
-			if (ev->type == SND_SEQ_EVENT_NOTEOFF)
+			if (ev->type == SND_SEQ_EVENT_NOTEON)
 			{
 				std::cout << (int)ev->data.note.note << " " << (int)ev->data.note.velocity << std::endl;
 
