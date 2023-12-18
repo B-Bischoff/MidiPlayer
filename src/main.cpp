@@ -65,10 +65,14 @@ void exitError(const char* str)
 }
 
 short *sine_wave(short *buffer, size_t sample_count, int freq) {
+	bool pair = true;
 	for (int i = 0; i < sample_count; i++)
 	{
-		buffer[i] = 10000 * sinf(2 * M_PI * freq * ((float)i / 44100.0f));
+		buffer[i] = (short)(10000 * sinf(2 * M_PI * freq * ((float)i / 44100.0f)));
 		buffer[i] *= 0.1f;
+		if (!pair)
+			buffer[i] = 0;
+		//pair = !pair;
 	}
 	return buffer;
 }
@@ -135,8 +139,9 @@ int main(void)
 	// ----------------- PLAY SOUND TEST CODE ----------------
 	snd_pcm_t *pcm_handle;
 	unsigned int sample_rate = 44100;
-	const int channels = 1;
+	const int channels = 2;
 	const snd_pcm_format_t format = SND_PCM_FORMAT_S16_LE;  // 16-bit little-endian
+	int direction = 0;
 
 	// Open PCM device
 	if (snd_pcm_open(&pcm_handle, "default", SND_PCM_STREAM_PLAYBACK, 0) < 0) {
@@ -153,11 +158,13 @@ int main(void)
 	snd_pcm_hw_params_set_access(pcm_handle, params, SND_PCM_ACCESS_RW_INTERLEAVED);
 	snd_pcm_hw_params_set_format(pcm_handle, params, format);
 	snd_pcm_hw_params_set_channels(pcm_handle, params, channels);
-	snd_pcm_hw_params_set_rate(pcm_handle, params, sample_rate, 0); // use near variant
-	//snd_pcm_hw_params_set_periods(pcm_handle, params, 2, 0);
+	snd_pcm_hw_params_set_rate(pcm_handle, params, sample_rate, direction); // use near variant
+
+	unsigned int periods = 4;
+	snd_pcm_hw_params_set_periods_near(pcm_handle, params, &periods, &direction);
 	//snd_pcm_hw_params_set_period_size(pcm_handle, params, 1, 0);
 	//snd_pcm_hw_params_set_period_time(pcm_handle, params, 100000, 0); // 0.1 seconds
-	snd_pcm_hw_params_set_buffer_size(pcm_handle, params, 735 * 2.0f);
+	snd_pcm_hw_params_set_buffer_size(pcm_handle, params, ((float)sample_rate / 60.0f) * 2.0f);
 
 	// Apply parameters to PCM device
 	if (snd_pcm_hw_params(pcm_handle, params) < 0) {
@@ -178,14 +185,14 @@ int main(void)
 	std::cout << "period time " << (val / 1000000.0) << " seconds" << std::endl;
 	snd_pcm_uframes_t frames;
 	snd_pcm_hw_params_get_period_size(params, &frames, &dir);
-	std::cout << "period size " << val << std::endl;
+	std::cout << "period size " << frames << std::endl;
 	snd_pcm_hw_params_get_buffer_time(params, &val, &dir);
 	std::cout << "buffer time: " << (val / 1000000.0f) << " seconds" << std::endl;
 
 
 	RingBuffer ringBuffer = {};
 
-	std::cout << snd_pcm_writei(pcm_handle, ringBuffer.buffer, 44100) << std::endl;
+	std::cout << snd_pcm_writei(pcm_handle, ringBuffer.buffer, 44100 / 2.0f) << std::endl;
 	std::cout << "frames available : " << snd_pcm_avail(pcm_handle) << std::endl;
 	//std::cout << snd_pcm_writei(pcm_handle, buffer, 44100) << std::endl;
 	std::cout << "frames available : " << snd_pcm_avail(pcm_handle) << std::endl;
