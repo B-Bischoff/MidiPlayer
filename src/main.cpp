@@ -11,7 +11,22 @@ struct RingBuffer {
 	unsigned int cursor;
 };
 
-void task(snd_pcm_t* pcm_handle, RingBuffer& ringBuffer)
+struct AudioProperties {
+	unsigned int uploadPerSecond;
+	unsigned int sampleRate;
+	unsigned int channels;
+	snd_pcm_format_t format;
+	unsigned int periods;
+	int direction;
+};
+
+struct AudioData {
+	RingBuffer ringBuffer;
+	AudioProperties properties;
+	snd_pcm_t* handle;
+};
+
+void task(snd_pcm_t* handle, RingBuffer& ringBuffer)
 {
 	float dt = 0.0f;
 	float sum = 0.0f;
@@ -25,14 +40,14 @@ void task(snd_pcm_t* pcm_handle, RingBuffer& ringBuffer)
 		{
 			sum = 0;
 			//std::cout << "time sing start : " << timeElapsed << std::endl;
-			//std::cout << "frames available : " << snd_strerror(snd_pcm_avail(pcm_handle)) << std::endl;
-			int writeReturn = snd_pcm_writei(pcm_handle, ringBuffer.buffer + ringBuffer.cursor, 44100.0f / 60.0f);
+			//std::cout << "frames available : " << snd_strerror(snd_pcm_avail(audio.handle)) << std::endl;
+			int writeReturn = snd_pcm_writei(handle, ringBuffer.buffer + ringBuffer.cursor, 44100.0f / 60.0f);
 			ringBuffer.cursor = std::fmod(ringBuffer.cursor + 44100.0f / 60.0f * channels, 44100.0f);
 			if (writeReturn == -EPIPE)
 			{
 				std::cout << "Underrun occured" << std::endl;
 				// [TODO] check prepare return value
-				snd_pcm_prepare(pcm_handle);
+				std::cout << snd_pcm_prepare(handle) << std::endl;
 			}
 			else if (writeReturn < 0)
 			{
@@ -46,7 +61,7 @@ void task(snd_pcm_t* pcm_handle, RingBuffer& ringBuffer)
 					std::cout << "[WARNING] : written " << writeReturn << " instead of supposed " << (44100.0f / 60.0f) << std::endl;
 				}
 				//std::cout << "written: " << writeReturn << std::endl;
-				//std::cout << "frames available : " << snd_pcm_avail(pcm_handle) << std::endl;
+				//std::cout << "frames available : " << snd_pcm_avail(audio.handle) << std::endl;
 				//std::cout << "--------------------" << std::endl;
 			}
 		}
@@ -137,39 +152,42 @@ std::string getDevicePort(snd_seq_t* sequencer)
 
 int main(void)
 {
-	// ----------------- PLAY SOUND TEST CODE ----------------
-	snd_pcm_t *pcm_handle;
-	unsigned int sample_rate = 44100;
-	const int channels = 2;
-	const snd_pcm_format_t format = SND_PCM_FORMAT_S16_LE;  // 16-bit little-endian
-	int direction = 0;
+	AudioData audio;
+	audio.properties = {
+		.uploadPerSecond = 60,
+		.sampleRate = 44100,
+		.channels = 2,
+		.format = SND_PCM_FORMAT_S16_LE,
+		.periods = 4, // Keep that value low to quickly ear change in played audio
+		.direction = 0,
+	};
+	memset(&audio.ringBuffer, 0, sizeof(RingBuffer));
 
 	// Open PCM device
-	if (snd_pcm_open(&pcm_handle, "default", SND_PCM_STREAM_PLAYBACK, 0) < 0) {
+	if (snd_pcm_open(&audio.handle, "default", SND_PCM_STREAM_PLAYBACK, 0) < 0) {
 		fprintf(stderr, "Error opening PCM device\n");
 		return 1;
 	}
 
-	//snd_pcm_nonblock(pcm_handle, 1);
+	//snd_pcm_nonblock(audio.handle, 1);
 
 	snd_pcm_hw_params_t *params;
 
 	snd_pcm_hw_params_alloca(&params);
 	// [TODO] check snd_pcm_hw_params_* return value
-	snd_pcm_hw_params_any(pcm_handle, params);
-	snd_pcm_hw_params_set_access(pcm_handle, params, SND_PCM_ACCESS_RW_INTERLEAVED);
-	snd_pcm_hw_params_set_format(pcm_handle, params, format);
-	snd_pcm_hw_params_set_channels(pcm_handle, params, channels);
-	snd_pcm_hw_params_set_rate(pcm_handle, params, sample_rate, direction); // use near variant
+	snd_pcm_hw_params_any(audio.handle, params);
+	snd_pcm_hw_params_set_access(audio.handle, params, SND_PCM_ACCESS_RW_INTERLEAVED);
+	snd_pcm_hw_params_set_format(audio.handle, params, audio.properties.format);
+	snd_pcm_hw_params_set_channels(audio.handle, params, audio.properties.channels);
+	snd_pcm_hw_params_set_rate(audio.handle, params, audio.properties.sampleRate, audio.properties.sampleRate); // use near variant
 
-	unsigned int periods = 4;
-	snd_pcm_hw_params_set_periods_near(pcm_handle, params, &periods, &direction);
-	//snd_pcm_hw_params_set_period_size(pcm_handle, params, 1, 0);
-	//snd_pcm_hw_params_set_period_time(pcm_handle, params, 100000, 0); // 0.1 seconds
-	snd_pcm_hw_params_set_buffer_size(pcm_handle, params, ((float)sample_rate / 60.0f) * 2.0f);
+	snd_pcm_hw_params_set_periods_near(audio.handle, params, &audio.properties.periods, &audio.properties.direction);
+	//snd_pcm_hw_params_set_period_size(audio.handle, params, 1, 0);
+	//snd_pcm_hw_params_set_period_time(audio.handle, params, 100000, 0); // 0.1 seconds
+	snd_pcm_hw_params_set_buffer_size(audio.handle, params, (audio.properties.sampleRate / audio.properties.uploadPerSecond) * audio.properties.channels);
 
 	// Apply parameters to PCM device
-	if (snd_pcm_hw_params(pcm_handle, params) < 0) {
+	if (snd_pcm_hw_params(audio.handle, params) < 0) {
 		fprintf(stderr, "Error setting hardware parameters\n");
 		return 1;
 	}
@@ -194,20 +212,27 @@ int main(void)
 
 	RingBuffer ringBuffer = {};
 
-	std::cout << snd_pcm_writei(pcm_handle, ringBuffer.buffer, 44100 / 2.0f) << std::endl;
-	std::cout << "frames available : " << snd_pcm_avail(pcm_handle) << std::endl;
-	//std::cout << snd_pcm_writei(pcm_handle, buffer, 44100) << std::endl;
-	std::cout << "frames available : " << snd_pcm_avail(pcm_handle) << std::endl;
-	sine_wave(ringBuffer.buffer, sample_rate, channels, 440);
-	//std::cout << snd_pcm_writei(pcm_handle, buffer, 44100) << std::endl;
-	//std::cout << "frames available : " << snd_pcm_avail(pcm_handle) << std::endl;
+	// Fill alsa buffer with silence
+	snd_pcm_sframes_t frameAvailable = snd_pcm_avail(audio.handle);
+	std::cout << "first init write : " << frameAvailable << std::endl;
+	snd_pcm_writei(audio.handle, ringBuffer.buffer, frameAvailable);
+	frameAvailable = snd_pcm_avail(audio.handle);
+	if (frameAvailable > 0)
+	{
+		std::cout << "second init write : " << frameAvailable << std::endl;
+		snd_pcm_writei(audio.handle, ringBuffer.buffer, frameAvailable);
+	}
+
+	sine_wave(ringBuffer.buffer, audio.properties.sampleRate, audio.properties.channels, 440);
+	//std::cout << snd_pcm_writei(audio.handle, buffer, 44100) << std::endl;
+	//std::cout << "frames available : " << snd_pcm_avail(audio.handle) << std::endl;
 
 
-	//snd_pcm_drain(pcm_handle); // Block until buffer is empty
-	//snd_pcm_close(pcm_handle);
+	//snd_pcm_drain(audio.handle); // Block until buffer is empty
+	//snd_pcm_close(audio.handle);
 	// -----------------------------------------------------
 
-	std::thread t1(task, pcm_handle, std::ref(ringBuffer));
+	std::thread t1(task, audio.handle, std::ref(ringBuffer));
 
 	snd_seq_t* sequencer;
 
@@ -247,11 +272,11 @@ int main(void)
 				std::cout << (int)ev->data.note.note << " " << (int)ev->data.note.velocity << std::endl;
 
 				// Generate sine wave samples dynamically
-				sine_wave(ringBuffer.buffer, 44100, 660);
+				sine_wave(ringBuffer.buffer, audio.properties.sampleRate, audio.properties.channels, 660);
 			}
 			else if (ev->type == SND_SEQ_EVENT_NOTEOFF)
 			{
-				sine_wave(ringBuffer.buffer, 44100, 440);
+				sine_wave(ringBuffer.buffer, audio.properties.sampleRate, audio.properties.channels, 440);
 			}
 			else if (ev->type == 10) // potentiometer
 			{
