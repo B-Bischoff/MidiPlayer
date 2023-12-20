@@ -26,7 +26,7 @@ void task(snd_pcm_t* pcm_handle, RingBuffer& ringBuffer)
 			//std::cout << "time sing start : " << timeElapsed << std::endl;
 			//std::cout << "frames available : " << snd_strerror(snd_pcm_avail(pcm_handle)) << std::endl;
 			int writeReturn = snd_pcm_writei(pcm_handle, ringBuffer.buffer + ringBuffer.cursor, 44100.0f / 60.0f);
-			ringBuffer.cursor = std::fmod(ringBuffer.cursor + 44100.0f / 60.0f, 44100.0f);
+			ringBuffer.cursor = std::fmod(ringBuffer.cursor + 44100.0f / 60.0f * 2.0f, 44100.0f);
 			if (writeReturn == -EPIPE)
 			{
 				std::cout << "Underrun occured" << std::endl;
@@ -65,14 +65,14 @@ void exitError(const char* str)
 }
 
 short *sine_wave(short *buffer, size_t sample_count, int freq) {
-	bool pair = true;
+	bool pair = false;
 	for (int i = 0; i < sample_count; i++)
 	{
 		buffer[i] = (short)(10000 * sinf(2 * M_PI * freq * ((float)i / 44100.0f)));
-		buffer[i] *= 0.1f;
+		buffer[i] *= 0.4f;
 		if (!pair)
 			buffer[i] = 0;
-		//pair = !pair;
+		pair = !pair;
 	}
 	return buffer;
 }
@@ -154,6 +154,7 @@ int main(void)
 	snd_pcm_hw_params_t *params;
 
 	snd_pcm_hw_params_alloca(&params);
+	// [TODO] check snd_pcm_hw_params_* return value
 	snd_pcm_hw_params_any(pcm_handle, params);
 	snd_pcm_hw_params_set_access(pcm_handle, params, SND_PCM_ACCESS_RW_INTERLEAVED);
 	snd_pcm_hw_params_set_format(pcm_handle, params, format);
