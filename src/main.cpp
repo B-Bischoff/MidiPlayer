@@ -16,6 +16,7 @@ void task(snd_pcm_t* pcm_handle, RingBuffer& ringBuffer)
 	float dt = 0.0f;
 	float sum = 0.0f;
 	float timeElapsed = 0.0f;
+	unsigned int channels = 2;
 
 	auto startTime = std::chrono::high_resolution_clock::now();
 	while (1)
@@ -26,7 +27,7 @@ void task(snd_pcm_t* pcm_handle, RingBuffer& ringBuffer)
 			//std::cout << "time sing start : " << timeElapsed << std::endl;
 			//std::cout << "frames available : " << snd_strerror(snd_pcm_avail(pcm_handle)) << std::endl;
 			int writeReturn = snd_pcm_writei(pcm_handle, ringBuffer.buffer + ringBuffer.cursor, 44100.0f / 60.0f);
-			ringBuffer.cursor = std::fmod(ringBuffer.cursor + 44100.0f / 60.0f * 2.0f, 44100.0f);
+			ringBuffer.cursor = std::fmod(ringBuffer.cursor + 44100.0f / 60.0f * channels, 44100.0f);
 			if (writeReturn == -EPIPE)
 			{
 				std::cout << "Underrun occured" << std::endl;
@@ -42,7 +43,7 @@ void task(snd_pcm_t* pcm_handle, RingBuffer& ringBuffer)
 			{
 				if (writeReturn != 44100.0f / 60.0f)
 				{
-					std::cout << "[WARNING] : written " << writeReturn << std::endl;
+					std::cout << "[WARNING] : written " << writeReturn << " instead of supposed " << (44100.0f / 60.0f) << std::endl;
 				}
 				//std::cout << "written: " << writeReturn << std::endl;
 				//std::cout << "frames available : " << snd_pcm_avail(pcm_handle) << std::endl;
@@ -64,15 +65,15 @@ void exitError(const char* str)
 	exit(1);
 }
 
-short *sine_wave(short *buffer, size_t sample_count, int freq) {
-	bool pair = false;
+short *sine_wave(short *buffer, size_t sample_count, unsigned int channels, int freq) {
+	bool pair = true;
 	for (int i = 0; i < sample_count; i++)
 	{
-		buffer[i] = (short)(10000 * sinf(2 * M_PI * freq * ((float)i / 44100.0f)));
+		buffer[i] = (short)(10000 * sinf(2 * M_PI * freq * ((float)i / channels / 44100.0f)));
 		buffer[i] *= 0.4f;
 		if (!pair)
 			buffer[i] = 0;
-		pair = !pair;
+		//pair = !pair;
 	}
 	return buffer;
 }
@@ -197,7 +198,7 @@ int main(void)
 	std::cout << "frames available : " << snd_pcm_avail(pcm_handle) << std::endl;
 	//std::cout << snd_pcm_writei(pcm_handle, buffer, 44100) << std::endl;
 	std::cout << "frames available : " << snd_pcm_avail(pcm_handle) << std::endl;
-	sine_wave(ringBuffer.buffer, sample_rate, 440);
+	sine_wave(ringBuffer.buffer, sample_rate, channels, 440);
 	//std::cout << snd_pcm_writei(pcm_handle, buffer, 44100) << std::endl;
 	//std::cout << "frames available : " << snd_pcm_avail(pcm_handle) << std::endl;
 
