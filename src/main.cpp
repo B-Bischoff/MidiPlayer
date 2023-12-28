@@ -1,10 +1,15 @@
-#include <asm-generic/errno-base.h>
 #include <iostream>
 #include <alsa/asoundlib.h>
 #include <math.h>
 #include <thread>
 #include <vector>
 #include <chrono>
+
+void exitError(const std::string& error)
+{
+	std::cerr << error << std::endl;
+	exit(1);
+}
 
 struct RingBuffer {
 	short buffer[44100];
@@ -158,14 +163,34 @@ int main(void)
 		.sampleRate = 44100,
 		.channels = 2,
 		.format = SND_PCM_FORMAT_S16_LE,
-		.periods = 4, // Keep that value low to quickly ear change in played audio
+		.periods = 2, // Keep that value low to quickly ear change in played audio
 		.direction = 0,
 	};
 	memset(&audio.ringBuffer, 0, sizeof(RingBuffer));
 
+	void** hints = nullptr;
+	if (snd_device_name_hint(-1, "pcm", &hints) < 0)
+	{
+		std::cerr << "Error getting hints" << std::endl;
+		return 1;
+	}
+
+	for (int i = 0; hints[i] != nullptr; i++)
+	{
+		char* description = snd_device_name_get_hint(hints[i], "DESC");
+		char* name = snd_device_name_get_hint(hints[i], "NAME");
+		if (name)
+		{
+			std::cout << "Device " << i << " " << name << " : " << description << std::endl;
+			free(name);
+		}
+	}
+	snd_device_name_free_hint(hints);
+
 	// Open PCM device
-	if (snd_pcm_open(&audio.handle, "default", SND_PCM_STREAM_PLAYBACK, 0) < 0) {
-		fprintf(stderr, "Error opening PCM device\n");
+	if (snd_pcm_open(&audio.handle, "hw:CARD=NVidia,DEV=3", SND_PCM_STREAM_PLAYBACK, 0) < 0) {
+	//if (snd_pcm_open(&audio.handle, "default", SND_PCM_STREAM_PLAYBACK, 0) < 0) {
+		std::cerr << "Error opening PCM device" << std::endl;
 		return 1;
 	}
 
@@ -175,38 +200,59 @@ int main(void)
 
 	snd_pcm_hw_params_alloca(&params);
 	// [TODO] check snd_pcm_hw_params_* return value
-	snd_pcm_hw_params_any(audio.handle, params);
-	snd_pcm_hw_params_set_access(audio.handle, params, SND_PCM_ACCESS_RW_INTERLEAVED);
-	snd_pcm_hw_params_set_format(audio.handle, params, audio.properties.format);
-	snd_pcm_hw_params_set_channels(audio.handle, params, audio.properties.channels);
-	snd_pcm_hw_params_set_rate(audio.handle, params, audio.properties.sampleRate, audio.properties.sampleRate); // use near variant
+	if (snd_pcm_hw_params_any(audio.handle, params) < 0)
+		exitError("snd_pcm_hw_params_any");
+	if (snd_pcm_hw_params_set_access(audio.handle, params, SND_PCM_ACCESS_RW_INTERLEAVED) < 0)
+		exitError("snd_pcm_hw_params_set_access");
+	if (snd_pcm_hw_params_set_format(audio.handle, params, audio.properties.format) < 0)
+		exitError("snd_pcm_hw_params_set_format");
+	if (snd_pcm_hw_params_set_channels(audio.handle, params, audio.properties.channels) < 0)
+		exitError("snd_pcm_hw_params_set_channels");
+	if (snd_pcm_hw_params_set_rate_near(audio.handle, params, &audio.properties.sampleRate, &audio.properties.direction) < 0) // use near variant
+		exitError("snd_pcm_hw_params_set_rate");
 
-	snd_pcm_hw_params_set_periods_near(audio.handle, params, &audio.properties.periods, &audio.properties.direction);
-	//snd_pcm_hw_params_set_period_size(audio.handle, params, 1, 0);
-	//snd_pcm_hw_params_set_period_time(audio.handle, params, 100000, 0); // 0.1 seconds
-	snd_pcm_hw_params_set_buffer_size(audio.handle, params, (audio.properties.sampleRate / audio.properties.uploadPerSecond) * audio.properties.channels);
-
-	// Apply parameters to PCM device
-	if (snd_pcm_hw_params(audio.handle, params) < 0) {
-		fprintf(stderr, "Error setting hardware parameters\n");
-		return 1;
-	}
 
 	unsigned int val;
 	int dir;
-
-	snd_pcm_hw_params_get_channels(params, &val);
+	if (snd_pcm_hw_params_get_channels(params, &val) < 0)
+		exitError("snd_pcm_hw_params_get_channels");
 	std::cout << "channels : " << val << std::endl;
-	snd_pcm_hw_params_get_rate(params, &val, &dir);
+	if (snd_pcm_hw_params_get_rate(params, &val, &dir) < 0)
+		exitError("snd_pcm_hw_params_get_rate");
 	std::cout << "rate : " << val << std::endl;
-	snd_pcm_hw_params_get_periods(params, &val, &dir);
+
+	//snd_pcm_hw_params_set_periods_near(audio.handle, params, &audio.properties.periods, &audio.properties.direction);
+	//snd_pcm_hw_params_set_period_size(audio.handle, params, 1, 0);
+	unsigned int periodTimeInMicroSeconds = ((1.0f / 60.0f) / (float)audio.properties.periods) * 1000000;
+	std::cout << "----------> " << periodTimeInMicroSeconds << std::endl;
+	if (snd_pcm_hw_params_set_period_time_near(audio.handle, params, &periodTimeInMicroSeconds, &audio.properties.direction) < 0)
+		exitError("snd_pcm_hw_params_set_period_time_near");
+
+	std::cout << "aaaaaaaaaaaaaaaA" << std::endl;
+	//snd_pcm_hw_params_set_buffer_size(audio.handle, params, (audio.properties.sampleRate / audio.properties.uploadPerSecond) * audio.properties.channels);
+	snd_pcm_uframes_t desiredBufferSize = (audio.properties.sampleRate / audio.properties.uploadPerSecond);
+	if (snd_pcm_hw_params_set_buffer_size_near(audio.handle, params, &desiredBufferSize) < 0)
+		exitError("snd_pcm_hw_params_set_buffer_size_near");
+
+	// Apply parameters to PCM device
+	if (snd_pcm_hw_params(audio.handle, params) < 0)
+		exitError("Error setting hardware parameters");
+
+	if (snd_pcm_hw_params_get_periods(params, &val, &dir) < 0)
+		exitError("snd_pcm_hw_params_get_periods");
 	std::cout << "periods : " << val << std::endl;
-	snd_pcm_hw_params_get_period_time(params, &val, &dir);
+	if (snd_pcm_hw_params_get_period_time(params, &val, &dir) < 0)
+		exitError("snd_pcm_hw_params_get_period_time");
 	std::cout << "period time " << (val / 1000000.0) << " seconds" << std::endl;
 	snd_pcm_uframes_t frames;
-	snd_pcm_hw_params_get_period_size(params, &frames, &dir);
+	if (snd_pcm_hw_params_get_period_size(params, &frames, &dir) < 0)
+		exitError("snd_pcm_hw_params_get_period_size");
 	std::cout << "period size " << frames << std::endl;
-	snd_pcm_hw_params_get_buffer_time(params, &val, &dir);
+
+	unsigned a1;
+	int a2;
+	if (snd_pcm_hw_params_get_buffer_time(params, &val, &dir) < 0)
+		exitError("snd_pcm_hw_params_get_buffer_time");
 	std::cout << "buffer time: " << (val / 1000000.0f) << " seconds" << std::endl;
 
 
