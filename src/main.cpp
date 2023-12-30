@@ -90,7 +90,7 @@ short *sine_wave(short *buffer, size_t sample_count, unsigned int channels, int 
 	for (int i = 0; i < sample_count; i++)
 	{
 		buffer[i] = (short)(10000 * sinf(2 * M_PI * freq * ((float)i / channels / 44100.0f)));
-		buffer[i] *= 0.4f;
+		buffer[i] *= 1.5f;
 		if (!pair)
 			buffer[i] = 0;
 		//pair = !pair;
@@ -197,9 +197,10 @@ int main(void)
 	//snd_pcm_nonblock(audio.handle, 1);
 
 	snd_pcm_hw_params_t *params;
+	unsigned int val;
+	int dir;
 
 	snd_pcm_hw_params_alloca(&params);
-	// [TODO] check snd_pcm_hw_params_* return value
 	if (snd_pcm_hw_params_any(audio.handle, params) < 0)
 		exitError("snd_pcm_hw_params_any");
 	if (snd_pcm_hw_params_set_access(audio.handle, params, SND_PCM_ACCESS_RW_INTERLEAVED) < 0)
@@ -210,27 +211,29 @@ int main(void)
 		exitError("snd_pcm_hw_params_set_channels");
 	if (snd_pcm_hw_params_set_rate_near(audio.handle, params, &audio.properties.sampleRate, &audio.properties.direction) < 0) // use near variant
 		exitError("snd_pcm_hw_params_set_rate");
-
-
-	unsigned int val;
-	int dir;
-	if (snd_pcm_hw_params_get_channels(params, &val) < 0)
-		exitError("snd_pcm_hw_params_get_channels");
-	std::cout << "channels : " << val << std::endl;
 	if (snd_pcm_hw_params_get_rate(params, &val, &dir) < 0)
 		exitError("snd_pcm_hw_params_get_rate");
 	std::cout << "rate : " << val << std::endl;
+	assert(val == audio.properties.sampleRate && "sample rate not available");
 
-	//snd_pcm_hw_params_set_periods_near(audio.handle, params, &audio.properties.periods, &audio.properties.direction);
-	//snd_pcm_hw_params_set_period_size(audio.handle, params, 1, 0);
-	unsigned int periodTimeInMicroSeconds = ((1.0f / 60.0f) / (float)audio.properties.periods) * 1000000;
+	if (snd_pcm_hw_params_get_channels(params, &val) < 0)
+		exitError("snd_pcm_hw_params_get_channels");
+	std::cout << "channels : " << val << std::endl;
+	assert (val == audio.properties.channels && "requested channel number not available");
+
+	snd_pcm_hw_params_set_periods_near(audio.handle, params, &audio.properties.periods, &audio.properties.direction);
+	if (snd_pcm_hw_params_get_periods(params, &val, &dir) < 0)
+		exitError("snd_pcm_hw_params_get_periods");
+	std::cout << "periods : " << val << std::endl;
+	unsigned int definitivePeriod = val;
+	unsigned int periodTimeInMicroSeconds = ((1.0f / 60.0f) / (float)definitivePeriod) * 1000000;
 	std::cout << "----------> " << periodTimeInMicroSeconds << std::endl;
-	if (snd_pcm_hw_params_set_period_time_near(audio.handle, params, &periodTimeInMicroSeconds, &audio.properties.direction) < 0)
+	if (snd_pcm_hw_params_set_period_time_min(audio.handle, params, &periodTimeInMicroSeconds, &audio.properties.direction) < 0)
 		exitError("snd_pcm_hw_params_set_period_time_near");
 
-	std::cout << "aaaaaaaaaaaaaaaA" << std::endl;
-	//snd_pcm_hw_params_set_buffer_size(audio.handle, params, (audio.properties.sampleRate / audio.properties.uploadPerSecond) * audio.properties.channels);
-	snd_pcm_uframes_t desiredBufferSize = (audio.properties.sampleRate / audio.properties.uploadPerSecond);
+	const float BUFFER_SIZE_MARGIN = 1.25f; // Without this increased buffer size, some output audio devices may undergo constant underrun
+	snd_pcm_uframes_t desiredBufferSize = ((float)audio.properties.sampleRate / (float)audio.properties.uploadPerSecond) * BUFFER_SIZE_MARGIN;
+	std::cout << "desired buffer size " << desiredBufferSize << std::endl;
 	if (snd_pcm_hw_params_set_buffer_size_near(audio.handle, params, &desiredBufferSize) < 0)
 		exitError("snd_pcm_hw_params_set_buffer_size_near");
 
@@ -238,12 +241,6 @@ int main(void)
 	if (snd_pcm_hw_params(audio.handle, params) < 0)
 		exitError("Error setting hardware parameters");
 
-	if (snd_pcm_hw_params_get_periods(params, &val, &dir) < 0)
-		exitError("snd_pcm_hw_params_get_periods");
-	std::cout << "periods : " << val << std::endl;
-	if (snd_pcm_hw_params_get_period_time(params, &val, &dir) < 0)
-		exitError("snd_pcm_hw_params_get_period_time");
-	std::cout << "period time " << (val / 1000000.0) << " seconds" << std::endl;
 	snd_pcm_uframes_t frames;
 	if (snd_pcm_hw_params_get_period_size(params, &frames, &dir) < 0)
 		exitError("snd_pcm_hw_params_get_period_size");
@@ -255,6 +252,9 @@ int main(void)
 		exitError("snd_pcm_hw_params_get_buffer_time");
 	std::cout << "buffer time: " << (val / 1000000.0f) << " seconds" << std::endl;
 
+	if (snd_pcm_hw_params_get_periods(params, &val, &dir) < 0)
+		exitError("snd_pcm_hw_params_get_periods");
+	std::cout << "periods : " << val << std::endl;
 
 	RingBuffer ringBuffer = {};
 
