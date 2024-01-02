@@ -90,7 +90,7 @@ short *sine_wave(short *buffer, size_t sample_count, unsigned int channels, int 
 	for (int i = 0; i < sample_count; i++)
 	{
 		buffer[i] = (short)(10000 * sinf(2 * M_PI * freq * ((float)i / channels / 44100.0f)));
-		buffer[i] *= 1.5f;
+		buffer[i] *= 0.25f;
 		if (!pair)
 			buffer[i] = 0;
 		//pair = !pair;
@@ -188,8 +188,8 @@ int main(void)
 	snd_device_name_free_hint(hints);
 
 	// Open PCM device
-	if (snd_pcm_open(&audio.handle, "hw:CARD=NVidia,DEV=3", SND_PCM_STREAM_PLAYBACK, 0) < 0) {
-	//if (snd_pcm_open(&audio.handle, "default", SND_PCM_STREAM_PLAYBACK, 0) < 0) {
+	//if (snd_pcm_open(&audio.handle, "hw:CARD=NVidia,DEV=3", SND_PCM_STREAM_PLAYBACK, 0) < 0) {
+	if (snd_pcm_open(&audio.handle, "default", SND_PCM_STREAM_PLAYBACK, 0) < 0) {
 		std::cerr << "Error opening PCM device" << std::endl;
 		return 1;
 	}
@@ -308,20 +308,21 @@ int main(void)
 		 * 10 : potentiometer
 		 * 67 : device disconnected
 		*/
-		if (snd_seq_event_input_pending(sequencer, 0) <= 0)
+		if (snd_seq_event_input_pending(sequencer, 0) >= 0)
 		{
 			//std::cout << (int)ev->type << std::endl;
 			snd_seq_event_input(sequencer, &ev);
 
 			if (ev->type == SND_SEQ_EVENT_NOTEON)
 			{
-				std::cout << (int)ev->data.note.note << " " << (int)ev->data.note.velocity << std::endl;
+				std::cout << "[NOTE ON] " << (int)ev->data.note.note << " " << (int)ev->data.note.velocity << std::endl;
 
 				// Generate sine wave samples dynamically
 				sine_wave(ringBuffer.buffer, audio.properties.sampleRate, audio.properties.channels, 660);
 			}
 			else if (ev->type == SND_SEQ_EVENT_NOTEOFF)
 			{
+				std::cout << "[NOTE OFF] " << (int)ev->data.note.note << std::endl;
 				sine_wave(ringBuffer.buffer, audio.properties.sampleRate, audio.properties.channels, 440);
 			}
 			else if (ev->type == 10) // potentiometer
