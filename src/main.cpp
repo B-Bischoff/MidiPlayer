@@ -4,6 +4,7 @@
 #include <thread>
 #include <vector>
 #include <chrono>
+#include <iomanip>
 
 void exitError(const std::string& error)
 {
@@ -14,6 +15,8 @@ void exitError(const std::string& error)
 struct RingBuffer {
 	short buffer[44100];
 	unsigned int cursor;
+	double timeElapsed;
+	// [TODO] add buffer size
 };
 
 struct AudioProperties {
@@ -31,28 +34,113 @@ struct AudioData {
 	snd_pcm_t* handle;
 };
 
-void task(snd_pcm_t* handle, RingBuffer& ringBuffer)
+void tkt(snd_pcm_t* handle, int size)
 {
-	float dt = 0.0f;
-	float sum = 0.0f;
-	float timeElapsed = 0.0f;
+	std::cout << "size : " << size << std::endl;
+	short* ptr = new short(size);
+	assert(ptr != nullptr);
+	std::cout << "alloc okay" <<std::endl;
+	memset(ptr, 0, sizeof(short) * size);
+	std::cout << "memset okay" <<std::endl;
+	snd_pcm_writei(handle, ptr, size);
+	std::cout << "writei okay" <<std::endl;
+	delete ptr;
+}
+
+int writeBuffer(snd_pcm_t* handle, RingBuffer& ringBuffer, unsigned int size)
+{
+	int writeReturn = 0;
+	const int channels = 2; // [TODO] pass this as parameter or with AudioData struct
+
+	std::cout << "cursor pos : " << ringBuffer.cursor << std::endl;
+	if (ringBuffer.cursor + size >= 44100)
+	{
+		unsigned int firstWriteSize = 44100 - ringBuffer.cursor;
+		unsigned int secondWriteSize = size - firstWriteSize;
+
+		writeReturn = snd_pcm_writei(handle, ringBuffer.buffer + ringBuffer.cursor, firstWriteSize);
+		ringBuffer.cursor = 0;
+		if (writeReturn == -EPIPE)
+			return writeReturn;
+		writeReturn += snd_pcm_writei(handle, ringBuffer.buffer + ringBuffer.cursor, secondWriteSize);
+		ringBuffer.cursor = secondWriteSize;
+	}
+	else
+	{
+		writeReturn = snd_pcm_writei(handle, ringBuffer.buffer + ringBuffer.cursor, size);
+		ringBuffer.cursor = std::fmod(ringBuffer.cursor + size * channels, 44100.0f);
+	}
+
+	return writeReturn;
+}
+
+void uploadRingBufferToAlsa(snd_pcm_t* handle, RingBuffer& ringBuffer)
+{
+	double dt = 0.0f;
+	double sum = 0.0f;
 	unsigned int channels = 2;
+	ringBuffer.timeElapsed = 0.0;
 
 	auto startTime = std::chrono::high_resolution_clock::now();
+
+	float frameToWrite = 44100.0f / 60.0f;
+
 	while (1)
 	{
 		if (sum >= 1.0f / 60.0f)
 		{
+			std::cout << sum << std::endl;
 			sum = 0;
 			//std::cout << "time sing start : " << timeElapsed << std::endl;
 			//std::cout << "frames available : " << snd_strerror(snd_pcm_avail(audio.handle)) << std::endl;
-			int writeReturn = snd_pcm_writei(handle, ringBuffer.buffer + ringBuffer.cursor, 44100.0f / 60.0f);
-			ringBuffer.cursor = std::fmod(ringBuffer.cursor + 44100.0f / 60.0f * channels, 44100.0f);
+			int writeReturn;
+			int frameAvailable = snd_pcm_avail(handle);
+			//std::cout << "write return                            " << writeReturn << std::endl;
+
+
+			if (frameAvailable > frameToWrite)
+			{
+				std::cout << "[preventing underrun]" << std::endl;
+				frameToWrite = frameAvailable * 2;
+				writeReturn = writeBuffer(handle, ringBuffer, frameToWrite);
+				frameToWrite = 44100.0f / 60.0f;
+			}
+			else
+			{
+				writeReturn = writeBuffer(handle, ringBuffer, frameToWrite);
+			}
+			/*
+			static double tempTime, oldTempTime;
+			tempTime = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - startTime).count() / 1000000000.0f;
+			std::cout << (tempTime - oldTempTime) << std::endl;
+			oldTempTime = tempTime;
+			*/
+
 			if (writeReturn == -EPIPE)
 			{
-				std::cout << "Underrun occured" << std::endl;
+				//std::cout << "Underrun occured" << std::endl;
+				std::cout << "prepare : " << snd_pcm_prepare(handle) << std::endl;
+				/*
 				// [TODO] check prepare return value
-				std::cout << snd_pcm_prepare(handle) << std::endl;
+				//int frameAvailable = snd_pcm_avail(handle);
+				//std::cout << "---> " << frameAvailable << std::endl;
+				int frameAvailable = snd_pcm_avail(handle);
+				std::cout << "frame available " << frameAvailable << std::endl;
+				std::cout << "prepare : " << snd_pcm_prepare(handle) << std::endl;
+				frameAvailable = snd_pcm_avail(handle);
+				std::cout << "frame available " << frameAvailable << std::endl;
+				if (frameAvailable > 0)
+				{
+					std::cout << "first" << std::endl;
+					tkt(handle, frameAvailable);
+				}
+				if (frameAvailable > 0)
+				{
+					std::cout << "first" << std::endl;
+					tkt(handle, frameAvailable);
+				}
+				*/
+				//snd_pcm_writei(handle, ringBuffer.buffer + ringBuffer.cursor, 44100.0f / 60.0f);
 			}
 			else if (writeReturn < 0)
 			{
@@ -61,7 +149,7 @@ void task(snd_pcm_t* handle, RingBuffer& ringBuffer)
 			}
 			else
 			{
-				if (writeReturn != 44100.0f / 60.0f)
+				if (writeReturn < 44100.0f / 60.0f)
 				{
 					std::cout << "[WARNING] : written " << writeReturn << " instead of supposed " << (44100.0f / 60.0f) << std::endl;
 				}
@@ -71,11 +159,11 @@ void task(snd_pcm_t* handle, RingBuffer& ringBuffer)
 			}
 		}
 
-		float newTimeElapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - startTime).count() / 1000000000.0f;
-
-		dt = newTimeElapsed - timeElapsed;
+		std::this_thread::sleep_for(std::chrono::nanoseconds(1));
+		double newTimeElapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - startTime).count() / 1000000000.0f;
+		dt = newTimeElapsed - ringBuffer.timeElapsed;
 		sum += dt;
-		timeElapsed = newTimeElapsed;
+		ringBuffer.timeElapsed = newTimeElapsed;
 	}
 }
 
@@ -90,7 +178,7 @@ short *sine_wave(short *buffer, size_t sample_count, unsigned int channels, int 
 	for (int i = 0; i < sample_count; i++)
 	{
 		buffer[i] = (short)(10000 * sinf(2 * M_PI * freq * ((float)i / channels / 44100.0f)));
-		buffer[i] *= 0.25f;
+		buffer[i] *= 0.5f;
 		if (!pair)
 			buffer[i] = 0;
 		//pair = !pair;
@@ -163,7 +251,7 @@ int main(void)
 		.sampleRate = 44100,
 		.channels = 2,
 		.format = SND_PCM_FORMAT_S16_LE,
-		.periods = 2, // Keep that value low to quickly ear change in played audio
+		.periods = 6, // Keep that value low to quickly ear change in played audio
 		.direction = 0,
 	};
 	memset(&audio.ringBuffer, 0, sizeof(RingBuffer));
@@ -278,7 +366,7 @@ int main(void)
 	//snd_pcm_close(audio.handle);
 	// -----------------------------------------------------
 
-	std::thread t1(task, audio.handle, std::ref(ringBuffer));
+	std::thread t1(uploadRingBufferToAlsa, audio.handle, std::ref(ringBuffer));
 
 	snd_seq_t* sequencer;
 
@@ -304,9 +392,9 @@ int main(void)
 	while (1)
 	{
 		/*
-		 * note on/off : ev.type ==  6/7
-		 * 10 : potentiometer
-		 * 67 : device disconnected
+		* note on/off : ev.type == 6/7
+		* 10 : potentiometer
+		* 67 : device disconnected
 		*/
 		if (snd_seq_event_input_pending(sequencer, 0) >= 0)
 		{
@@ -317,19 +405,21 @@ int main(void)
 			{
 				std::cout << "[NOTE ON] " << (int)ev->data.note.note << " " << (int)ev->data.note.velocity << std::endl;
 
-				// Generate sine wave samples dynamically
-				sine_wave(ringBuffer.buffer, audio.properties.sampleRate, audio.properties.channels, 660);
+				float hertzValue =  440.0 * std::pow(2.0, (ev->data.note.note - 49) / 12.0);
+				std::cout << "Hz : " << hertzValue << std::endl;
+				sine_wave(ringBuffer.buffer, audio.properties.sampleRate, audio.properties.channels, hertzValue);
 			}
 			else if (ev->type == SND_SEQ_EVENT_NOTEOFF)
 			{
 				std::cout << "[NOTE OFF] " << (int)ev->data.note.note << std::endl;
-				sine_wave(ringBuffer.buffer, audio.properties.sampleRate, audio.properties.channels, 440);
+				memset(ringBuffer.buffer, 0, sizeof(ringBuffer.buffer));
+				//sine_wave(ringBuffer.buffer, audio.properties.sampleRate, audio.properties.channels, 440);
 			}
 			else if (ev->type == 10) // potentiometer
 			{
 				std::cout << ev->data.control.channel << "value : " << ev->data.control.value << std::endl;
 			}
 		}
-		//std::cout << timeElapsed << std::endl;
+		std::cout << ringBuffer.timeElapsed << std::endl;
 	}
 }
