@@ -34,25 +34,12 @@ struct AudioData {
 	snd_pcm_t* handle;
 };
 
-void tkt(snd_pcm_t* handle, int size)
-{
-	std::cout << "size : " << size << std::endl;
-	short* ptr = new short(size);
-	assert(ptr != nullptr);
-	std::cout << "alloc okay" <<std::endl;
-	memset(ptr, 0, sizeof(short) * size);
-	std::cout << "memset okay" <<std::endl;
-	snd_pcm_writei(handle, ptr, size);
-	std::cout << "writei okay" <<std::endl;
-	delete ptr;
-}
-
 int writeBuffer(snd_pcm_t* handle, RingBuffer& ringBuffer, unsigned int size)
 {
 	int writeReturn = 0;
 	const int channels = 2; // [TODO] pass this as parameter or with AudioData struct
 
-	std::cout << "cursor pos : " << ringBuffer.cursor << std::endl;
+	//std::cout << "cursor pos : " << ringBuffer.cursor << std::endl;
 	if (ringBuffer.cursor + size >= 44100)
 	{
 		unsigned int firstWriteSize = 44100 - ringBuffer.cursor;
@@ -87,9 +74,9 @@ void uploadRingBufferToAlsa(snd_pcm_t* handle, RingBuffer& ringBuffer)
 
 	while (1)
 	{
-		if (sum >= 1.0f / 60.0f)
+		if (sum >= 1.0f / 60.0f / 2.0f) // Write rate is divided by 2 to avoid underrun
 		{
-			std::cout << sum << std::endl;
+			//std::cout << sum << std::endl;
 			sum = 0;
 			//std::cout << "time sing start : " << timeElapsed << std::endl;
 			//std::cout << "frames available : " << snd_strerror(snd_pcm_avail(audio.handle)) << std::endl;
@@ -101,7 +88,7 @@ void uploadRingBufferToAlsa(snd_pcm_t* handle, RingBuffer& ringBuffer)
 			if (frameAvailable > frameToWrite)
 			{
 				std::cout << "[preventing underrun]" << std::endl;
-				frameToWrite = frameAvailable * 2;
+				frameToWrite = frameAvailable;
 				writeReturn = writeBuffer(handle, ringBuffer, frameToWrite);
 				frameToWrite = 44100.0f / 60.0f;
 			}
@@ -120,32 +107,24 @@ void uploadRingBufferToAlsa(snd_pcm_t* handle, RingBuffer& ringBuffer)
 			{
 				//std::cout << "Underrun occured" << std::endl;
 				std::cout << "prepare : " << snd_pcm_prepare(handle) << std::endl;
-				/*
-				// [TODO] check prepare return value
-				//int frameAvailable = snd_pcm_avail(handle);
-				//std::cout << "---> " << frameAvailable << std::endl;
-				int frameAvailable = snd_pcm_avail(handle);
-				std::cout << "frame available " << frameAvailable << std::endl;
-				std::cout << "prepare : " << snd_pcm_prepare(handle) << std::endl;
+
+				short silenceBuffer[44100] = {};
+				snd_pcm_sframes_t frameAvailable = snd_pcm_avail(handle);
+				std::cout << "first init write : " << frameAvailable << std::endl;
+				snd_pcm_writei(handle, silenceBuffer, frameAvailable);
 				frameAvailable = snd_pcm_avail(handle);
-				std::cout << "frame available " << frameAvailable << std::endl;
-				if (frameAvailable > 0)
+				while (frameAvailable > 0)
 				{
-					std::cout << "first" << std::endl;
-					tkt(handle, frameAvailable);
+					std::cout << "second init write : " << frameAvailable << std::endl;
+					snd_pcm_writei(handle, silenceBuffer, frameAvailable);
+					frameAvailable = snd_pcm_avail(handle);
 				}
-				if (frameAvailable > 0)
-				{
-					std::cout << "first" << std::endl;
-					tkt(handle, frameAvailable);
-				}
-				*/
-				//snd_pcm_writei(handle, ringBuffer.buffer + ringBuffer.cursor, 44100.0f / 60.0f);
 			}
 			else if (writeReturn < 0)
 			{
 				// [TODO] handle write error
 				std::cout << "Alsa buffer upload error" << std::endl;
+				exit(1);
 			}
 			else
 			{
@@ -153,9 +132,6 @@ void uploadRingBufferToAlsa(snd_pcm_t* handle, RingBuffer& ringBuffer)
 				{
 					std::cout << "[WARNING] : written " << writeReturn << " instead of supposed " << (44100.0f / 60.0f) << std::endl;
 				}
-				//std::cout << "written: " << writeReturn << std::endl;
-				//std::cout << "frames available : " << snd_pcm_avail(audio.handle) << std::endl;
-				//std::cout << "--------------------" << std::endl;
 			}
 		}
 
@@ -243,6 +219,10 @@ std::string getDevicePort(snd_seq_t* sequencer)
 	return selectedPort;
 }
 
+void fillAlsaBufferWithSilence()
+{
+}
+
 int main(void)
 {
 	AudioData audio;
@@ -251,7 +231,7 @@ int main(void)
 		.sampleRate = 44100,
 		.channels = 2,
 		.format = SND_PCM_FORMAT_S16_LE,
-		.periods = 6, // Keep that value low to quickly ear change in played audio
+		.periods = 3, // Keep that value low to quickly ear change in played audio
 		.direction = 0,
 	};
 	memset(&audio.ringBuffer, 0, sizeof(RingBuffer));
@@ -276,8 +256,9 @@ int main(void)
 	snd_device_name_free_hint(hints);
 
 	// Open PCM device
-	//if (snd_pcm_open(&audio.handle, "hw:CARD=NVidia,DEV=3", SND_PCM_STREAM_PLAYBACK, 0) < 0) {
-	if (snd_pcm_open(&audio.handle, "default", SND_PCM_STREAM_PLAYBACK, 0) < 0) {
+	//if (snd_pcm_open(&audio.handle, "hw:CARD=NVidia,DEV=3", SND_PCM_STREAM_PLAYBACK, 0) < 0)
+	if (snd_pcm_open(&audio.handle, "default", SND_PCM_STREAM_PLAYBACK, 0) < 0)
+	{
 		std::cerr << "Error opening PCM device" << std::endl;
 		return 1;
 	}
@@ -319,8 +300,7 @@ int main(void)
 	if (snd_pcm_hw_params_set_period_time_min(audio.handle, params, &periodTimeInMicroSeconds, &audio.properties.direction) < 0)
 		exitError("snd_pcm_hw_params_set_period_time_near");
 
-	const float BUFFER_SIZE_MARGIN = 1.25f; // Without this increased buffer size, some output audio devices may undergo constant underrun
-	snd_pcm_uframes_t desiredBufferSize = ((float)audio.properties.sampleRate / (float)audio.properties.uploadPerSecond) * BUFFER_SIZE_MARGIN;
+	snd_pcm_uframes_t desiredBufferSize = ((float)audio.properties.sampleRate / (float)audio.properties.uploadPerSecond);
 	std::cout << "desired buffer size " << desiredBufferSize << std::endl;
 	if (snd_pcm_hw_params_set_buffer_size_near(audio.handle, params, &desiredBufferSize) < 0)
 		exitError("snd_pcm_hw_params_set_buffer_size_near");
@@ -347,14 +327,16 @@ int main(void)
 	RingBuffer ringBuffer = {};
 
 	// Fill alsa buffer with silence
+	short silenceBuffer[44100] = {};
 	snd_pcm_sframes_t frameAvailable = snd_pcm_avail(audio.handle);
 	std::cout << "first init write : " << frameAvailable << std::endl;
-	snd_pcm_writei(audio.handle, ringBuffer.buffer, frameAvailable);
+	snd_pcm_writei(audio.handle, silenceBuffer, frameAvailable);
 	frameAvailable = snd_pcm_avail(audio.handle);
-	if (frameAvailable > 0)
+	while (frameAvailable > 0)
 	{
 		std::cout << "second init write : " << frameAvailable << std::endl;
-		snd_pcm_writei(audio.handle, ringBuffer.buffer, frameAvailable);
+		snd_pcm_writei(audio.handle, silenceBuffer, frameAvailable);
+		frameAvailable = snd_pcm_avail(audio.handle);
 	}
 
 	sine_wave(ringBuffer.buffer, audio.properties.sampleRate, audio.properties.channels, 440);
