@@ -1,3 +1,4 @@
+#include <cstring>
 #include <iostream>
 #include <alsa/asoundlib.h>
 #include <math.h>
@@ -5,6 +6,8 @@
 #include <vector>
 #include <chrono>
 #include <iomanip>
+
+short *sine_wave(short *buffer, size_t sample_count, unsigned int channels, int freq);
 
 void exitError(const std::string& error)
 {
@@ -32,6 +35,7 @@ struct AudioData {
 	RingBuffer ringBuffer;
 	AudioProperties properties;
 	snd_pcm_t* handle;
+	bool pressed;
 };
 
 int writeBuffer(snd_pcm_t* handle, RingBuffer& ringBuffer, unsigned int size)
@@ -61,16 +65,20 @@ int writeBuffer(snd_pcm_t* handle, RingBuffer& ringBuffer, unsigned int size)
 	return writeReturn;
 }
 
-void uploadRingBufferToAlsa(snd_pcm_t* handle, RingBuffer& ringBuffer)
+void uploadRingBufferToAlsa(snd_pcm_t* handle, AudioData& audio)
 {
 	double dt = 0.0f;
 	double sum = 0.0f;
 	unsigned int channels = 2;
+	RingBuffer& ringBuffer = audio.ringBuffer;
+
 	ringBuffer.timeElapsed = 0.0;
 
 	auto startTime = std::chrono::high_resolution_clock::now();
 
 	float frameToWrite = 44100.0f / 60.0f;
+
+	std::cout << &ringBuffer << std::endl;
 
 	while (1)
 	{
@@ -84,7 +92,6 @@ void uploadRingBufferToAlsa(snd_pcm_t* handle, RingBuffer& ringBuffer)
 			int frameAvailable = snd_pcm_avail(handle);
 			//std::cout << "write return                            " << writeReturn << std::endl;
 
-
 			if (frameAvailable > frameToWrite)
 			{
 				std::cout << "[preventing underrun]" << std::endl;
@@ -96,12 +103,6 @@ void uploadRingBufferToAlsa(snd_pcm_t* handle, RingBuffer& ringBuffer)
 			{
 				writeReturn = writeBuffer(handle, ringBuffer, frameToWrite);
 			}
-			/*
-			static double tempTime, oldTempTime;
-			tempTime = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - startTime).count() / 1000000000.0f;
-			std::cout << (tempTime - oldTempTime) << std::endl;
-			oldTempTime = tempTime;
-			*/
 
 			if (writeReturn == -EPIPE)
 			{
@@ -135,11 +136,43 @@ void uploadRingBufferToAlsa(snd_pcm_t* handle, RingBuffer& ringBuffer)
 			}
 		}
 
-		std::this_thread::sleep_for(std::chrono::nanoseconds(1));
+		std::this_thread::sleep_for(std::chrono::nanoseconds(100));
 		double newTimeElapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - startTime).count() / 1000000000.0f;
 		dt = newTimeElapsed - ringBuffer.timeElapsed;
 		sum += dt;
 		ringBuffer.timeElapsed = newTimeElapsed;
+	}
+}
+
+void generateSound(AudioData& audio)
+{
+	double dt = 0.0f;
+	double sum = 0.0f;
+	auto startTime = std::chrono::high_resolution_clock::now();
+
+	std::cout << &audio.ringBuffer << std::endl;
+
+	while (1)
+	{
+		if (sum >= 1.0f / 60.0f)
+		{
+			sum = 0;
+
+			if (audio.pressed)
+			{
+				//std::cout << "pressed" << std::endl;
+				sine_wave(audio.ringBuffer.buffer, 44100, 2, 440);
+			}
+			else
+			{
+				//std::cout << "not pressed" << std::endl;
+				memset(audio.ringBuffer.buffer, 0, sizeof(audio.ringBuffer.buffer));
+			}
+		}
+		double newTimeElapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - startTime).count() / 1000000000.0f;
+		dt = newTimeElapsed - audio.ringBuffer.timeElapsed;
+		sum += dt;
+		std::this_thread::sleep_for(std::chrono::nanoseconds(100));
 	}
 }
 
@@ -149,7 +182,8 @@ void exitError(const char* str)
 	exit(1);
 }
 
-short *sine_wave(short *buffer, size_t sample_count, unsigned int channels, int freq) {
+short *sine_wave(short *buffer, size_t sample_count, unsigned int channels, int freq)
+{
 	bool pair = true;
 	for (int i = 0; i < sample_count; i++)
 	{
@@ -339,7 +373,7 @@ int main(void)
 		frameAvailable = snd_pcm_avail(audio.handle);
 	}
 
-	sine_wave(ringBuffer.buffer, audio.properties.sampleRate, audio.properties.channels, 440);
+	//sine_wave(ringBuffer.buffer, audio.properties.sampleRate, audio.properties.channels, 440);
 	//std::cout << snd_pcm_writei(audio.handle, buffer, 44100) << std::endl;
 	//std::cout << "frames available : " << snd_pcm_avail(audio.handle) << std::endl;
 
@@ -348,7 +382,8 @@ int main(void)
 	//snd_pcm_close(audio.handle);
 	// -----------------------------------------------------
 
-	std::thread t1(uploadRingBufferToAlsa, audio.handle, std::ref(ringBuffer));
+	std::thread t1(uploadRingBufferToAlsa, audio.handle, std::ref(audio));
+	std::thread generateSoundThread(generateSound, std::ref(audio));
 
 	snd_seq_t* sequencer;
 
@@ -389,12 +424,14 @@ int main(void)
 
 				float hertzValue =  440.0 * std::pow(2.0, (ev->data.note.note - 49) / 12.0);
 				std::cout << "Hz : " << hertzValue << std::endl;
-				sine_wave(ringBuffer.buffer, audio.properties.sampleRate, audio.properties.channels, hertzValue);
+				//sine_wave(ringBuffer.buffer, audio.properties.sampleRate, audio.properties.channels, hertzValue);
+				audio.pressed = true;
 			}
 			else if (ev->type == SND_SEQ_EVENT_NOTEOFF)
 			{
 				std::cout << "[NOTE OFF] " << (int)ev->data.note.note << std::endl;
-				memset(ringBuffer.buffer, 0, sizeof(ringBuffer.buffer));
+				audio.pressed = false;
+				//memset(ringBuffer.buffer, 0, sizeof(ringBuffer.buffer));
 				//sine_wave(ringBuffer.buffer, audio.properties.sampleRate, audio.properties.channels, 440);
 			}
 			else if (ev->type == 10) // potentiometer
