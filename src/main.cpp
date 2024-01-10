@@ -1,3 +1,4 @@
+#include <cmath>
 #include <cstring>
 #include <iostream>
 #include <alsa/asoundlib.h>
@@ -6,8 +7,6 @@
 #include <vector>
 #include <chrono>
 #include <iomanip>
-
-short *sine_wave(short *buffer, size_t sample_count, unsigned int channels, int freq);
 
 void exitError(const std::string& error)
 {
@@ -18,9 +17,12 @@ void exitError(const std::string& error)
 struct RingBuffer {
 	short buffer[44100];
 	unsigned int cursor;
+	unsigned int writeCursor;
 	double timeElapsed;
 	// [TODO] add buffer size
 };
+
+void sine_wave(RingBuffer& ringBuffer, size_t sample_count, unsigned int channels, int freq, double time);
 
 struct AudioProperties {
 	unsigned int uploadPerSecond;
@@ -46,20 +48,63 @@ int writeBuffer(snd_pcm_t* handle, RingBuffer& ringBuffer, unsigned int size)
 	//std::cout << "cursor pos : " << ringBuffer.cursor << std::endl;
 	if (ringBuffer.cursor + size >= 44100)
 	{
+		std::cout << "loop ---------------------------------------------------------------------------" << std::endl;
 		unsigned int firstWriteSize = 44100 - ringBuffer.cursor;
 		unsigned int secondWriteSize = size - firstWriteSize;
 
+		/*
 		writeReturn = snd_pcm_writei(handle, ringBuffer.buffer + ringBuffer.cursor, firstWriteSize);
-		ringBuffer.cursor = 0;
 		if (writeReturn == -EPIPE)
 			return writeReturn;
-		writeReturn += snd_pcm_writei(handle, ringBuffer.buffer + ringBuffer.cursor, secondWriteSize);
+
+		if (writeReturn != firstWriteSize)
+		{
+			writeReturn += snd_pcm_writei(handle, ringBuffer.buffer + ringBuffer.cursor + firstWriteSize - writeReturn, firstWriteSize - writeReturn);
+		}
+
+		writeReturn += snd_pcm_writei(handle, ringBuffer.buffer + ringBuffer.cursor + writeReturn, secondWriteSize);
+		ringBuffer.cursor = std::fmod(ringBuffer.cursor + writeReturn * channels, 44100.0f); // [TODO] why would you use fmod ??
 		ringBuffer.cursor = secondWriteSize;
+		*/
+
+		//////////////////////////////////////////
+
+		unsigned int sum = 0;
+		// Send data until buffer end
+		while (sum != firstWriteSize)
+		{
+			writeReturn = snd_pcm_writei(handle, ringBuffer.buffer + ringBuffer.cursor, firstWriteSize - sum);
+			if (writeReturn == -EPIPE)
+				return writeReturn;
+			ringBuffer.cursor = (ringBuffer.cursor + writeReturn * channels) % 44100;
+			sum += writeReturn;
+		}
+
+		// Send remaining data
+		sum = 0;
+		while (sum != secondWriteSize)
+		{
+			writeReturn = snd_pcm_writei(handle, ringBuffer.buffer + ringBuffer.cursor, secondWriteSize - sum);
+			if (writeReturn == -EPIPE)
+				return writeReturn;
+			ringBuffer.cursor = (ringBuffer.cursor + writeReturn * channels) % 44100;
+			sum += writeReturn;
+		}
+		writeReturn = size;
 	}
 	else
 	{
-		writeReturn = snd_pcm_writei(handle, ringBuffer.buffer + ringBuffer.cursor, size);
-		ringBuffer.cursor = std::fmod(ringBuffer.cursor + size * channels, 44100.0f);
+		std::cout << "standart" << std::endl;
+		unsigned int sum = 0;
+		while (sum != size)
+		{
+			std::cout << "x" << std::endl;
+			writeReturn = snd_pcm_writei(handle, ringBuffer.buffer + ringBuffer.cursor, size - sum);
+			if (writeReturn == -EPIPE)
+				return writeReturn;
+			ringBuffer.cursor = (ringBuffer.cursor + writeReturn * channels) % 44100;
+			sum += writeReturn;
+		}
 	}
 
 	return writeReturn;
@@ -79,11 +124,22 @@ void uploadRingBufferToAlsa(snd_pcm_t* handle, AudioData& audio)
 	float frameToWrite = 44100.0f / 60.0f;
 
 	std::cout << &ringBuffer << std::endl;
+	sine_wave(audio.ringBuffer, 44100.0f, 2, 440, 0);
 
 	while (1)
 	{
 		if (sum >= 1.0f / 60.0f / 2.0f) // Write rate is divided by 2 to avoid underrun
 		{
+			if (audio.pressed)
+			{
+				//memset(audio.ringBuffer.buffer, 0, sizeof(audio.ringBuffer.buffer));
+				sine_wave(audio.ringBuffer, 44100.0f, 2, 440, 0);
+			}
+			else
+			{
+				//std::cout << "not pressed" << std::endl;
+				memset(audio.ringBuffer.buffer, 0, sizeof(audio.ringBuffer.buffer));
+			}
 			//std::cout << sum << std::endl;
 			sum = 0;
 			//std::cout << "time sing start : " << timeElapsed << std::endl;
@@ -91,6 +147,10 @@ void uploadRingBufferToAlsa(snd_pcm_t* handle, AudioData& audio)
 			int writeReturn;
 			int frameAvailable = snd_pcm_avail(handle);
 			//std::cout << "write return                            " << writeReturn << std::endl;
+
+			//for (int i = 0; i < 44100.0f / 60.0f; i++)
+			//	std::cout << ringBuffer.buffer[ringBuffer.cursor + i] << " ";
+			//std::cout << std::endl;
 
 			if (frameAvailable > frameToWrite)
 			{
@@ -134,9 +194,10 @@ void uploadRingBufferToAlsa(snd_pcm_t* handle, AudioData& audio)
 					std::cout << "[WARNING] : written " << writeReturn << " instead of supposed " << (44100.0f / 60.0f) << std::endl;
 				}
 			}
+			std::cout << (int)ringBuffer.cursor << " " << (int)ringBuffer.writeCursor << std::endl;
 		}
 
-		std::this_thread::sleep_for(std::chrono::nanoseconds(100));
+		std::this_thread::sleep_for(std::chrono::nanoseconds(1));
 		double newTimeElapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - startTime).count() / 1000000000.0f;
 		dt = newTimeElapsed - ringBuffer.timeElapsed;
 		sum += dt;
@@ -149,30 +210,34 @@ void generateSound(AudioData& audio)
 	double dt = 0.0f;
 	double sum = 0.0f;
 	auto startTime = std::chrono::high_resolution_clock::now();
+	double previousFrame = 0;
 
 	std::cout << &audio.ringBuffer << std::endl;
 
 	while (1)
 	{
-		if (sum >= 1.0f / 60.0f)
+		if (sum >= 1.0f / 60.0f / 2.0f)
 		{
 			sum = 0;
 
+			/*
 			if (audio.pressed)
 			{
-				//std::cout << "pressed" << std::endl;
-				sine_wave(audio.ringBuffer.buffer, 44100, 2, 440);
+				sine_wave(audio.ringBuffer, 44100.0f / 60.0f, 2, 440, audio.ringBuffer.timeElapsed);
+				//sine_wave(audio.ringBuffer.buffer, 44100.0f, 2, 440, 0);
 			}
 			else
 			{
 				//std::cout << "not pressed" << std::endl;
 				memset(audio.ringBuffer.buffer, 0, sizeof(audio.ringBuffer.buffer));
 			}
+			*/
 		}
 		double newTimeElapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - startTime).count() / 1000000000.0f;
-		dt = newTimeElapsed - audio.ringBuffer.timeElapsed;
+		dt = newTimeElapsed - previousFrame;
 		sum += dt;
-		std::this_thread::sleep_for(std::chrono::nanoseconds(100));
+		previousFrame = newTimeElapsed;
+		std::this_thread::sleep_for(std::chrono::nanoseconds(1));
 	}
 }
 
@@ -182,18 +247,34 @@ void exitError(const char* str)
 	exit(1);
 }
 
-short *sine_wave(short *buffer, size_t sample_count, unsigned int channels, int freq)
+float freqToAngularVelocity(float hertz)
+{
+	return hertz * 2.0f * M_PI;
+}
+
+float ocs(float hertz, float time)
+{
+	float t = 10000 * sinf(freqToAngularVelocity(hertz) * time);
+	return t;
+}
+
+void sine_wave(RingBuffer& ringBuffer, size_t sample_count, unsigned int channels, int freq, double time)
 {
 	bool pair = true;
 	for (int i = 0; i < sample_count; i++)
 	{
-		buffer[i] = (short)(10000 * sinf(2 * M_PI * freq * ((float)i / channels / 44100.0f)));
-		buffer[i] *= 0.5f;
+		int bufferIndex = (ringBuffer.writeCursor + i) % 44100;
+		//buffer[i] = (short)(10000 * sinf(2 * M_PI * freq * ((float)i / channels / 44100.0f)));
+		ringBuffer.buffer[bufferIndex] = (short)ocs(freq, time + ((float)i / channels) / 44100.0f);
+		ringBuffer.buffer[bufferIndex] *= 0.5f;
 		if (!pair)
-			buffer[i] = 0;
+			ringBuffer.buffer[bufferIndex] = 0;
 		//pair = !pair;
 	}
-	return buffer;
+	int newWriteCursorPos = (ringBuffer.writeCursor + sample_count) % 44100;
+	//if (ringBuffer.writeCursor < ringBuffer.cursor && newWriteCursorPos >= ringBuffer.cursor)
+	//	std::cout << "[WARNING] write cursor" << std::endl;
+	ringBuffer.writeCursor = newWriteCursorPos;
 }
 
 std::string getDevicePort(snd_seq_t* sequencer)
@@ -251,10 +332,6 @@ std::string getDevicePort(snd_seq_t* sequencer)
 	std::cout << std::endl << "---------------------------" << std::endl << std::endl;
 
 	return selectedPort;
-}
-
-void fillAlsaBufferWithSilence()
-{
 }
 
 int main(void)
