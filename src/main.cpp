@@ -8,6 +8,13 @@
 #include <chrono>
 #include <iomanip>
 
+#include <portaudio.h>
+
+#define VERBOSE true
+
+float AUDIO_DATA[200];
+int leftPhase, rightPhase;
+
 void exitError(const std::string& error)
 {
 	std::cerr << error << std::endl;
@@ -334,8 +341,132 @@ std::string getDevicePort(snd_seq_t* sequencer)
 	return selectedPort;
 }
 
+void printPaDeviceInfo(const PaDeviceInfo* deviceInfo)
+{
+	assert(deviceInfo != nullptr && "Invalid deviceInfo");
+
+	std::cout << "name : " << deviceInfo->name << std::endl;
+	std::cout << "max input / output channels : " << deviceInfo->maxInputChannels << " " << deviceInfo->maxOutputChannels << std::endl;
+	std::cout << "max default low input / ouput latency : " << deviceInfo->defaultLowInputLatency << " " << deviceInfo->defaultLowOutputLatency << std::endl;
+	std::cout << "default sample rate : " << deviceInfo->defaultSampleRate << std::endl;
+	std::cout << std::endl;
+}
+
+static int paCallback(const void* inputBuffer, void* outputBuffer,
+		unsigned long framesPerBuffer,
+		const PaStreamCallbackTimeInfo* timeInfo,
+		PaStreamCallbackFlags statusFlags,
+		void* data)
+{
+	float* out = (float*)outputBuffer;
+
+	static double timeElapsed = 0.0f;
+	timeElapsed += timeInfo->outputBufferDacTime;
+	if ((int)timeElapsed % 2)
+	{
+		for( int i=0; i < 200; i++ )
+		{
+			AUDIO_DATA[i] = 0.1f * (float) sin( ((double)i/(double)200) * M_PI * 2. );
+		}
+	}
+	else
+	{
+		for( int i=0; i < 200; i++ )
+		{
+			AUDIO_DATA[i] = 0.1f * (float) sin( ((double)i/(double)400) * M_PI * 2. );
+		}
+	}
+
+	std::cout << timeElapsed << std::endl;
+
+	for (int i = 0; i < 64; i++)
+	{
+		*out++ = AUDIO_DATA[leftPhase];
+		*out++ = AUDIO_DATA[rightPhase];
+		leftPhase = (leftPhase + 1) % 200;
+		rightPhase = (rightPhase + 1) % 200;
+	}
+
+	return paContinue;
+}
+
+void portaudio_sandbox()
+{
+	if (Pa_Initialize() != paNoError)
+	{
+		std::cerr << "[ERROR] Port Audio : initialization failed" << std::endl;
+		exit(1);
+	}
+
+	int numDevices = Pa_GetDeviceCount();
+
+	for (int deviceIndex = 0; deviceIndex < numDevices; deviceIndex++)
+	{
+		const PaDeviceInfo* deviceInfo = Pa_GetDeviceInfo(deviceIndex);
+#if VERBOSE
+		std::cout << "Device id : " << deviceIndex << std::endl;
+		printPaDeviceInfo(deviceInfo);
+#endif
+	}
+
+	int defaultDevice = Pa_GetDefaultOutputDevice();
+	if (defaultDevice == paNoDevice)
+	{
+		std::cerr << "[ERROR] Port Audio : no default output device found" << std::endl;
+		exit(1);
+	}
+
+	std::cout << "Device id : " << defaultDevice << std::endl;
+	printPaDeviceInfo(Pa_GetDeviceInfo(defaultDevice));
+
+	PaStreamParameters outputParameters;
+	outputParameters.device = defaultDevice;
+	outputParameters.channelCount = 2;
+	outputParameters.sampleFormat = paFloat32;
+	outputParameters.suggestedLatency = Pa_GetDeviceInfo(defaultDevice)->defaultLowOutputLatency;
+	outputParameters.hostApiSpecificStreamInfo = nullptr;
+
+	void* data = nullptr;
+
+	memset(AUDIO_DATA, 0, sizeof(AUDIO_DATA));
+	for( int i=0; i < 200; i++ )
+	{
+		AUDIO_DATA[i] = 0.1f * (float) sin( ((double)i/(double)200) * M_PI * 2. );
+	}
+	leftPhase = 0;
+	rightPhase = 0;
+
+	PaStream* stream = nullptr;
+	PaError error = Pa_OpenStream(
+		&stream,
+		nullptr, // input parameters (not used)
+		&outputParameters,
+		44100,
+		64,
+		paClipOff, // we won't output out of range samples so don't bother clipping them
+		paCallback,
+		data
+	);
+
+	if (error != paNoError)
+	{
+		std::cerr << "[ERROR] Port Audio : could not open stream" << std::endl;
+		exit(1);
+	}
+	if (Pa_StartStream(stream) != paNoError)
+	{
+		std::cerr << "[ERROR] Port Audio : could not start stream" << std::endl;
+		exit(1);
+	}
+}
+
 int main(void)
 {
+	portaudio_sandbox();
+	while (1) {}
+	//Pa_Sleep(5  * 1000 );
+	return 0;
+
 	AudioData audio;
 	audio.properties = {
 		.uploadPerSecond = 60,
