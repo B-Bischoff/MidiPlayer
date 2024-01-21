@@ -9,6 +9,7 @@
 #include <iomanip>
 
 #include <portaudio.h>
+#include <portmidi.h>
 
 #define VERBOSE true
 
@@ -462,6 +463,62 @@ void portaudio_sandbox()
 
 int main(void)
 {
+    // Initialize PortMidi
+    Pm_Initialize();
+
+    // Get the number of MIDI devices
+    int numDevices = Pm_CountDevices();
+    if (numDevices <= 0) {
+        std::cerr << "No MIDI devices found." << std::endl;
+        return 1;
+    }
+
+	for (int i = 0; i < numDevices; i++)
+	{
+		const PmDeviceInfo* info = Pm_GetDeviceInfo(i);
+		assert(info);
+		std::cout << i << " " << info->name << std::endl;
+		std::cout << "input/output: " << info->input << " " << info->output << std::endl;
+		std::cout << "open/virtual: " << info->opened << " " << info->is_virtual << std::endl;
+		std::cout << std::endl;
+	}
+
+    // Open the first available MIDI input device
+    PmStream* midiStream;
+    Pm_OpenInput(&midiStream, 3, NULL, 512, NULL, NULL);
+
+	PmEvent buffer[32];
+
+    // Your program will run here, waiting for MIDI events
+	while(1)
+	{
+		int numEvents = Pm_Read(midiStream, buffer, 32);
+
+		for (int i = 0; i < numEvents; i++)
+		{
+			PmEvent& event = buffer[i];
+
+			// Extract MIDI status and data bytes
+            PmMessage message = event.message;
+            int status = Pm_MessageStatus(message);
+            int data1 = Pm_MessageData1(message);
+            int data2 = Pm_MessageData2(message);
+
+            // Print MIDI event information
+            std::cout << " state " << status
+                      << " key " << (int)data1
+                      << " vel " << (int)data2 << std::endl;
+		}
+		Pa_Sleep(1);
+	}
+
+    // Close the MIDI stream when done
+    Pm_Close(midiStream);
+
+    // Terminate PortMidi
+    Pm_Terminate();
+
+    return 0;
 	portaudio_sandbox();
 	while (1) {}
 	//Pa_Sleep(5  * 1000 );

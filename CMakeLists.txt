@@ -7,6 +7,7 @@ find_package(ALSA REQUIRED)
 set(CMAKE_CXX_STANDARD 11)
 
 add_subdirectory(external/portaudio)
+add_subdirectory(external/portmidi)
 
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
@@ -17,3 +18,4 @@ add_executable(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} PRIVATE asound)
 target_link_libraries(${PROJECT_NAME} PRIVATE pthread)
 target_link_libraries(${PROJECT_NAME} PRIVATE PortAudio)
+target_link_libraries(${PROJECT_NAME} PRIVATE portmidi)
