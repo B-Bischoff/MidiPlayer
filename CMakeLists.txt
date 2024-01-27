@@ -9,6 +9,8 @@ set(CMAKE_CXX_STANDARD 11)
 add_subdirectory(external/portaudio)
 add_subdirectory(external/portmidi)
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/portmidi/pm_common)
+
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
 add_executable(${PROJECT_NAME}
