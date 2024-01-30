@@ -3,13 +3,16 @@
 #include <iostream>
 #include <alsa/asoundlib.h>
 #include <math.h>
+#include <thread>
 
 #include <portaudio.h>
 #include <portmidi.h>
 
 #define VERBOSE true
 
-float AUDIO_DATA[200];
+#define AUDIO_SIZE 44100
+
+float AUDIO_DATA[AUDIO_SIZE];
 int leftPhase, rightPhase;
 
 void exitError(const std::string& error)
@@ -99,31 +102,24 @@ static int paCallback(const void* inputBuffer, void* outputBuffer,
 {
 	float* out = (float*)outputBuffer;
 
-	static double timeElapsed = 0.0f;
-	timeElapsed += timeInfo->outputBufferDacTime;
-	if ((int)timeElapsed % 2)
+	for(int i = 0; i < AUDIO_SIZE; i++)
 	{
-		for( int i=0; i < 200; i++ )
-		{
-			AUDIO_DATA[i] = 0.1f * (float) sin( ((double)i/(double)200) * M_PI * 2. );
-		}
-	}
-	else
-	{
-		for( int i=0; i < 200; i++ )
-		{
-			AUDIO_DATA[i] = 0.1f * (float) sin( ((double)i/(double)400) * M_PI * 2. );
-		}
+		AUDIO_DATA[i] = 0.00005f * ocs(440, (float)i / 44100.0f);
 	}
 
-	std::cout << timeElapsed << std::endl;
+	std::cout << "frames per buffer : " << framesPerBuffer <<  std::endl;
+	std::cout << "time elapsed: " << timeInfo->inputBufferAdcTime << std::endl;
 
-	for (int i = 0; i < 64; i++)
+	for (int i = 0; i < framesPerBuffer; i++)
 	{
 		*out++ = AUDIO_DATA[leftPhase];
 		*out++ = AUDIO_DATA[rightPhase];
-		leftPhase = (leftPhase + 1) % 200;
-		rightPhase = (rightPhase + 1) % 200;
+		leftPhase = (leftPhase + 1) % AUDIO_SIZE;
+		rightPhase = (rightPhase + 1) % AUDIO_SIZE;
+		if (leftPhase == 0)
+			std::cout << "LEFT PHASE LOOP" << std::endl;
+		if (rightPhase == 0)
+			std::cout << "RIGHT PHASE LOOP" << std::endl;
 	}
 
 	return paContinue;
@@ -213,7 +209,7 @@ void portaudio_sandbox()
 		exit(1);
 	}
 
-	std::cout << "Device id : " << defaultDevice << std::endl;
+	std::cout << "(default) Device id : " << defaultDevice << std::endl;
 	printPaDeviceInfo(Pa_GetDeviceInfo(defaultDevice));
 
 	PaStreamParameters outputParameters;
@@ -226,10 +222,12 @@ void portaudio_sandbox()
 	void* data = nullptr;
 
 	memset(AUDIO_DATA, 0, sizeof(AUDIO_DATA));
-	for( int i=0; i < 200; i++ )
+	for(int i = 0; i < AUDIO_SIZE; i++)
 	{
-		AUDIO_DATA[i] = 0.1f * (float) sin( ((double)i/(double)200) * M_PI * 2. );
+		AUDIO_DATA[i] = 0;
+		//AUDIO_DATA[i] = 0.1f * (float) sin( ((double)i/(double)200) * M_PI * 2. );
 	}
+
 	leftPhase = 0;
 	rightPhase = 0;
 
@@ -239,7 +237,7 @@ void portaudio_sandbox()
 		nullptr, // input parameters (not used)
 		&outputParameters,
 		44100,
-		64,
+		paFramesPerBufferUnspecified,
 		paClipOff, // we won't output out of range samples so don't bother clipping them
 		paCallback,
 		data
@@ -259,10 +257,11 @@ void portaudio_sandbox()
 
 int main(void)
 {
-	portmidi_sandbox();
+	//portmidi_sandbox();
+
+	std::thread midiThread(portmidi_sandbox);
 	portaudio_sandbox();
-	Pa_Sleep(5  * 1000 );
-	return 0;
+	//Pa_Sleep(2 * 1000);
 
 	AudioData audio;
 	audio.properties = {
