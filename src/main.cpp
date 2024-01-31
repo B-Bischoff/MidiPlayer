@@ -2,15 +2,13 @@
 #include <cstring>
 #include <iostream>
 #include <math.h>
+#include <chrono>
 #include <thread>
 #include <assert.h>
-
 #include <portaudio.h>
 #include <portmidi.h>
 
 #define VERBOSE false
-
-#define AUDIO_SIZE 44100
 
 void exitError(const std::string& error)
 {
@@ -72,8 +70,6 @@ static int paCallback(const void* inputBuffer, void* outputBuffer,
 	AudioData& audioData = *(AudioData*)data;
 	RingBuffer& ringBuffer = audioData.ringBuffer;
 	float* out = (float*)outputBuffer;
-
-	float* t = ringBuffer.buffer;
 
 	for(int i = 0; i < audioData.properties.sampleRate; i++)
 	{
@@ -173,7 +169,7 @@ void portaudio_sandbox(AudioData& audioData)
 	outputParameters.device = defaultDevice;
 	outputParameters.channelCount = audioData.properties.channels;
 	outputParameters.sampleFormat = audioData.properties.sampleFormat;
-	outputParameters.suggestedLatency = Pa_GetDeviceInfo(defaultDevice)->defaultLowOutputLatency;
+	outputParameters.suggestedLatency = Pa_GetDeviceInfo(defaultDevice)->defaultLowOutputLatency; // [TODO] This parameter makes the program CPU hogging, check if this can be improved
 	outputParameters.hostApiSpecificStreamInfo = nullptr;
 
 	// Allocate buffer for a duration of one second
@@ -206,7 +202,7 @@ int main(void)
 {
 	//portmidi_sandbox();
 
-	std::thread midiThread(portmidi_sandbox);
+	//std::thread midiThread(portmidi_sandbox);
 	//Pa_Sleep(2 * 1000);
 
 	AudioData audio = {};
@@ -218,7 +214,27 @@ int main(void)
 
 	portaudio_sandbox(audio);
 
+	const unsigned int targetFPS = 144;
+	const std::chrono::duration<double> targetFrameDuration(1.0f / (double)targetFPS);
+
+	auto programStartTime = std::chrono::high_resolution_clock::now();
+
 	while (1)
 	{
+		auto startTime = std::chrono::high_resolution_clock::now();
+
+		auto programElapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(startTime - programStartTime);
+		std::cout << programElapsedTime.count() << std::endl;
+
+
+		auto endTime = std::chrono::high_resolution_clock::now();
+		auto deltaTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
+
+		auto sleepDuration = targetFrameDuration - deltaTime;
+
+		if (sleepDuration > std::chrono::duration<double>(0.0))
+			std::this_thread::sleep_for(sleepDuration);
+		else
+			std::cerr << "[WARNING] : update took longer than expected" << std::endl;
 	}
 }
