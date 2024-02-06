@@ -4,3 +4,6 @@
 [submodule "external/portmidi"]
 	path = external/portmidi
 	url = git@github.com:PortMidi/portmidi.git
+[submodule "external/rtaudio"]
+	path = external/rtaudio
+	url = git@github.com:thestk/rtaudio.git

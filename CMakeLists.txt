@@ -4,8 +4,9 @@ project(MidiPlayer)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_subdirectory(external/portaudio)
+# add_subdirectory(external/portaudio)
 add_subdirectory(external/portmidi)
+add_subdirectory(external/rtaudio)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/portmidi/pm_common)
 
@@ -16,5 +17,6 @@ add_executable(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE pthread)
-target_link_libraries(${PROJECT_NAME} PRIVATE PortAudio)
+# target_link_libraries(${PROJECT_NAME} PRIVATE PortAudio)
 target_link_libraries(${PROJECT_NAME} PRIVATE portmidi)
+target_link_libraries(${PROJECT_NAME} PRIVATE rtaudio)
