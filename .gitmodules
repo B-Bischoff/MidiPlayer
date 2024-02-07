@@ -1,6 +1,3 @@
-[submodule "external/portaudio"]
-	path = external/portaudio
-	url = git@github.com:PortAudio/portaudio
 [submodule "external/portmidi"]
 	path = external/portmidi
 	url = git@github.com:PortMidi/portmidi.git
