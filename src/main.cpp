@@ -1,3 +1,10 @@
+#if __has_include("RtAudio.h")
+#include <RtAudio.h>
+#else
+#include <rtaudio/RtAudio.h> // Development purpose
+#endif
+
+// includes for development purpose, to remove
 #include <cmath>
 #include <cstring>
 #include <iostream>
@@ -7,58 +14,8 @@
 #include <assert.h>
 #include <portmidi.h>
 
-#if __has_include("RtAudio.h")
-#include <RtAudio.h>
-#else
-#include <rtaudio/RtAudio.h>
-#endif
-
-#define VERBOSE false
-
-void exitError(const std::string& error)
-{
-	std::cerr << error << std::endl;
-	exit(1);
-}
-
-struct AudioData {
-	unsigned int sampleRate;
-	unsigned int channels;
-	float bufferDuration; // In seconds
-	unsigned int latency; // In frame
-
-	float* buffer;
-	unsigned int leftPhase, rightPhase;
-	unsigned int writeCursor;
-
-	unsigned int targetFPS;
-
-	RtAudio stream;
-
-	bool test;
-
-	unsigned int getBufferSize() const
-	{
-		return sampleRate * bufferDuration * channels;
-	}
-
-	void incrementPhases()
-	{
-		leftPhase = (leftPhase + channels) % (int(sampleRate * bufferDuration) * channels);
-		rightPhase = (rightPhase + channels) % (int(sampleRate * bufferDuration) * channels);
-	}
-
-	void incrementWriteCursor()
-	{
-		writeCursor = (writeCursor + 1) % ((int)(sampleRate * bufferDuration) * channels);
-	}
-};
-
-void exitError(const char* str)
-{
-	std::cerr << str << std::endl;
-	exit(1);
-}
+#include "inc.hpp"
+#include "../include/inc.hpp"
 
 double freqToAngularVelocity(float hertz)
 {
@@ -149,37 +106,17 @@ int uploadBuffer( void *outputBuffer, void *inputBuffer, unsigned int nBufferFra
 	return 0;
 }
 
-void rtAudioInit(AudioData& audio)
-{
-	std::vector<unsigned int> deviceIds = audio.stream.getDeviceIds();
-	if (deviceIds.size() < 1)
-		exitError("[RTAUDIO ERROR]: No audio devices found.");
-
-	RtAudio::StreamParameters parameters;
-	parameters.deviceId = audio.stream.getDefaultOutputDevice();
-	parameters.nChannels = audio.channels;
-	parameters.firstChannel = 0;
-	unsigned int sampleRate = audio.sampleRate;
-	unsigned int bufferFrames = sampleRate / audio.targetFPS;
-
-	if (audio.stream.openStream(&parameters, NULL, RTAUDIO_FLOAT64, sampleRate, &bufferFrames, &uploadBuffer, &audio))
-		exitError("[RTAUDIO ERROR]: Cannot open stream.");
-
-	if (audio.stream.startStream())
-		exitError("[RTAUDIO ERROR]: Cannot start stream.");
-}
-
 int main(void)
 {
 	AudioData audio = {
-		.sampleRate = 48000,
+		.sampleRate = 44100,
 		.channels = 2,
 		.bufferDuration = 2,
 		.latency = 2,
 		.buffer = nullptr,
 		.leftPhase = 0, .rightPhase = 1,
 		.writeCursor = 0,
-		.targetFPS = 144,
+		.targetFPS = 60,
 	};
 
 	const std::chrono::duration<double> targetFrameDuration(1.0f / (double)audio.targetFPS);
@@ -197,6 +134,7 @@ int main(void)
 
 	auto programStartTime = std::chrono::high_resolution_clock::now();
 
+	std::this_thread::sleep_for(std::chrono::milliseconds(100)); // let rtaudio get more stable [TODO] check if that is necessary
 	audio.writeCursor = audio.leftPhase + ((double)audio.sampleRate / (double)audio.targetFPS) * audio.latency;
 	std::cout << "L/R/W : " << audio.leftPhase << " " << audio.rightPhase << " " << audio.writeCursor << std::endl;
 	while (1)

@@ -9,6 +9,8 @@ add_subdirectory(external/rtaudio)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/portmidi/pm_common)
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/)
+
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
 add_executable(${PROJECT_NAME}
