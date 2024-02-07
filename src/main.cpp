@@ -38,13 +38,18 @@ struct AudioData {
 
 	unsigned int getBufferSize() const
 	{
-		return bufferDuration * sampleRate * channels;
+		return sampleRate * bufferDuration * channels;
 	}
 
 	void incrementPhases()
 	{
-		leftPhase = (leftPhase + channels) % (sampleRate * channels);
-		rightPhase = (rightPhase + channels) % (sampleRate * channels);
+		leftPhase = (leftPhase + channels) % (int(sampleRate * bufferDuration) * channels);
+		rightPhase = (rightPhase + channels) % (int(sampleRate * bufferDuration) * channels);
+	}
+
+	void incrementWriteCursor()
+	{
+		writeCursor = (writeCursor + 1) % ((int)(sampleRate * bufferDuration) * channels);
 	}
 };
 
@@ -166,9 +171,9 @@ void rtAudioInit(AudioData& audio)
 int main(void)
 {
 	AudioData audio = {
-		.sampleRate = 48000,
+		.sampleRate = 44100,
 		.channels = 2,
-		.bufferDuration = 1,
+		.bufferDuration = 2,
 		.buffer = nullptr,
 		.leftPhase = 0, .rightPhase = 1,
 		.writeCursor = 0,
@@ -177,7 +182,7 @@ int main(void)
 
 	const std::chrono::duration<double> targetFrameDuration(1.0f / (double)audio.targetFPS);
 
-	audio.buffer = new float[audio.sampleRate * audio.channels];
+	audio.buffer = new float[(int)(audio.sampleRate * audio.bufferDuration) * audio.channels];
 
 	if (audio.buffer == nullptr)
 		exitError("[ERROR]: ring buffer allocation failed.");
@@ -211,7 +216,7 @@ int main(void)
 			for (int j = 0; j < audio.channels; j++)
 			{
 				audio.buffer[audio.writeCursor] = value;
-				audio.writeCursor = (audio.writeCursor + 1) % (audio.sampleRate * audio.channels);
+				audio.incrementWriteCursor();
 			}
 		}
 		//std::cout << "wrote " << rb.writeCursor << std::endl;
