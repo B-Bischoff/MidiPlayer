@@ -7,7 +7,11 @@
 #include <assert.h>
 #include <portmidi.h>
 
+#if __has_include("RtAudio.h")
 #include <RtAudio.h>
+#else
+#include <rtaudio/RtAudio.h>
+#endif
 
 #define VERBOSE false
 
@@ -17,27 +21,28 @@ void exitError(const std::string& error)
 	exit(1);
 }
 
-struct RingBuffer {
-	float* buffer; // To make true stereo, this buffer should be twice its size
-	//PaStream* stream;
-	unsigned int leftPhase, rightPhase;
-	unsigned int writeCursor;
-};
-
-// [TODO] move everything in the RingBuffer struct
-struct AudioProperties {
+struct AudioData {
 	unsigned int sampleRate;
 	unsigned int channels;
-};
+	float bufferDuration; // In seconds
 
-struct AudioData {
-	RingBuffer ringBuffer;
-	AudioProperties properties;
+	float* buffer;
+	unsigned int leftPhase, rightPhase;
+	unsigned int writeCursor;
+
+	unsigned int targetFPS;
+
+	RtAudio stream;
+
+	unsigned int getBufferSize() const
+	{
+		return bufferDuration * sampleRate * channels;
+	}
 
 	void incrementPhases()
 	{
-		ringBuffer.leftPhase = (ringBuffer.leftPhase + 2) % (properties.sampleRate * properties.channels);
-		ringBuffer.rightPhase = (ringBuffer.rightPhase + 2) % (properties.sampleRate * properties.channels);
+		leftPhase = (leftPhase + 2) % (sampleRate * channels);
+		rightPhase = (rightPhase + 2) % (sampleRate * channels);
 	}
 };
 
@@ -54,7 +59,7 @@ double freqToAngularVelocity(float hertz)
 
 double ocs(float hertz, float time)
 {
-	double t = sinl(freqToAngularVelocity(hertz) * time);
+	double t = sin(freqToAngularVelocity(hertz) * time);
 	return t;
 }
 
@@ -111,11 +116,10 @@ void portmidi_sandbox()
 }
 
 int saw( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
-				 double streamTime, RtAudioStreamStatus status, void *userData )
+				double streamTime, RtAudioStreamStatus status, void *userData )
 {
 	double *buffer = (double *) outputBuffer;
 	AudioData& audio = *(AudioData*)userData;
-	RingBuffer& rb = audio.ringBuffer;
 
 	//std::cout << "callback time : " << streamTime << std::endl;
 	if (status)
@@ -131,61 +135,57 @@ int saw( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
 		double t = std::modf(streamTime, &tmp) + (1.0f / 44100.0f * (double)(i));
 		double value = ocs(440, t) * 0.5f;
 
-		*buffer++ = rb.buffer[rb.leftPhase];
-		*buffer++ = rb.buffer[rb.rightPhase];
+		*buffer++ = audio.buffer[audio.leftPhase];
+		*buffer++ = audio.buffer[audio.rightPhase];
 		audio.incrementPhases();
 	}
-	std::cout << rb.leftPhase / 2 << " " << rb.writeCursor / 2.0f << std::endl;
+	std::cout << audio.leftPhase / 2 << " " << audio.writeCursor / 2.0f << std::endl;
 
 	return 0;
 }
 
+void rtAudioInit(AudioData& audio)
+{
+	std::vector<unsigned int> deviceIds = audio.stream.getDeviceIds();
+	if (deviceIds.size() < 1)
+		exitError("[RTAUDIO ERROR]: No audio devices found.");
+
+	RtAudio::StreamParameters parameters;
+	parameters.deviceId = audio.stream.getDefaultOutputDevice();
+	parameters.nChannels = audio.channels;
+	parameters.firstChannel = 0;
+	unsigned int sampleRate = audio.sampleRate;
+	unsigned int bufferFrames = sampleRate / audio.targetFPS;
+
+	if (audio.stream.openStream(&parameters, NULL, RTAUDIO_FLOAT64, sampleRate, &bufferFrames, &saw, &audio))
+		exitError("[RTAUDIO ERROR]: Cannot open stream.");
+
+	if (audio.stream.startStream())
+		exitError("[RTAUDIO ERROR]: Cannot start stream.");
+}
+
 int main(void)
 {
-	const unsigned int targetFPS = 60;
-	const std::chrono::duration<double> targetFrameDuration(1.0f / (double)targetFPS);
-
-	AudioData audio = {};
-	audio.properties = {
+	AudioData audio = {
 		.sampleRate = 44100,
 		.channels = 2,
-		//.sampleFormat = paFloat32
+		.bufferDuration = 1,
+		.buffer = nullptr,
+		.leftPhase = 0, .rightPhase = 1,
+		.writeCursor = 0,
+		.targetFPS = 60,
 	};
-	RingBuffer& rb = audio.ringBuffer;
-	audio.ringBuffer.rightPhase = 1; // [TODO] move this line in a constructor
-	audio.ringBuffer.buffer = new float[audio.properties.sampleRate * audio.properties.channels];
 
-	if (audio.ringBuffer.buffer == nullptr)
+	const std::chrono::duration<double> targetFrameDuration(1.0f / (double)audio.targetFPS);
+
+	audio.buffer = new float[audio.sampleRate * audio.channels];
+
+	if (audio.buffer == nullptr)
 		exitError("[ERROR]: ring buffer allocation failed.");
 
-	memset(audio.ringBuffer.buffer, 0, sizeof(float) * audio.properties.sampleRate * audio.properties.channels);
+	memset(audio.buffer, 0, sizeof(float) * audio.getBufferSize());
 
-	RtAudio dac;
-	std::vector<unsigned int> deviceIds = dac.getDeviceIds();
-	if ( deviceIds.size() < 1 )
-	{
-		std::cout << "\nNo audio devices found!\n";
-		exit( 0 );
-	}
-	RtAudio::StreamParameters parameters;
-	parameters.deviceId = dac.getDefaultOutputDevice();
-	parameters.nChannels = 2;
-	parameters.firstChannel = 0;
-	unsigned int sampleRate = 44100;
-	unsigned int bufferFrames = sampleRate / targetFPS;
-	if ( dac.openStream( &parameters, NULL, RTAUDIO_FLOAT64, sampleRate,
-											 &bufferFrames, &saw, &audio ) ) {
-		std::cout << '\n' << dac.getErrorText() << '\n' << std::endl;
-		exit( 0 ); // problem with device settings
-	}
-
-	//assert(bufferFrames == 44100);
-
-	if ( dac.startStream() )
-	{
-		std::cout << dac.getErrorText() << std::endl;
-		exit(1);
-	}
+	rtAudioInit(audio);
 
 	//portmidi_sandbox();
 
@@ -193,10 +193,7 @@ int main(void)
 
 	auto programStartTime = std::chrono::high_resolution_clock::now();
 
-	rb.writeCursor = (44100.0f / (double)targetFPS) * 35.0f;
-
-	rb.leftPhase = 0;
-	rb.rightPhase = 1;
+	audio.writeCursor = (44100.0f / (double)audio.targetFPS) * 35.0f;
 	while (1)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
@@ -204,16 +201,16 @@ int main(void)
 		auto programElapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(startTime - programStartTime);
 		//std::cout << programElapsedTime.count() << std::endl;
 
-		for (int i = 0; i < audio.properties.sampleRate / targetFPS; i++)
+		for (int i = 0; i < audio.sampleRate / audio.targetFPS; i++)
 		{
 			double tmp;
 			double t = std::modf(programElapsedTime.count(), &tmp) + (1.0f / 44100.0f * (double)(i));
 			double value = ocs(440, t) * 0.5f;
 
-			for (int j = 0; j < audio.properties.channels; j++)
+			for (int j = 0; j < audio.channels; j++)
 			{
-				rb.buffer[rb.writeCursor] = value;
-				rb.writeCursor = (rb.writeCursor + 1) % (audio.properties.sampleRate * audio.properties.channels);
+				audio.buffer[audio.writeCursor] = value;
+				audio.writeCursor = (audio.writeCursor + 1) % (audio.sampleRate * audio.channels);
 			}
 		}
 		//std::cout << "wrote " << rb.writeCursor << std::endl;
