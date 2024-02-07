@@ -25,6 +25,7 @@ struct AudioData {
 	unsigned int sampleRate;
 	unsigned int channels;
 	float bufferDuration; // In seconds
+	unsigned int latency; // In frame
 
 	float* buffer;
 	unsigned int leftPhase, rightPhase;
@@ -171,13 +172,14 @@ void rtAudioInit(AudioData& audio)
 int main(void)
 {
 	AudioData audio = {
-		.sampleRate = 44100,
+		.sampleRate = 48000,
 		.channels = 2,
 		.bufferDuration = 2,
+		.latency = 2,
 		.buffer = nullptr,
 		.leftPhase = 0, .rightPhase = 1,
 		.writeCursor = 0,
-		.targetFPS = 60,
+		.targetFPS = 144,
 	};
 
 	const std::chrono::duration<double> targetFrameDuration(1.0f / (double)audio.targetFPS);
@@ -195,7 +197,7 @@ int main(void)
 
 	auto programStartTime = std::chrono::high_resolution_clock::now();
 
-	audio.writeCursor = ((double)audio.sampleRate / (double)audio.targetFPS) * 3.0f;
+	audio.writeCursor = audio.leftPhase + ((double)audio.sampleRate / (double)audio.targetFPS) * audio.latency;
 	std::cout << "L/R/W : " << audio.leftPhase << " " << audio.rightPhase << " " << audio.writeCursor << std::endl;
 	while (1)
 	{
