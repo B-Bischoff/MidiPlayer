@@ -34,6 +34,8 @@ struct AudioData {
 
 	RtAudio stream;
 
+	bool test;
+
 	unsigned int getBufferSize() const
 	{
 		return bufferDuration * sampleRate * channels;
@@ -41,8 +43,8 @@ struct AudioData {
 
 	void incrementPhases()
 	{
-		leftPhase = (leftPhase + 2) % (sampleRate * channels);
-		rightPhase = (rightPhase + 2) % (sampleRate * channels);
+		leftPhase = (leftPhase + channels) % (sampleRate * channels);
+		rightPhase = (rightPhase + channels) % (sampleRate * channels);
 	}
 };
 
@@ -63,7 +65,7 @@ double ocs(float hertz, float time)
 	return t;
 }
 
-void portmidi_sandbox()
+void portmidiSandbox(AudioData& audio)
 {
 	Pm_Initialize();
 
@@ -107,15 +109,17 @@ void portmidi_sandbox()
 			std::cout << " state " << status
 					<< " key " << (int)data1
 					<< " vel " << (int)data2 << std::endl;
+			audio.test = status == 145;
 		}
-		//Pa_Sleep(1);
+		//std::cout << audio.test << std::endl;
+		std::this_thread::sleep_for(std::chrono::milliseconds((int)(1.0f / 60.0f * 1000.0f)));
 	}
 
 	Pm_Close(midiStream);
 	Pm_Terminate();
 }
 
-int saw( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
+int uploadBuffer( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
 				double streamTime, RtAudioStreamStatus status, void *userData )
 {
 	double *buffer = (double *) outputBuffer;
@@ -129,17 +133,12 @@ int saw( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
 	for (int i = 0 ; i<nBufferFrames; i++)
 	{
 		double tmp;
-		// When using the whole stream time (decimal part included), audio produces
-		// a weird sound amplified when stream time reaches a power of 2.
-		// This error is probably (not 100% sure) due to floating point precision.
-		double t = std::modf(streamTime, &tmp) + (1.0f / 44100.0f * (double)(i));
-		double value = ocs(440, t) * 0.5f;
-
 		*buffer++ = audio.buffer[audio.leftPhase];
-		*buffer++ = audio.buffer[audio.rightPhase];
+		if (audio.channels == 2)
+			*buffer++ = audio.buffer[audio.rightPhase];
 		audio.incrementPhases();
 	}
-	std::cout << audio.leftPhase / 2 << " " << audio.writeCursor / 2.0f << std::endl;
+	//std::cout << audio.leftPhase / 2 << " " << audio.writeCursor / 2.0f << std::endl;
 
 	return 0;
 }
@@ -157,7 +156,7 @@ void rtAudioInit(AudioData& audio)
 	unsigned int sampleRate = audio.sampleRate;
 	unsigned int bufferFrames = sampleRate / audio.targetFPS;
 
-	if (audio.stream.openStream(&parameters, NULL, RTAUDIO_FLOAT64, sampleRate, &bufferFrames, &saw, &audio))
+	if (audio.stream.openStream(&parameters, NULL, RTAUDIO_FLOAT64, sampleRate, &bufferFrames, &uploadBuffer, &audio))
 		exitError("[RTAUDIO ERROR]: Cannot open stream.");
 
 	if (audio.stream.startStream())
@@ -167,7 +166,7 @@ void rtAudioInit(AudioData& audio)
 int main(void)
 {
 	AudioData audio = {
-		.sampleRate = 44100,
+		.sampleRate = 48000,
 		.channels = 2,
 		.bufferDuration = 1,
 		.buffer = nullptr,
@@ -187,13 +186,12 @@ int main(void)
 
 	rtAudioInit(audio);
 
-	//portmidi_sandbox();
-
-	//std::thread midiThread(portmidi_sandbox);
+	std::thread midiThread(portmidiSandbox, std::ref(audio));
 
 	auto programStartTime = std::chrono::high_resolution_clock::now();
 
-	audio.writeCursor = (44100.0f / (double)audio.targetFPS) * 35.0f;
+	audio.writeCursor = ((double)audio.sampleRate / (double)audio.targetFPS) * 3.0f;
+	std::cout << "L/R/W : " << audio.leftPhase << " " << audio.rightPhase << " " << audio.writeCursor << std::endl;
 	while (1)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
@@ -204,8 +202,11 @@ int main(void)
 		for (int i = 0; i < audio.sampleRate / audio.targetFPS; i++)
 		{
 			double tmp;
-			double t = std::modf(programElapsedTime.count(), &tmp) + (1.0f / 44100.0f * (double)(i));
-			double value = ocs(440, t) * 0.5f;
+			// When using the whole stream time (decimal part included), audio produces
+			// a weird sound amplified when stream time reaches a power of 2.
+			// This error is probably (not 100% sure) due to floating point precision.
+			double t = std::modf(programElapsedTime.count(), &tmp) + (1.0f / (double)audio.sampleRate * (double)(i));
+			double value = ocs(audio.test ? 440 : 0, t) * 0.5f;
 
 			for (int j = 0; j < audio.channels; j++)
 			{
