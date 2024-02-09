@@ -27,6 +27,7 @@ struct AudioData {
 	RtAudio stream;
 
 	bool test;
+	std::chrono::time_point<std::chrono::high_resolution_clock> startTime;
 
 	unsigned int getBufferSize() const
 	{
