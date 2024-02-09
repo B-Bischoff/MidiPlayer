@@ -17,12 +17,12 @@
 #include "inc.hpp"
 #include "../include/inc.hpp"
 
-double freqToAngularVelocity(float hertz)
+double freqToAngularVelocity(double hertz)
 {
 	return hertz * 2.0 * M_PI;
 }
 
-double ocs(float hertz, float time)
+double ocs(double hertz, double time)
 {
 	double t = sin(freqToAngularVelocity(hertz) * time);
 	return t;
