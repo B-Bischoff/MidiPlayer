@@ -1,3 +1,4 @@
+#include <sys/types.h>
 #if __has_include("RtAudio.h")
 #include <RtAudio.h>
 #else
@@ -17,6 +18,42 @@
 #include "inc.hpp"
 #include "../include/inc.hpp"
 
+#ifdef _WIN32
+#include <conio.h>
+#else
+#include <unistd.h>
+#include <termios.h>
+#include <fcntl.h>
+#endif
+
+bool key_pressed() {
+#ifdef _WIN32
+    return _kbhit();
+#else
+    static struct termios oldt, newt;
+    static int ch;
+    static int oldf;
+
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
+    fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
+
+    ch = getchar();
+
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    fcntl(STDIN_FILENO, F_SETFL, oldf);
+
+    if (ch != EOF) {
+        ungetc(ch, stdin);
+        return true;
+    }
+
+    return false;
+#endif
+}
 
 // Amplitude (Attack, Decay, Sustain, Release) Envelope
 struct sEnvelopeADSR
@@ -169,6 +206,22 @@ int uploadBuffer( void *outputBuffer, void *inputBuffer, unsigned int nBufferFra
 	return 0;
 }
 
+double pianoKeyFrequency(int keyId) {
+    // Frequency of key A4 (A440) is 440 Hz
+    double A4Frequency = 440.0;
+
+    // Number of keys from A4 to the given key
+    int keysDifference = keyId - 49;
+
+    // Frequency multiplier for each semitone
+    double semitoneRatio = pow(2.0, 1.0/12.0);
+
+    // Calculate the frequency of the given key
+    double frequency = A4Frequency * pow(semitoneRatio, keysDifference);
+
+    return frequency;
+}
+
 int main(void)
 {
 	AudioData audio = {
@@ -202,6 +255,9 @@ int main(void)
 	std::this_thread::sleep_for(std::chrono::milliseconds(100)); // let rtaudio get more stable [TODO] check if that is necessary
 	audio.writeCursor = audio.leftPhase + ((double)audio.sampleRate / (double)audio.targetFPS) * audio.latency;
 	std::cout << "L/R/W : " << audio.leftPhase << " " << audio.rightPhase << " " << audio.writeCursor << std::endl;
+
+	unsigned int keyIndex = 0;
+
 	while (1)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
@@ -209,6 +265,21 @@ int main(void)
 		//std::cout << programElapsedTime.count() << std::endl;
 
 		// INPUTS
+		if (USE_KB_AS_MIDI_INPUT)
+		{
+			static bool keyPressed = false;
+			static bool previousKeyPressed = false;
+
+			keyPressed = key_pressed();
+
+			std::cout << keyPressed << " | " << previousKeyPressed << std::endl;
+			if (keyPressed && !previousKeyPressed)
+				e.NoteOn(programElapsedTime.count());
+			else if (!keyPressed && previousKeyPressed)
+				e.NoteOff(programElapsedTime.count());
+
+			previousKeyPressed = keyPressed;
+		}
 		int numEvents = Pm_Read(inputManager.midiStream, inputManager.buffer, 32);
 
 		for (int i = 0; i < numEvents; i++)
@@ -224,7 +295,10 @@ int main(void)
 			std::cout << " state " << status << " key " << (int)data1 << " vel " << (int)data2 << std::endl;
 			audio.test = status == 145;
 			if (status == 145)
+			{
 				e.NoteOn(programElapsedTime.count());
+				keyIndex = data1;
+			}
 			else
 				e.NoteOff(programElapsedTime.count());
 		}
@@ -235,7 +309,7 @@ int main(void)
 		{
 			double tmp;
 			double t = programElapsedTime.count() + (1.0f / (double)audio.sampleRate * (double)(i));
-			double value = ocs(440, t) * 0.5 * e.GetAmplitude(programElapsedTime.count());
+			double value = ocs(pianoKeyFrequency(keyIndex), t) * 0.5 * e.GetAmplitude(t);
 
 			for (int j = 0; j < audio.channels; j++)
 			{
