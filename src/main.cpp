@@ -26,38 +26,41 @@
 #include <fcntl.h>
 #endif
 
-bool key_pressed() {
+bool key_pressed()
+{
 #ifdef _WIN32
-    return _kbhit();
+	return _kbhit();
 #else
-    static struct termios oldt, newt;
-    static int ch;
-    static int oldf;
+	static struct termios oldt, newt;
+	static int ch;
+	static int oldf;
 
-    tcgetattr(STDIN_FILENO, &oldt);
-    newt = oldt;
-    newt.c_lflag &= ~(ICANON | ECHO);
-    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-    oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
-    fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
+	tcgetattr(STDIN_FILENO, &oldt);
+	newt = oldt;
+	newt.c_lflag &= ~(ICANON | ECHO);
+	tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+	oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
+	fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
 
-    ch = getchar();
+	ch = getchar();
 
-    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-    fcntl(STDIN_FILENO, F_SETFL, oldf);
+	tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+	fcntl(STDIN_FILENO, F_SETFL, oldf);
 
-    if (ch != EOF) {
-        ungetc(ch, stdin);
-        return true;
-    }
+	if (ch != EOF) {
+		ungetc(ch, stdin);
+		return true;
+	}
 
-    return false;
+	return false;
 #endif
 }
 
 // Amplitude (Attack, Decay, Sustain, Release) Envelope
 struct sEnvelopeADSR
 {
+	enum Phase { Attack, Decay, Sustain, Release, Inactive, Retrigger };
+
 	double dAttackTime;
 	double dDecayTime;
 	double dSustainAmplitude;
@@ -67,22 +70,30 @@ struct sEnvelopeADSR
 	double dTriggerOnTime;
 	bool bNoteOn;
 
+	bool retrigger;
+	double amplitudeBeforeRetrigger;
+
+	Phase phase;
+	double amplitude;
+
 	sEnvelopeADSR()
 	{
-		dAttackTime = .20;
-		dDecayTime = 0.10;
+		dAttackTime = .5;
+		dDecayTime = 0.5,
 		dStartAmplitude = 1.0;
 		dSustainAmplitude = 0.8;
-		dReleaseTime = 0.20;
+		dReleaseTime = 1.00;
 		bNoteOn = false;
 		dTriggerOffTime = 0.0;
 		dTriggerOnTime = 0.0;
+		retrigger = false;
+		amplitude = 0.0;
 	}
 
 	// Call when key is pressed
 	void NoteOn(double dTimeOn)
 	{
-		std::cout << "note on " << dTimeOn << std::endl;
+		//std::cout << "note on " << dTimeOn << std::endl;
 		dTriggerOnTime = dTimeOn;
 		bNoteOn = true;
 	}
@@ -90,12 +101,117 @@ struct sEnvelopeADSR
 	// Call when key is released
 	void NoteOff(double dTimeOff)
 	{
-		std::cout << "note off " << dTimeOff << std::endl;
+		//std::cout << "note off " << dTimeOff << std::endl;
 		dTriggerOffTime = dTimeOff;
 		bNoteOn = false;
 	}
 
+	Phase getPhase(double time)
+	{
+		if (!bNoteOn)
+		{
+			if (time - dTriggerOffTime <= dReleaseTime)
+				return Phase::Release;
+			else
+				return Phase::Inactive;
+		}
+
+		const double lifeTime = time - dTriggerOnTime;
+
+		if (dTriggerOffTime != 0.0 && dTriggerOnTime != 0.0f && dTriggerOnTime - dTriggerOffTime < dReleaseTime && lifeTime <= dAttackTime)
+			return Phase::Retrigger;
+
+		if (lifeTime <= dAttackTime)
+			return Phase::Attack;
+		else if (lifeTime <= dAttackTime + dDecayTime)
+			return Phase::Decay;
+		else
+			return Phase::Sustain;
+	}
+
+	void printPhase(Phase state)
+	{
+		switch (state)
+		{
+			case Phase::Sustain : std::cout << "sustain"; break;
+			case Phase::Decay : std::cout << "decay"; break;
+			case Phase::Attack : std::cout << "attack"; break;
+			case Phase::Release : std::cout << "release"; break;
+			case Phase::Inactive : std::cout << "inactive"; break;
+			case Phase::Retrigger : std::cout << "retrigger"; break;
+		}
+	}
+
+	double GetAmplitude(double time)
+	{
+		if (dTriggerOnTime == 0.0f)
+			return 0;
+
+		double lifeTime = time - dTriggerOnTime;
+
+		Phase newPhase = getPhase(time);
+
+		if (newPhase == Retrigger && phase == Release)
+			amplitudeBeforeRetrigger = amplitude;
+
+		phase = newPhase;
+
+		// Special cases
+		/*
+		if (dTriggerOffTime != 0.0 && dTriggerOnTime > dTriggerOffTime && dTriggerOnTime - dTriggerOffTime < dReleaseTime) // Retrigger when release phase not finished
+		{
+			// Find release phase amplitude
+			lifeTime = time - dTriggerOffTime;
+			double releaseAmplitude = (1.0 - (lifeTime / dReleaseTime)) * dSustainAmplitude;
+
+			lifeTime = time - dTriggerOnTime;
+			amplitude = (lifeTime / dAttackTime) * dStartAmplitude + releaseAmplitude;
+			return amplitude;
+		}
+		*/
+
+		switch (phase)
+		{
+			case Phase::Attack :
+				amplitude = (lifeTime / dAttackTime) * dStartAmplitude;
+				break;
+
+			case Phase::Decay :
+				retrigger = false;
+				lifeTime -= dAttackTime;
+				amplitude = (lifeTime / dDecayTime) * (dSustainAmplitude - dStartAmplitude) + dStartAmplitude;
+				break;
+
+			case Phase::Sustain :
+				amplitude = dSustainAmplitude;
+				break;
+
+			case Phase::Release :
+				lifeTime = time - dTriggerOffTime;
+				amplitude = (1.0 - (lifeTime / dReleaseTime)) * dSustainAmplitude;
+				break;
+
+			case Phase::Inactive :
+				amplitude = 0.0;
+				break;
+
+			case Phase::Retrigger :
+				amplitude = (lifeTime / dAttackTime) * (dStartAmplitude - amplitudeBeforeRetrigger) + amplitudeBeforeRetrigger;
+				break;
+		}
+
+
+		if (amplitude <= 0.0001)
+			amplitude = 0.0;
+
+		std::cout << time << " " << amplitude << " " << (retrigger ? 6 : phase) << std::endl;
+
+		return amplitude;
+	}
+
+
 	// Get the correct amplitude at the requested point in time
+	/*
 	double GetAmplitude(double dTime)
 	{
 		double dAmplitude = 0.0;
@@ -106,36 +222,55 @@ struct sEnvelopeADSR
 
 		if (bNoteOn)
 		{
-			if (dLifeTime <= dAttackTime)
+			if (dLifeTime <= dAttackTime) // Attack phase
 			{
-				// In attack Phase - approach max amplitude
-				dAmplitude = (dLifeTime / dAttackTime) * dStartAmplitude;
-			}
+				if (dTriggerOnTime - dTriggerOffTime >= dReleaseTime) // Envelope has been re-triggered while its release phase was note finished
+				{
 
-			if (dLifeTime > dAttackTime && dLifeTime <= (dAttackTime + dDecayTime))
+				}
+				else // In attack Phase - approach max amplitude
+					dAmplitude = (dLifeTime / dAttackTime) * dStartAmplitude;
+			}
+			else if (dLifeTime <= (dAttackTime + dDecayTime)) // Decay phase
 			{
 				// In decay phase - reduce to sustained amplitude
 				dAmplitude = ((dLifeTime - dAttackTime) / dDecayTime) * (dSustainAmplitude - dStartAmplitude) + dStartAmplitude;
 			}
-
-			if (dLifeTime > (dAttackTime + dDecayTime))
+			else // Sustain phase
+			//if (dLifeTime > (dAttackTime + dDecayTime))
 			{
 				// In sustain phase - dont change until note released
 				dAmplitude = dSustainAmplitude;
 			}
 		}
-		else
+		else // Release phase
 		{
+			double delta = dTriggerOffTime - dTriggerOnTime;
+
+			// Find amplitude at trigger off time
+			if (delta <= dAttackTime) // Attack phase
+				dAmplitude = (delta / dAttackTime) * dStartAmplitude;
+			else if (delta <= (dAttackTime + dDecayTime)) // Decay phase
+				dAmplitude = ((delta - dAttackTime) / dDecayTime) * (dSustainAmplitude - dStartAmplitude) + dStartAmplitude;
+			else // Sustain phase
+				dAmplitude = dSustainAmplitude;
+
+
+			double currentReleaseTime = dTime - dTriggerOffTime;
+			dAmplitude = dAmplitude * (1.0 - (currentReleaseTime / dReleaseTime));
+
 			// Note has been released, so in release phase
-			dAmplitude = ((dTime - dTriggerOffTime) / dReleaseTime) * (0.0 - dSustainAmplitude) + dSustainAmplitude;
+			//dAmplitude = ((dTime - dTriggerOffTime) / dReleaseTime) * (0.0 - dSustainAmplitude) + dSustainAmplitude;
 		}
 
+		//std::cout << dAmplitude << std::endl;
 		// Amplitude should not be negative
 		if (dAmplitude <= 0.0001)
 			dAmplitude = 0.0;
 
 		return dAmplitude;
 	}
+	*/
 };
 
 sEnvelopeADSR e;
@@ -206,20 +341,21 @@ int uploadBuffer( void *outputBuffer, void *inputBuffer, unsigned int nBufferFra
 	return 0;
 }
 
-double pianoKeyFrequency(int keyId) {
-    // Frequency of key A4 (A440) is 440 Hz
-    double A4Frequency = 440.0;
+double pianoKeyFrequency(int keyId)
+{
+	// Frequency of key A4 (A440) is 440 Hz
+	double A4Frequency = 440.0;
 
-    // Number of keys from A4 to the given key
-    int keysDifference = keyId - 49;
+	// Number of keys from A4 to the given key
+	int keysDifference = keyId - 49;
 
-    // Frequency multiplier for each semitone
-    double semitoneRatio = pow(2.0, 1.0/12.0);
+	// Frequency multiplier for each semitone
+	double semitoneRatio = pow(2.0, 1.0/12.0);
 
-    // Calculate the frequency of the given key
-    double frequency = A4Frequency * pow(semitoneRatio, keysDifference);
+	// Calculate the frequency of the given key
+	double frequency = A4Frequency * pow(semitoneRatio, keysDifference);
 
-    return frequency;
+	return frequency;
 }
 
 int main(void)
@@ -232,7 +368,7 @@ int main(void)
 		.buffer = nullptr,
 		.leftPhase = 0, .rightPhase = 1,
 		.writeCursor = 0,
-		.targetFPS = 60,
+		.targetFPS = 30,
 	};
 
 
@@ -292,7 +428,7 @@ int main(void)
 			int data1 = Pm_MessageData1(message);
 			int data2 = Pm_MessageData2(message);
 
-			std::cout << " state " << status << " key " << (int)data1 << " vel " << (int)data2 << std::endl;
+			//std::cout << " state " << status << " key " << (int)data1 << " vel " << (int)data2 << std::endl;
 			audio.test = status == 145;
 			if (status == 145)
 			{
