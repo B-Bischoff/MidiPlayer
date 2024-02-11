@@ -56,7 +56,6 @@ bool key_pressed()
 #endif
 }
 
-// Amplitude (Attack, Decay, Sustain, Release) Envelope
 struct sEnvelopeADSR
 {
 	enum Phase { Attack, Decay, Sustain, Release, Inactive, Retrigger };
@@ -72,14 +71,15 @@ struct sEnvelopeADSR
 
 	bool retrigger;
 	double amplitudeBeforeRetrigger;
+	double amplitudeAtOffTrigger;
 
 	Phase phase;
 	double amplitude;
 
 	sEnvelopeADSR()
 	{
-		dAttackTime = .5;
-		dDecayTime = 0.5,
+		dAttackTime = .1;
+		dDecayTime = 1.5,
 		dStartAmplitude = 1.0;
 		dSustainAmplitude = 0.8;
 		dReleaseTime = 1.00;
@@ -90,7 +90,6 @@ struct sEnvelopeADSR
 		amplitude = 0.0;
 	}
 
-	// Call when key is pressed
 	void NoteOn(double dTimeOn)
 	{
 		//std::cout << "note on " << dTimeOn << std::endl;
@@ -98,7 +97,6 @@ struct sEnvelopeADSR
 		bNoteOn = true;
 	}
 
-	// Call when key is released
 	void NoteOff(double dTimeOff)
 	{
 		//std::cout << "note off " << dTimeOff << std::endl;
@@ -129,19 +127,6 @@ struct sEnvelopeADSR
 			return Phase::Sustain;
 	}
 
-	void printPhase(Phase state)
-	{
-		switch (state)
-		{
-			case Phase::Sustain : std::cout << "sustain"; break;
-			case Phase::Decay : std::cout << "decay"; break;
-			case Phase::Attack : std::cout << "attack"; break;
-			case Phase::Release : std::cout << "release"; break;
-			case Phase::Inactive : std::cout << "inactive"; break;
-			case Phase::Retrigger : std::cout << "retrigger"; break;
-		}
-	}
-
 	double GetAmplitude(double time)
 	{
 		if (dTriggerOnTime == 0.0f)
@@ -151,24 +136,13 @@ struct sEnvelopeADSR
 
 		Phase newPhase = getPhase(time);
 
-		if (newPhase == Retrigger && phase == Release)
+		// Special cases
+		if (newPhase == Retrigger && phase == Release) // Press key while its release phase is not finished
 			amplitudeBeforeRetrigger = amplitude;
+		else if (newPhase == Release && phase != Release) // Save last amplitude before note off
+			amplitudeAtOffTrigger = amplitude;
 
 		phase = newPhase;
-
-		// Special cases
-		/*
-		if (dTriggerOffTime != 0.0 && dTriggerOnTime > dTriggerOffTime && dTriggerOnTime - dTriggerOffTime < dReleaseTime) // Retrigger when release phase not finished
-		{
-			// Find release phase amplitude
-			lifeTime = time - dTriggerOffTime;
-			double releaseAmplitude = (1.0 - (lifeTime / dReleaseTime)) * dSustainAmplitude;
-
-			lifeTime = time - dTriggerOnTime;
-			amplitude = (lifeTime / dAttackTime) * dStartAmplitude + releaseAmplitude;
-			return amplitude;
-		}
-		*/
 
 		switch (phase)
 		{
@@ -188,7 +162,7 @@ struct sEnvelopeADSR
 
 			case Phase::Release :
 				lifeTime = time - dTriggerOffTime;
-				amplitude = (1.0 - (lifeTime / dReleaseTime)) * dSustainAmplitude;
+				amplitude = (1.0 - (lifeTime / dReleaseTime)) * amplitudeAtOffTrigger;
 				break;
 
 			case Phase::Inactive :
@@ -208,69 +182,6 @@ struct sEnvelopeADSR
 
 		return amplitude;
 	}
-
-
-	// Get the correct amplitude at the requested point in time
-	/*
-	double GetAmplitude(double dTime)
-	{
-		double dAmplitude = 0.0;
-		double dLifeTime = dTime - dTriggerOnTime;
-
-		if (dTriggerOnTime == 0.0f)
-			return 0;
-
-		if (bNoteOn)
-		{
-			if (dLifeTime <= dAttackTime) // Attack phase
-			{
-				if (dTriggerOnTime - dTriggerOffTime >= dReleaseTime) // Envelope has been re-triggered while its release phase was note finished
-				{
-
-				}
-				else // In attack Phase - approach max amplitude
-					dAmplitude = (dLifeTime / dAttackTime) * dStartAmplitude;
-			}
-			else if (dLifeTime <= (dAttackTime + dDecayTime)) // Decay phase
-			{
-				// In decay phase - reduce to sustained amplitude
-				dAmplitude = ((dLifeTime - dAttackTime) / dDecayTime) * (dSustainAmplitude - dStartAmplitude) + dStartAmplitude;
-			}
-			else // Sustain phase
-			//if (dLifeTime > (dAttackTime + dDecayTime))
-			{
-				// In sustain phase - dont change until note released
-				dAmplitude = dSustainAmplitude;
-			}
-		}
-		else // Release phase
-		{
-			double delta = dTriggerOffTime - dTriggerOnTime;
-
-			// Find amplitude at trigger off time
-			if (delta <= dAttackTime) // Attack phase
-				dAmplitude = (delta / dAttackTime) * dStartAmplitude;
-			else if (delta <= (dAttackTime + dDecayTime)) // Decay phase
-				dAmplitude = ((delta - dAttackTime) / dDecayTime) * (dSustainAmplitude - dStartAmplitude) + dStartAmplitude;
-			else // Sustain phase
-				dAmplitude = dSustainAmplitude;
-
-
-			double currentReleaseTime = dTime - dTriggerOffTime;
-			dAmplitude = dAmplitude * (1.0 - (currentReleaseTime / dReleaseTime));
-
-			// Note has been released, so in release phase
-			//dAmplitude = ((dTime - dTriggerOffTime) / dReleaseTime) * (0.0 - dSustainAmplitude) + dSustainAmplitude;
-		}
-
-		//std::cout << dAmplitude << std::endl;
-		// Amplitude should not be negative
-		if (dAmplitude <= 0.0001)
-			dAmplitude = 0.0;
-
-		return dAmplitude;
-	}
-	*/
 };
 
 sEnvelopeADSR e;
