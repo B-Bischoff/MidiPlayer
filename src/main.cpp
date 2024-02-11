@@ -60,14 +60,14 @@ struct sEnvelopeADSR
 {
 	enum Phase { Attack, Decay, Sustain, Release, Inactive, Retrigger };
 
-	double dAttackTime;
-	double dDecayTime;
-	double dSustainAmplitude;
-	double dReleaseTime;
-	double dStartAmplitude;
-	double dTriggerOffTime;
-	double dTriggerOnTime;
-	bool bNoteOn;
+	double attackTime;
+	double decayTime;
+	double sustainAmplitude;
+	double releaseTime;
+	double attackAmplitude;
+	double triggerOffTime;
+	double triggerOnTime;
+	bool noteOn;
 
 	bool retrigger;
 	double amplitudeBeforeRetrigger;
@@ -78,14 +78,14 @@ struct sEnvelopeADSR
 
 	sEnvelopeADSR()
 	{
-		dAttackTime = .1;
-		dDecayTime = 1.5,
-		dStartAmplitude = 1.0;
-		dSustainAmplitude = 0.8;
-		dReleaseTime = 1.00;
-		bNoteOn = false;
-		dTriggerOffTime = 0.0;
-		dTriggerOnTime = 0.0;
+		attackTime = .1;
+		decayTime = 1.5,
+		attackAmplitude = 1.0;
+		sustainAmplitude = 0.8;
+		releaseTime = 1.00;
+		noteOn = false;
+		triggerOffTime = 0.0;
+		triggerOnTime = 0.0;
 		retrigger = false;
 		amplitude = 0.0;
 	}
@@ -93,35 +93,35 @@ struct sEnvelopeADSR
 	void NoteOn(double dTimeOn)
 	{
 		//std::cout << "note on " << dTimeOn << std::endl;
-		dTriggerOnTime = dTimeOn;
-		bNoteOn = true;
+		triggerOnTime = dTimeOn;
+		noteOn = true;
 	}
 
 	void NoteOff(double dTimeOff)
 	{
 		//std::cout << "note off " << dTimeOff << std::endl;
-		dTriggerOffTime = dTimeOff;
-		bNoteOn = false;
+		triggerOffTime = dTimeOff;
+		noteOn = false;
 	}
 
 	Phase getPhase(double time)
 	{
-		if (!bNoteOn)
+		if (!noteOn)
 		{
-			if (time - dTriggerOffTime <= dReleaseTime)
+			if (time - triggerOffTime <= releaseTime)
 				return Phase::Release;
 			else
 				return Phase::Inactive;
 		}
 
-		const double lifeTime = time - dTriggerOnTime;
+		const double lifeTime = time - triggerOnTime;
 
-		if (dTriggerOffTime != 0.0 && dTriggerOnTime != 0.0f && dTriggerOnTime - dTriggerOffTime < dReleaseTime && lifeTime <= dAttackTime)
+		if (triggerOffTime != 0.0 && triggerOnTime != 0.0f && triggerOnTime - triggerOffTime < releaseTime && lifeTime <= attackTime)
 			return Phase::Retrigger;
 
-		if (lifeTime <= dAttackTime)
+		if (lifeTime <= attackTime)
 			return Phase::Attack;
-		else if (lifeTime <= dAttackTime + dDecayTime)
+		else if (lifeTime <= attackTime + decayTime)
 			return Phase::Decay;
 		else
 			return Phase::Sustain;
@@ -129,14 +129,13 @@ struct sEnvelopeADSR
 
 	double GetAmplitude(double time)
 	{
-		if (dTriggerOnTime == 0.0f)
+		if (triggerOnTime == 0.0f)
 			return 0;
 
-		double lifeTime = time - dTriggerOnTime;
+		double lifeTime = time - triggerOnTime;
 
 		Phase newPhase = getPhase(time);
 
-		// Special cases
 		if (newPhase == Retrigger && phase == Release) // Press key while its release phase is not finished
 			amplitudeBeforeRetrigger = amplitude;
 		else if (newPhase == Release && phase != Release) // Save last amplitude before note off
@@ -147,22 +146,22 @@ struct sEnvelopeADSR
 		switch (phase)
 		{
 			case Phase::Attack :
-				amplitude = (lifeTime / dAttackTime) * dStartAmplitude;
+				amplitude = (lifeTime / attackTime) * attackAmplitude;
 				break;
 
 			case Phase::Decay :
 				retrigger = false;
-				lifeTime -= dAttackTime;
-				amplitude = (lifeTime / dDecayTime) * (dSustainAmplitude - dStartAmplitude) + dStartAmplitude;
+				lifeTime -= attackTime;
+				amplitude = (lifeTime / decayTime) * (sustainAmplitude - attackAmplitude) + attackAmplitude;
 				break;
 
 			case Phase::Sustain :
-				amplitude = dSustainAmplitude;
+				amplitude = sustainAmplitude;
 				break;
 
 			case Phase::Release :
-				lifeTime = time - dTriggerOffTime;
-				amplitude = (1.0 - (lifeTime / dReleaseTime)) * amplitudeAtOffTrigger;
+				lifeTime = time - triggerOffTime;
+				amplitude = (1.0 - (lifeTime / releaseTime)) * amplitudeAtOffTrigger;
 				break;
 
 			case Phase::Inactive :
@@ -170,7 +169,7 @@ struct sEnvelopeADSR
 				break;
 
 			case Phase::Retrigger :
-				amplitude = (lifeTime / dAttackTime) * (dStartAmplitude - amplitudeBeforeRetrigger) + amplitudeBeforeRetrigger;
+				amplitude = (lifeTime / attackTime) * (attackAmplitude - amplitudeBeforeRetrigger) + amplitudeBeforeRetrigger;
 				break;
 		}
 
