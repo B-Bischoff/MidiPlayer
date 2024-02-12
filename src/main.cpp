@@ -56,9 +56,12 @@ bool key_pressed()
 #endif
 }
 
+enum Phase { Attack, Decay, Sustain, Release, Inactive, Retrigger };
+
 struct sEnvelopeADSR
 {
-	enum Phase { Attack, Decay, Sustain, Release, Inactive, Retrigger };
+
+	unsigned int keyIndex;
 
 	double attackTime;
 	double decayTime;
@@ -78,15 +81,16 @@ struct sEnvelopeADSR
 
 	sEnvelopeADSR()
 	{
-		attackTime = .1;
-		decayTime = 1.5,
+		attackTime = .05;
+		decayTime = 0.05,
 		attackAmplitude = 1.0;
 		sustainAmplitude = 0.8;
-		releaseTime = 1.00;
+		releaseTime = 0.05;
 		noteOn = false;
 		triggerOffTime = 0.0;
 		triggerOnTime = 0.0;
 		retrigger = false;
+		phase = Inactive;
 		amplitude = 0.0;
 	}
 
@@ -166,6 +170,10 @@ struct sEnvelopeADSR
 
 			case Phase::Inactive :
 				amplitude = 0.0;
+				keyIndex = 0;
+				triggerOnTime = 0;
+				triggerOffTime = 0;
+				amplitudeAtOffTrigger = 0;
 				break;
 
 			case Phase::Retrigger :
@@ -177,13 +185,11 @@ struct sEnvelopeADSR
 		if (amplitude <= 0.0001)
 			amplitude = 0.0;
 
-		std::cout << time << " " << amplitude << " " << (retrigger ? 6 : phase) << std::endl;
+		//std::cout << time << " " << amplitude << " " << (retrigger ? 6 : phase) << std::endl;
 
 		return amplitude;
 	}
 };
-
-sEnvelopeADSR e;
 
 double freqToAngularVelocity(double hertz)
 {
@@ -234,6 +240,7 @@ int uploadBuffer( void *outputBuffer, void *inputBuffer, unsigned int nBufferFra
 	AudioData& audio = *(AudioData*)userData;
 
 	//std::cout << "callback time : " << streamTime << std::endl;
+	std::cout << status << std::endl;
 	if (status)
 		std::cout << "Stream underflow detected!" << std::endl;
 
@@ -253,6 +260,7 @@ int uploadBuffer( void *outputBuffer, void *inputBuffer, unsigned int nBufferFra
 
 double pianoKeyFrequency(int keyId)
 {
+
 	// Frequency of key A4 (A440) is 440 Hz
 	double A4Frequency = 440.0;
 
@@ -265,11 +273,15 @@ double pianoKeyFrequency(int keyId)
 	// Calculate the frequency of the given key
 	double frequency = A4Frequency * pow(semitoneRatio, keysDifference);
 
+	//std::cout << keyId << " " << frequency << std::endl;
+
 	return frequency;
 }
 
 int main(void)
 {
+	std::vector<sEnvelopeADSR> envelopes(16);
+
 	AudioData audio = {
 		.sampleRate = 44100,
 		.channels = 2,
@@ -278,7 +290,7 @@ int main(void)
 		.buffer = nullptr,
 		.leftPhase = 0, .rightPhase = 1,
 		.writeCursor = 0,
-		.targetFPS = 30,
+		.targetFPS = 60,
 	};
 
 
@@ -302,8 +314,6 @@ int main(void)
 	audio.writeCursor = audio.leftPhase + ((double)audio.sampleRate / (double)audio.targetFPS) * audio.latency;
 	std::cout << "L/R/W : " << audio.leftPhase << " " << audio.rightPhase << " " << audio.writeCursor << std::endl;
 
-	unsigned int keyIndex = 0;
-
 	while (1)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
@@ -319,10 +329,12 @@ int main(void)
 			keyPressed = key_pressed();
 
 			std::cout << keyPressed << " | " << previousKeyPressed << std::endl;
+			/*
 			if (keyPressed && !previousKeyPressed)
 				e.NoteOn(programElapsedTime.count());
 			else if (!keyPressed && previousKeyPressed)
 				e.NoteOff(programElapsedTime.count());
+			*/
 
 			previousKeyPressed = keyPressed;
 		}
@@ -342,11 +354,33 @@ int main(void)
 			audio.test = status == 145;
 			if (status == 145)
 			{
-				e.NoteOn(programElapsedTime.count());
-				keyIndex = data1;
+				for (sEnvelopeADSR& e : envelopes)
+				{
+					if (e.phase == Phase::Inactive)
+					{
+						std::cout << data1 << " on " << std::endl;
+						e.NoteOn(programElapsedTime.count());
+						e.keyIndex = data1;
+						break;
+					}
+				}
+
+				//e.NoteOn(programElapsedTime.count());
+				//keyIndex = data1;
 			}
 			else
-				e.NoteOff(programElapsedTime.count());
+			{
+				for (sEnvelopeADSR& e : envelopes)
+				{
+					if (e.keyIndex == data1)
+					{
+						std::cout << data1 << " off " << std::endl;
+						e.NoteOff(programElapsedTime.count());
+						break;
+					}
+				}
+				//e.NoteOff(programElapsedTime.count());
+			}
 		}
 
 		// AUDIO
@@ -355,7 +389,16 @@ int main(void)
 		{
 			double tmp;
 			double t = programElapsedTime.count() + (1.0f / (double)audio.sampleRate * (double)(i));
-			double value = ocs(pianoKeyFrequency(keyIndex), t) * 0.5 * e.GetAmplitude(t);
+			double value = 0.0;
+
+			for (sEnvelopeADSR& e : envelopes)
+			{
+				if (e.noteOn || e.phase != Phase::Inactive)
+				{
+					//std::cout << "add value " << e.keyIndex << std::endl;
+					value += ocs(pianoKeyFrequency(e.keyIndex), t) * 0.1 * e.GetAmplitude(t);
+				}
+			}
 
 			for (int j = 0; j < audio.channels; j++)
 			{
@@ -374,6 +417,7 @@ int main(void)
 
 		if (sleepDuration > std::chrono::duration<double>(0.0))
 		{
+			std::cout << sleepDuration.count() << " rab" << std::endl;
 			std::this_thread::sleep_for(sleepDuration * 0.9f);
 			endTime = std::chrono::high_resolution_clock::now();
 			while (endTime - startTime < targetFrameDuration)
