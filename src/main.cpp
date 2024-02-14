@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <sys/types.h>
 #if __has_include("RtAudio.h")
 #include <RtAudio.h>
@@ -99,6 +100,7 @@ struct sEnvelopeADSR
 		//std::cout << "note on " << dTimeOn << std::endl;
 		triggerOnTime = dTimeOn;
 		noteOn = true;
+		phase = Phase::Attack;
 	}
 
 	void NoteOff(double dTimeOff)
@@ -196,7 +198,7 @@ double freqToAngularVelocity(double hertz)
 	return hertz * 2.0 * M_PI;
 }
 
-double ocs(double hertz, double time)
+double osc(double hertz, double time)
 {
 	double t = sin(freqToAngularVelocity(hertz) * time);
 	return t;
@@ -240,7 +242,6 @@ int uploadBuffer( void *outputBuffer, void *inputBuffer, unsigned int nBufferFra
 	AudioData& audio = *(AudioData*)userData;
 
 	//std::cout << "callback time : " << streamTime << std::endl;
-	std::cout << status << std::endl;
 	if (status)
 		std::cout << "Stream underflow detected!" << std::endl;
 
@@ -347,10 +348,10 @@ int main(void)
 			// Extract MIDI status and data bytes
 			PmMessage message = event.message;
 			int status = Pm_MessageStatus(message);
-			int data1 = Pm_MessageData1(message);
+			int keyIndex = Pm_MessageData1(message);
 			int data2 = Pm_MessageData2(message);
 
-			//std::cout << " state " << status << " key " << (int)data1 << " vel " << (int)data2 << std::endl;
+			// std::cout << " state " << status << " key " << (int)keyIndex << " vel " << (int)data2 << std::endl;
 			audio.test = status == 145;
 			if (status == 145)
 			{
@@ -358,9 +359,9 @@ int main(void)
 				{
 					if (e.phase == Phase::Inactive)
 					{
-						std::cout << data1 << " on " << std::endl;
+						std::cout << keyIndex << " on " << std::endl;
 						e.NoteOn(programElapsedTime.count());
-						e.keyIndex = data1;
+						e.keyIndex = keyIndex;
 						break;
 					}
 				}
@@ -372,9 +373,9 @@ int main(void)
 			{
 				for (sEnvelopeADSR& e : envelopes)
 				{
-					if (e.keyIndex == data1)
+					if (e.keyIndex == keyIndex)
 					{
-						std::cout << data1 << " off " << std::endl;
+						std::cout << keyIndex << " off " << std::endl;
 						e.NoteOff(programElapsedTime.count());
 						break;
 					}
@@ -396,7 +397,7 @@ int main(void)
 				if (e.noteOn || e.phase != Phase::Inactive)
 				{
 					//std::cout << "add value " << e.keyIndex << std::endl;
-					value += ocs(pianoKeyFrequency(e.keyIndex), t) * 0.1 * e.GetAmplitude(t);
+					value += osc(pianoKeyFrequency(e.keyIndex), t) * 0.2 * e.GetAmplitude(t);
 				}
 			}
 
@@ -417,7 +418,6 @@ int main(void)
 
 		if (sleepDuration > std::chrono::duration<double>(0.0))
 		{
-			std::cout << sleepDuration.count() << " rab" << std::endl;
 			std::this_thread::sleep_for(sleepDuration * 0.9f);
 			endTime = std::chrono::high_resolution_clock::now();
 			while (endTime - startTime < targetFrameDuration)
