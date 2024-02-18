@@ -27,36 +27,6 @@
 #include <fcntl.h>
 #endif
 
-bool key_pressed()
-{
-#ifdef _WIN32
-	return _kbhit();
-#else
-	static struct termios oldt, newt;
-	static int ch;
-	static int oldf;
-
-	tcgetattr(STDIN_FILENO, &oldt);
-	newt = oldt;
-	newt.c_lflag &= ~(ICANON | ECHO);
-	tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-	oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
-	fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
-
-	ch = getchar();
-
-	tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-	fcntl(STDIN_FILENO, F_SETFL, oldf);
-
-	if (ch != EOF) {
-		ungetc(ch, stdin);
-		return true;
-	}
-
-	return false;
-#endif
-}
-
 enum Phase { Attack, Decay, Sustain, Release, Inactive, Retrigger };
 
 struct sEnvelopeADSR
@@ -83,7 +53,7 @@ struct sEnvelopeADSR
 	sEnvelopeADSR()
 	{
 		attackTime = .05;
-		decayTime = 0.05,
+		decayTime = .05,
 		attackAmplitude = 1.0;
 		sustainAmplitude = 0.8;
 		releaseTime = 0.05;
@@ -167,6 +137,7 @@ struct sEnvelopeADSR
 
 			case Phase::Release :
 				lifeTime = time - triggerOffTime;
+				std::cout << ">>> " << lifeTime << " " << amplitudeAtOffTrigger << std::endl;
 				amplitude = (1.0 - (lifeTime / releaseTime)) * amplitudeAtOffTrigger;
 				break;
 
@@ -204,7 +175,8 @@ double osc(double hertz, double time)
 	return t;
 }
 
-struct InputManager {
+struct InputManager
+{
 	PmStream* midiStream;
 	PmEvent buffer[32];
 };
@@ -241,12 +213,19 @@ int uploadBuffer( void *outputBuffer, void *inputBuffer, unsigned int nBufferFra
 	double *buffer = (double *) outputBuffer;
 	AudioData& audio = *(AudioData*)userData;
 
+	static int SUM_FRAMES = 0;
+	static int FRAME_COUNT = 0;
+	FRAME_COUNT++;
+	SUM_FRAMES += nBufferFrames;
+	//std::cout << FRAME_COUNT << " : " << streamTime << " " << SUM_FRAMES << std::endl;
+
 	//std::cout << "callback time : " << streamTime << std::endl;
 	if (status)
 		std::cout << "Stream underflow detected!" << std::endl;
 
-	//std::cout << nBufferFrames << " | " << rb.writeCursor << " " << rb.leftPhase << std::endl;
-	for (int i = 0 ; i<nBufferFrames; i++)
+	//std::cout << "buffer frames " << nBufferFrames << std::endl;
+
+	for (int i = 0 ; i < nBufferFrames; i++)
 	{
 		double tmp;
 		*buffer++ = audio.buffer[audio.leftPhase];
@@ -254,7 +233,8 @@ int uploadBuffer( void *outputBuffer, void *inputBuffer, unsigned int nBufferFra
 			*buffer++ = audio.buffer[audio.rightPhase];
 		audio.incrementPhases();
 	}
-	//std::cout << audio.leftPhase / 2 << " " << audio.writeCursor / 2.0f << std::endl;
+
+	std::cout << audio.leftPhase << " " << audio.writeCursor << std::endl;
 
 	return 0;
 }
@@ -285,15 +265,14 @@ int main(void)
 
 	AudioData audio = {
 		.sampleRate = 44100,
-		.channels = 2,
+		.channels = 1,
 		.bufferDuration = 2,
 		.latency = 2,
 		.buffer = nullptr,
 		.leftPhase = 0, .rightPhase = 1,
 		.writeCursor = 0,
-		.targetFPS = 60,
+		.targetFPS = 64,
 	};
-
 
 	const std::chrono::duration<double> targetFrameDuration(1.0f / (double)audio.targetFPS);
 
@@ -313,31 +292,19 @@ int main(void)
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(100)); // let rtaudio get more stable [TODO] check if that is necessary
 	audio.writeCursor = audio.leftPhase + ((double)audio.sampleRate / (double)audio.targetFPS) * audio.latency;
-	std::cout << "L/R/W : " << audio.leftPhase << " " << audio.rightPhase << " " << audio.writeCursor << std::endl;
+	//std::cout << "L/R/W : " << audio.leftPhase << " " << audio.rightPhase << " " << audio.writeCursor << std::endl;
+
+	double t = 0.0;
 
 	while (1)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
 		auto programElapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(startTime - audio.startTime);
-		//std::cout << programElapsedTime.count() << std::endl;
+		//std::cout << programElapsedTime.count() << " " << t << std::endl;
 
 		// INPUTS
 		if (USE_KB_AS_MIDI_INPUT)
 		{
-			static bool keyPressed = false;
-			static bool previousKeyPressed = false;
-
-			keyPressed = key_pressed();
-
-			std::cout << keyPressed << " | " << previousKeyPressed << std::endl;
-			/*
-			if (keyPressed && !previousKeyPressed)
-				e.NoteOn(programElapsedTime.count());
-			else if (!keyPressed && previousKeyPressed)
-				e.NoteOff(programElapsedTime.count());
-			*/
-
-			previousKeyPressed = keyPressed;
 		}
 		int numEvents = Pm_Read(inputManager.midiStream, inputManager.buffer, 32);
 
@@ -349,25 +316,22 @@ int main(void)
 			PmMessage message = event.message;
 			int status = Pm_MessageStatus(message);
 			int keyIndex = Pm_MessageData1(message);
-			int data2 = Pm_MessageData2(message);
+			int velocity = Pm_MessageData2(message);
 
-			// std::cout << " state " << status << " key " << (int)keyIndex << " vel " << (int)data2 << std::endl;
+			//std::cout << " state " << status << " key " << (int)keyIndex << " vel " << (int)velocity << std::endl;
 			audio.test = status == 145;
-			if (status == 145)
+			if ((status == 145 || status == 155) && velocity != 0.0)
 			{
 				for (sEnvelopeADSR& e : envelopes)
 				{
 					if (e.phase == Phase::Inactive)
 					{
-						std::cout << keyIndex << " on " << std::endl;
-						e.NoteOn(programElapsedTime.count());
+						//std::cout << keyIndex << " on " << std::endl;
+						e.NoteOn(t);
 						e.keyIndex = keyIndex;
 						break;
 					}
 				}
-
-				//e.NoteOn(programElapsedTime.count());
-				//keyIndex = data1;
 			}
 			else
 			{
@@ -375,31 +339,48 @@ int main(void)
 				{
 					if (e.keyIndex == keyIndex)
 					{
-						std::cout << keyIndex << " off " << std::endl;
-						e.NoteOff(programElapsedTime.count());
+						//std::cout << keyIndex << " off " << std::endl;
+						e.NoteOff(t);
 						break;
 					}
 				}
-				//e.NoteOff(programElapsedTime.count());
 			}
 		}
 
 		// AUDIO
 
-		for (int i = 0; i < audio.sampleRate / audio.targetFPS; i++)
+		static int TEST = 0;
+		double samplesPerFrame = (double)audio.sampleRate / (double)audio.targetFPS;
+		double fractionalPart = samplesPerFrame - (int)samplesPerFrame;
+		int complementaryFrame = 0;
+		bool writeOneMoreFrame = false;
+		if (fractionalPart != 0.0)
 		{
+			complementaryFrame = std::ceil(1.0 / fractionalPart);
+			writeOneMoreFrame = TEST % complementaryFrame == 0;
+		}
+		TEST++;
+		//std::cout << writeOneMoreFrame << std::endl;
+		//for (int i = 0; i < audio.sampleRate / audio.targetFPS + (int)writeOneMoreFrame; i++)
+		for (int i = 0; i < audio.sampleRate / audio.targetFPS + writeOneMoreFrame; i++)
+		{
+			//std::cout << " >>> " << audio.sampleRate / audio.targetFPS + (i % 3 == 0) << std::endl;
 			double tmp;
-			double t = programElapsedTime.count() + (1.0f / (double)audio.sampleRate * (double)(i));
+			//double t = programElapsedTime.count() + (1.0f / (double)audio.sampleRate * (double)(i));
 			double value = 0.0;
 
 			for (sEnvelopeADSR& e : envelopes)
 			{
 				if (e.noteOn || e.phase != Phase::Inactive)
-				{
-					//std::cout << "add value " << e.keyIndex << std::endl;
-					value += osc(pianoKeyFrequency(e.keyIndex), t) * 0.2 * e.GetAmplitude(t);
-				}
+					value += osc(pianoKeyFrequency(e.keyIndex), t) * 0.3 * e.GetAmplitude(t);
 			}
+
+
+			//if (writeOneMoreFrame && i == audio.sampleRate/audio.targetFPS)
+			//	value = 0;
+			//std::cout << t << " " << value << " " << (writeOneMoreFrame && i == audio.sampleRate/audio.targetFPS ? "2" : "1") << std::endl;
+			//t += (double)audio.sampleRate / (double)audio.targetFPS;
+			t += 1.0 / (double)audio.sampleRate;
 
 			for (int j = 0; j < audio.channels; j++)
 			{
@@ -407,6 +388,7 @@ int main(void)
 				audio.incrementWriteCursor();
 			}
 		}
+		//std::cout << TEST << " " << audio.writeCursor << std::endl;
 		//std::cout << "wrote " << rb.writeCursor << std::endl;
 
 		// TIME MANAGEMENT

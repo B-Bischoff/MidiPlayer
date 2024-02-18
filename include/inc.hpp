@@ -11,7 +11,7 @@
 #include <RtAudio.h>
 
 #define VERBOSE true
-#define USE_KB_AS_MIDI_INPUT false
+#define USE_KB_AS_MIDI_INPUT true
 
 struct AudioData {
 	unsigned int sampleRate;

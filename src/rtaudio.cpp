@@ -11,7 +11,9 @@ void rtAudioInit(AudioData& audio)
 	parameters.nChannels = audio.channels;
 	parameters.firstChannel = 0;
 	unsigned int sampleRate = audio.sampleRate;
-	unsigned int bufferFrames = sampleRate / audio.targetFPS;
+	//unsigned int bufferFrames = sampleRate / audio.targetFPS;
+	unsigned int bufferFrames = 0;
+	//unsigned int bufferFrames = 735;
 
 	if (audio.stream.openStream(&parameters, NULL, RTAUDIO_FLOAT64, sampleRate, &bufferFrames, &uploadBuffer, &audio))
 		exitError("[RTAUDIO ERROR]: Cannot open stream.");
