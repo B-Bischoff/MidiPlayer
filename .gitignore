@@ -13,3 +13,6 @@ release
 bibliography/*
 
 .compile_log
+
+compile_commands.json
+data.txt

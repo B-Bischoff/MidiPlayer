@@ -18,7 +18,17 @@ then
 fi
 
 # Compile and launch application
-make -C $BUILD_DIRECTORY;
+
+bear --version &> /dev/null
+
+if [ "$?" -eq 0 ] && [ ! -f "compile_commands.json" ]
+then
+	# Use bear to generate compile/linking informations used by clangd server
+	bear -- make -C $BUILD_DIRECTORY
+else
+	make -C $BUILD_DIRECTORY
+fi
+
 if [ "$?" == 0 ]
 then
 	clear
