@@ -1,17 +1,22 @@
 #pragma once
 
-#include <cmath>
-#include <cstring>
 #include <iostream>
-#include <math.h>
 #include <chrono>
-#include <thread>
-#include <assert.h>
 #include <portmidi.h>
+#include <chrono>
+#include <cmath>
+#include <assert.h>
+#include <thread>
+#include <cstring>
+
 #include <RtAudio.h>
 
 #define VERBOSE true
 #define USE_KB_AS_MIDI_INPUT true
+
+typedef std::chrono::time_point<std::chrono::high_resolution_clock> time_point;
+
+struct sEnvelopeADSR;
 
 struct AudioData {
 	unsigned int sampleRate;
@@ -27,7 +32,6 @@ struct AudioData {
 
 	RtAudio stream;
 
-	bool test;
 	std::chrono::time_point<std::chrono::high_resolution_clock> startTime;
 
 	unsigned int getBufferSize() const
@@ -47,9 +51,18 @@ struct AudioData {
 	}
 };
 
+struct InputManager
+{
+	PmStream* midiStream;
+	PmEvent buffer[32];
+};
+
 void rtAudioInit(AudioData& audio);
-int uploadBuffer( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
-				double streamTime, RtAudioStreamStatus status, void *userData);
+int uploadBuffer( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
+void handleInput(InputManager& inputManager, std::vector<sEnvelopeADSR>& envelopes, double time);
+void initInput(InputManager& inputManger);
+void generateAudio(AudioData& audio, InputManager& inputManager, std::vector<sEnvelopeADSR>& envelopes, double& time);
+int uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
 
 static void exitError(const char* str)
 {
