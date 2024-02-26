@@ -4,16 +4,21 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include <portmidi.h>
+#include <RtAudio.h>
+
 #include <iostream>
 #include <chrono>
-#include <portmidi.h>
 #include <chrono>
 #include <cmath>
 #include <assert.h>
 #include <thread>
 #include <cstring>
 
-#include <RtAudio.h>
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+
 
 #define VERBOSE true
 #define USE_KB_AS_MIDI_INPUT true

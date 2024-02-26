@@ -7,10 +7,7 @@ find_package(GLEW REQUIRED)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_subdirectory(external/portmidi)
-add_subdirectory(external/rtaudio)
-
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/portmidi/pm_common)
+add_subdirectory(external)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/)
 
@@ -23,6 +20,7 @@ add_executable(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} PRIVATE pthread)
 target_link_libraries(${PROJECT_NAME} PRIVATE portmidi)
 target_link_libraries(${PROJECT_NAME} PRIVATE rtaudio)
+target_link_libraries(${PROJECT_NAME} PRIVATE imgui)
 target_link_libraries(${PROJECT_NAME} PRIVATE GLEW::GLEW)
 target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
 target_link_libraries(${PROJECT_NAME} PRIVATE GL)
