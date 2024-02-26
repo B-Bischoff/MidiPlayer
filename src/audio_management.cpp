@@ -21,7 +21,7 @@ int uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBufferFram
 		audio.incrementPhases();
 	}
 
-	std::cout << audio.leftPhase << " " << audio.writeCursor << std::endl;
+	//std::cout << audio.leftPhase << " " << audio.writeCursor << std::endl;
 
 	return 0;
 }

@@ -111,7 +111,6 @@ struct sEnvelopeADSR
 
 			case Phase::Release :
 				lifeTime = time - triggerOffTime;
-				std::cout << ">>> " << lifeTime << " " << amplitudeAtOffTrigger << std::endl;
 				amplitude = (1.0 - (lifeTime / releaseTime)) * amplitudeAtOffTrigger;
 				break;
 

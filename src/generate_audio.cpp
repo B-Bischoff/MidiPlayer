@@ -2,7 +2,16 @@
 #include "envelope.hpp"
 
 static double pianoKeyFrequency(int keyId);
-static double osc(double hertz, double time);
+static double osc(double hertz, double time, double LFOHertz = 0.0, double LFOAmplitude = 0.0);
+
+
+void applyLowPassFilter(double& sample)
+{
+	static double lowPassState = 0.0;
+	double lowPassAlpha = 0.01;
+	lowPassState = lowPassAlpha * sample + (1.0 - lowPassAlpha) * lowPassState;
+	sample = lowPassState;
+}
 
 // [TODO] think to group everything (or not?) in a class/struct
 void generateAudio(AudioData& audio, InputManager& inputManager, std::vector<sEnvelopeADSR>& envelopes, double& time)
@@ -30,12 +39,20 @@ void generateAudio(AudioData& audio, InputManager& inputManager, std::vector<sEn
 		for (sEnvelopeADSR& e : envelopes)
 		{
 			if (e.noteOn || e.phase != Phase::Inactive)
-				value += osc(pianoKeyFrequency(e.keyIndex), time) * 0.3 * e.GetAmplitude(time);
+			{
+				double amplitude = e.GetAmplitude(time);
+
+				//for (int j = 1; j < 10; j++)
+				//	value += osc(pianoKeyFrequency(e.keyIndex) * j, time) * 0.2 * (1.0 / (double)j) * amplitude;
+
+				value += osc(pianoKeyFrequency(e.keyIndex), time, 20.0, 0.05) * 0.3 * e.GetAmplitude(time);
+				//applyLowPassFilter(value);
+			}
 		}
 
 		//if (writeOneMoreFrame && i == audio.sampleRate/audio.targetFPS)
 		//	value = 0;
-		//std::cout << t << " " << value << " " << (writeOneMoreFrame && i == audio.sampleRate/audio.targetFPS ? "2" : "1") << std::endl;
+		std::cout << time << " " << value << " " << std::endl;
 		//t += (double)audio.sampleRate / (double)audio.targetFPS;
 		time += 1.0 / (double)audio.sampleRate;
 
@@ -72,8 +89,9 @@ static double freqToAngularVelocity(double hertz)
 	return hertz * 2.0 * M_PI;
 }
 
-static double osc(double hertz, double time)
+static double osc(double hertz, double time, double LFOHertz, double LFOAmplitude)
 {
-	double t = sin(freqToAngularVelocity(hertz) * time);
+	double t = freqToAngularVelocity(hertz) * time + LFOAmplitude * hertz * (sin(freqToAngularVelocity(LFOHertz) * time));
+	t = sin(t); // SINE oscillator
 	return t;
 }
