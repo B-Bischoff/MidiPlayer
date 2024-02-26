@@ -4,3 +4,6 @@
 [submodule "external/rtaudio"]
 	path = external/rtaudio
 	url = git@github.com:thestk/rtaudio.git
+[submodule "external/imgui"]
+	path = external/imgui
+	url = git@github.com:ocornut/imgui.git
