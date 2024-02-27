@@ -1,3 +1,4 @@
+#include "implot.h"
 #include "inc.hpp"
 #include "envelope.hpp"
 
@@ -52,6 +53,21 @@ int main(void)
 	const int SCREEN_HEIGHT = 1080;
 	GLFWwindow* window = init(SCREEN_WIDTH, SCREEN_HEIGHT);
 
+#if defined(IMGUI_IMPL_OPENGL_ES2)
+	const char* glsl_version = "#version 100";
+#elif defined(__APPLE__)
+	const char* glsl_version = "#version 150";
+#else
+	const char* glsl_version = "#version 130";
+#endif
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGui::StyleColorsDark();
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
+	ImGui_ImplOpenGL3_Init(glsl_version);
+
+	ImPlot::CreateContext();
+
 	std::vector<sEnvelopeADSR> envelopes(16);
 
 	AudioData audio = {
@@ -87,6 +103,10 @@ int main(void)
 
 	double t = 0.0;
 
+	float* timeArray = new float[audio.sampleRate];
+	for (int i = 0; i < audio.sampleRate; i++)
+		timeArray[i] = 1.0 / (double)audio.sampleRate * i;
+
 	while (!glfwWindowShouldClose(window) && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
@@ -96,6 +116,25 @@ int main(void)
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glfwPollEvents();
+
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+
+		ImGui::Begin("Test");
+		ImGui::Text("text test");
+
+		if (ImPlot::BeginPlot("Plot"))
+		{
+			ImPlot::PlotLine("line", timeArray, audio.buffer, audio.sampleRate);
+			ImPlot::EndPlot();
+		}
+
+		ImGui::End();
+
+
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 
 		handleInput(inputManager, envelopes, t);
@@ -110,6 +149,10 @@ int main(void)
 	Pm_Terminate();
 	// [TODO] clean up audio
 
+	ImPlot::DestroyContext();
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 	glfwTerminate();
 }
 

@@ -19,6 +19,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
+#include <implot.h>
 
 #define VERBOSE true
 #define USE_KB_AS_MIDI_INPUT true
