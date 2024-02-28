@@ -1,6 +1,8 @@
+#include "imgui.h"
 #include "implot.h"
 #include "inc.hpp"
 #include "envelope.hpp"
+#include <cstring>
 
 static void handleFrameProcessTime(const time_point& startTime, const std::chrono::duration<double>& targetFrameDuration);
 
@@ -49,8 +51,8 @@ GLFWwindow* init(const int WIN_WIDTH, const int WIN_HEIGHT)
 
 int main(void)
 {
-	const int SCREEN_WIDTH = 1200;
-	const int SCREEN_HEIGHT = 800;
+	const int SCREEN_WIDTH = 1920;
+	const int SCREEN_HEIGHT = 1080;
 	GLFWwindow* window = init(SCREEN_WIDTH, SCREEN_HEIGHT);
 
 #if defined(IMGUI_IMPL_OPENGL_ES2)
@@ -72,7 +74,7 @@ int main(void)
 
 	AudioData audio = {
 		.sampleRate = 44100,
-		.channels = 2,
+		.channels = 1,
 		.bufferDuration = 2,
 		.latency = 2,
 		.buffer = nullptr,
@@ -83,7 +85,7 @@ int main(void)
 
 	const std::chrono::duration<double> targetFrameDuration(1.0f / (double)audio.targetFPS);
 
-	audio.buffer = new float[(int)(audio.sampleRate * audio.bufferDuration) * audio.channels];
+	audio.buffer = new float[audio.getBufferSize()];
 
 	if (audio.buffer == nullptr)
 		exitError("[ERROR]: ring buffer allocation failed.");
@@ -103,9 +105,11 @@ int main(void)
 
 	double t = 0.0;
 
-	float* timeArray = new float[audio.sampleRate];
-	for (int i = 0; i < audio.sampleRate; i++)
+	float* timeArray = new float[audio.getBufferSize()];
+	for (int i = 0; i < audio.getBufferSize(); i++)
 		timeArray[i] = 1.0 / (double)audio.sampleRate * i;
+	bool copyAudioBuffer = true;
+	float* bufferCopy = new float[audio.getBufferSize()];
 
 	while (!glfwWindowShouldClose(window) && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS)
 	{
@@ -124,9 +128,21 @@ int main(void)
 		ImGui::NewFrame();
 
 		ImGui::Begin("Test");
-		if (ImPlot::BeginPlot("Plot", ImVec2(1200, 750)))
+		ImGui::Checkbox("Copy audio buffer", &copyAudioBuffer);
+		ImPlotFlags f;
+		if (ImPlot::BeginPlot("Plot", ImVec2(1600, 800)))
 		{
-			ImPlot::PlotLine("line", timeArray, audio.buffer, audio.sampleRate / 2.0);
+			if (copyAudioBuffer)
+				memcpy(bufferCopy, audio.buffer, audio.getBufferSize() * sizeof(float));
+			ImPlot::PlotLine("line", timeArray, bufferCopy, audio.getBufferSize());
+			double writeCursorX = audio.writeCursor / (double)audio.sampleRate;
+			double readCursorX = audio.leftPhase / (double)audio.sampleRate;
+			double writeCursorXArray[2] = { writeCursorX, writeCursorX };
+			double readCursorXArray[2] = { readCursorX, readCursorX };
+			double cursorY[2] = { 0.0, 1.0 };
+			ImPlot::PlotLine("write cursor", writeCursorXArray, cursorY, 2);
+			ImPlot::PlotLine("read cursor", readCursorXArray, cursorY, 2);
+
 			ImPlot::EndPlot();
 		}
 

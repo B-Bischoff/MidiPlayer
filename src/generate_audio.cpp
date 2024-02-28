@@ -45,14 +45,15 @@ void generateAudio(AudioData& audio, InputManager& inputManager, std::vector<sEn
 				//for (int j = 1; j < 10; j++)
 				//	value += osc(pianoKeyFrequency(e.keyIndex) * j, time) * 0.2 * (1.0 / (double)j) * amplitude;
 
-				value += osc(pianoKeyFrequency(e.keyIndex), time, 20.0, 0.05) * 0.3 * e.GetAmplitude(time);
+				//value += osc(pianoKeyFrequency(e.keyIndex), time, 20.0, 0.05) * 0.3 * e.GetAmplitude(time);
+				value += osc(pianoKeyFrequency(e.keyIndex), time) * 0.3 * e.GetAmplitude(time);
 				//applyLowPassFilter(value);
 			}
 		}
 
 		//if (writeOneMoreFrame && i == audio.sampleRate/audio.targetFPS)
 		//	value = 0;
-		std::cout << time << " " << value << " " << std::endl;
+		//std::cout << time << " " << value << " " << std::endl;
 		//t += (double)audio.sampleRate / (double)audio.targetFPS;
 		time += 1.0 / (double)audio.sampleRate;
 
