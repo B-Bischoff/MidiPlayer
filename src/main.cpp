@@ -49,8 +49,8 @@ GLFWwindow* init(const int WIN_WIDTH, const int WIN_HEIGHT)
 
 int main(void)
 {
-	const int SCREEN_WIDTH = 1920;
-	const int SCREEN_HEIGHT = 1080;
+	const int SCREEN_WIDTH = 1200;
+	const int SCREEN_HEIGHT = 800;
 	GLFWwindow* window = init(SCREEN_WIDTH, SCREEN_HEIGHT);
 
 #if defined(IMGUI_IMPL_OPENGL_ES2)
@@ -72,13 +72,13 @@ int main(void)
 
 	AudioData audio = {
 		.sampleRate = 44100,
-		.channels = 1,
+		.channels = 2,
 		.bufferDuration = 2,
 		.latency = 2,
 		.buffer = nullptr,
 		.leftPhase = 0, .rightPhase = 1,
 		.writeCursor = 0,
-		.targetFPS = 64,
+		.targetFPS = 60,
 	};
 
 	const std::chrono::duration<double> targetFrameDuration(1.0f / (double)audio.targetFPS);
@@ -112,36 +112,31 @@ int main(void)
 		auto startTime = std::chrono::high_resolution_clock::now();
 		auto programElapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(startTime - audio.startTime);
 
-
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glfwPollEvents();
+
+		handleInput(inputManager, envelopes, t);
+		generateAudio(audio, inputManager, envelopes, t);
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
 		ImGui::Begin("Test");
-		ImGui::Text("text test");
-
-		if (ImPlot::BeginPlot("Plot"))
+		if (ImPlot::BeginPlot("Plot", ImVec2(1200, 750)))
 		{
-			ImPlot::PlotLine("line", timeArray, audio.buffer, audio.sampleRate);
+			ImPlot::PlotLine("line", timeArray, audio.buffer, audio.sampleRate / 2.0);
 			ImPlot::EndPlot();
 		}
 
 		ImGui::End();
-
-
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-
-		handleInput(inputManager, envelopes, t);
-		generateAudio(audio, inputManager, envelopes, t);
-		handleFrameProcessTime(startTime, targetFrameDuration);
-
 		glfwSwapBuffers(window);
+
+		handleFrameProcessTime(startTime, targetFrameDuration);
 	}
 
 	// [TODO] should this be in destructor ?
