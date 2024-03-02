@@ -3,12 +3,15 @@
 // [TODO] Make an entity used as an intermediate between sound generation/mixing and sound management (stream open, volume, runtime reconfiguration, ...)
 int uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData)
 {
+	static unsigned int READ_COUNT = 0;
 	double *buffer = (double *) outputBuffer;
 	AudioData& audio = *(AudioData*)userData;
 
 	//std::cout << "callback time : " << streamTime << std::endl;
 	if (status)
 		std::cout << "Stream underflow detected!" << std::endl;
+
+	READ_COUNT += nBufferFrames;
 
 	//std::cout << "buffer frames " << nBufferFrames << std::endl;
 
@@ -21,6 +24,7 @@ int uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBufferFram
 		audio.incrementPhases();
 	}
 
+	std::cout << "READ_COUNT : " << READ_COUNT << std::endl;
 	//std::cout << audio.leftPhase << " " << audio.writeCursor << std::endl;
 
 	return 0;

@@ -4,7 +4,7 @@
 #include "envelope.hpp"
 #include <cstring>
 
-static void handleFrameProcessTime(const time_point& startTime, const std::chrono::duration<double>& targetFrameDuration);
+static void handleFrameProcessTime(const time_point& startTime, const std::chrono::duration<double>& targetFrameDuration, AudioData& audio);
 
 GLFWwindow* init(const int WIN_WIDTH, const int WIN_HEIGHT)
 {
@@ -100,7 +100,7 @@ int main(void)
 	audio.startTime = std::chrono::high_resolution_clock::now();
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(100)); // let rtaudio get more stable [TODO] check if that is necessary
-	audio.writeCursor = audio.leftPhase + ((double)audio.sampleRate / (double)audio.targetFPS) * audio.latency;
+	audio.writeCursor = audio.leftPhase + ((double)audio.sampleRate / (double)audio.targetFPS) * audio.latency * audio.channels;
 	//std::cout << "L/R/W : " << audio.leftPhase << " " << audio.rightPhase << " " << audio.writeCursor << std::endl;
 
 	double t = 0.0;
@@ -132,8 +132,11 @@ int main(void)
 		ImPlotFlags f;
 		if (ImPlot::BeginPlot("Plot", ImVec2(1600, 800)))
 		{
-			if (copyAudioBuffer)
-				memcpy(bufferCopy, audio.buffer, audio.getBufferSize() * sizeof(float));
+			if (true)
+			{
+				for (int i = 0; i < 1000; i++)
+					memcpy(bufferCopy, audio.buffer, audio.getBufferSize() * sizeof(float));
+			}
 			ImPlot::PlotLine("line", timeArray, bufferCopy, audio.getBufferSize());
 			double writeCursorX = audio.writeCursor / (double)audio.sampleRate;
 			double readCursorX = audio.leftPhase / (double)audio.sampleRate;
@@ -152,7 +155,7 @@ int main(void)
 
 		glfwSwapBuffers(window);
 
-		handleFrameProcessTime(startTime, targetFrameDuration);
+		handleFrameProcessTime(startTime, targetFrameDuration, audio);
 	}
 
 	// [TODO] should this be in destructor ?
@@ -167,7 +170,7 @@ int main(void)
 	glfwTerminate();
 }
 
-static void handleFrameProcessTime(const time_point& startTime, const std::chrono::duration<double>& targetFrameDuration)
+static void handleFrameProcessTime(const time_point& startTime, const std::chrono::duration<double>& targetFrameDuration, AudioData& audio)
 {
 	auto endTime = std::chrono::high_resolution_clock::now();
 	auto deltaTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
@@ -182,5 +185,17 @@ static void handleFrameProcessTime(const time_point& startTime, const std::chron
 			endTime = std::chrono::high_resolution_clock::now();
 	}
 	else
+	{
+		// [TODO] clear buffer skipped region (do not get audio artifcats once buffer looped)
+
 		std::cerr << "[WARNING] : update took longer than expected" << std::endl;
+		auto overlapTime = deltaTime - targetFrameDuration;
+		unsigned int framesToSkip = (double)audio.sampleRate * audio.channels * overlapTime.count();
+
+		memset(audio.buffer, 0, audio.leftPhase * sizeof(float));
+
+		audio.incrementWriteCursor(framesToSkip);
+		audio.leftPhase = (int)(audio.writeCursor - ((double)audio.sampleRate / (double)audio.targetFPS * audio.latency * audio.channels)) % audio.getBufferSize();
+		audio.rightPhase = (audio.leftPhase + 1) % audio.getBufferSize();
+	}
 }

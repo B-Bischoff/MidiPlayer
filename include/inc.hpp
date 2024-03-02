@@ -55,9 +55,9 @@ struct AudioData {
 		rightPhase = (rightPhase + channels) % (int(sampleRate * bufferDuration) * channels);
 	}
 
-	void incrementWriteCursor()
+	void incrementWriteCursor(unsigned int increment = 1)
 	{
-		writeCursor = (writeCursor + 1) % ((int)(sampleRate * bufferDuration) * channels);
+		writeCursor = (writeCursor + increment) % ((int)(sampleRate * bufferDuration) * channels);
 	}
 };
 
