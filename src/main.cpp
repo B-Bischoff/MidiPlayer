@@ -177,6 +177,10 @@ static void handleFrameProcessTime(const time_point& startTime, const std::chron
 
 	auto sleepDuration = targetFrameDuration - deltaTime;
 
+
+	auto startTimeP = std::chrono::duration_cast<std::chrono::duration<double>>(startTime - audio.startTime);
+	auto endTimeP = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - audio.startTime);
+
 	if (sleepDuration > std::chrono::duration<double>(0.0))
 	{
 		std::this_thread::sleep_for(sleepDuration * 0.9f);
@@ -190,12 +194,16 @@ static void handleFrameProcessTime(const time_point& startTime, const std::chron
 
 		std::cerr << "[WARNING] : update took longer than expected" << std::endl;
 		auto overlapTime = deltaTime - targetFrameDuration;
-		unsigned int framesToSkip = (double)audio.sampleRate * audio.channels * overlapTime.count();
+		std::cout << "Target: " << targetFrameDuration.count() << " start: " << startTimeP.count() << " end: " << endTimeP.count() << " dt: " << deltaTime.count() << " Overlap = " << overlapTime.count() << std::endl;
+		unsigned int framesToSkip = ceil((double)audio.sampleRate * overlapTime.count());
+		audio.samplesToRecover = framesToSkip + 2;
 
+		/*
 		memset(audio.buffer, 0, audio.leftPhase * sizeof(float));
 
 		audio.incrementWriteCursor(framesToSkip);
 		audio.leftPhase = (int)(audio.writeCursor - ((double)audio.sampleRate / (double)audio.targetFPS * audio.latency * audio.channels)) % audio.getBufferSize();
 		audio.rightPhase = (audio.leftPhase + 1) % audio.getBufferSize();
+		*/
 	}
 }

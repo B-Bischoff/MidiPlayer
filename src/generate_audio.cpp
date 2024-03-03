@@ -30,7 +30,7 @@ void generateAudio(AudioData& audio, InputManager& inputManager, std::vector<sEn
 	TEST++;
 	//std::cout << writeOneMoreFrame << std::endl;
 	//for (int i = 0; i < audio.sampleRate / audio.targetFPS + (int)writeOneMoreFrame; i++)
-	for (int i = 0; i < audio.sampleRate / audio.targetFPS + writeOneMoreFrame; i++)
+	for (int i = 0; i < audio.sampleRate / audio.targetFPS + writeOneMoreFrame + audio.samplesToRecover; i++)
 	{
 		//std::cout << " >>> " << audio.sampleRate / audio.targetFPS + (i % 3 == 0) << std::endl;
 		double tmp;
@@ -65,6 +65,10 @@ void generateAudio(AudioData& audio, InputManager& inputManager, std::vector<sEn
 			WRITE_COUNT++;
 		}
 	}
+
+	std::cout << "Samples to recover: " << audio.samplesToRecover << std::endl;
+
+	audio.samplesToRecover = 0;
 	std::cout << time << " WRITE COUNT : " << WRITE_COUNT << std::endl;
 }
 

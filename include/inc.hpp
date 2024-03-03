@@ -40,6 +40,8 @@ struct AudioData {
 
 	unsigned int targetFPS;
 
+	unsigned int samplesToRecover;
+
 	RtAudio stream;
 
 	std::chrono::time_point<std::chrono::high_resolution_clock> startTime;
