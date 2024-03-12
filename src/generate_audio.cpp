@@ -30,6 +30,9 @@ void generateAudio(AudioData& audio, InputManager& inputManager, std::vector<sEn
 	TEST++;
 	//std::cout << writeOneMoreFrame << std::endl;
 	//for (int i = 0; i < audio.sampleRate / audio.targetFPS + (int)writeOneMoreFrame; i++)
+
+	std::cout << (abs(audio.samplesToRecover) > 500 ? "----------------------_" : "" ) << "Samples to recover = " << audio.samplesToRecover << std::endl;
+
 	for (int i = 0; i < audio.sampleRate / audio.targetFPS + writeOneMoreFrame + audio.samplesToRecover; i++)
 	{
 		//std::cout << " >>> " << audio.sampleRate / audio.targetFPS + (i % 3 == 0) << std::endl;
@@ -46,8 +49,8 @@ void generateAudio(AudioData& audio, InputManager& inputManager, std::vector<sEn
 				//for (int j = 1; j < 10; j++)
 				//	value += osc(pianoKeyFrequency(e.keyIndex) * j, time) * 0.2 * (1.0 / (double)j) * amplitude;
 
-				value += osc(pianoKeyFrequency(e.keyIndex), time, 20.0, 0.02) * 0.3 * e.GetAmplitude(time);
-				//value += osc(pianoKeyFrequency(e.keyIndex), time) * 0.3 * e.GetAmplitude(time);
+				//value += osc(pianoKeyFrequency(e.keyIndex), time, 20.0, 0.02) * 0.3 * e.GetAmplitude(time);
+				value += osc(pianoKeyFrequency(e.keyIndex), time) * 0.3 * e.GetAmplitude(time);
 				//applyLowPassFilter(value);
 			}
 		}
@@ -66,10 +69,13 @@ void generateAudio(AudioData& audio, InputManager& inputManager, std::vector<sEn
 		}
 	}
 
-	std::cout << "Samples to recover: " << audio.samplesToRecover << std::endl;
+	assert(audio.set == false);
+	audio.set = true;
+	//std::cout << "ON" << std::endl;
 
 	audio.samplesToRecover = 0;
-	std::cout << time << " WRITE COUNT : " << WRITE_COUNT << std::endl;
+	//std::cout << time << " WRITE COUNT : " << WRITE_COUNT << std::endl;
+	//std::cout << time << " SAMPLE TIME : " << time << std::endl;
 }
 
 static double pianoKeyFrequency(int keyId)

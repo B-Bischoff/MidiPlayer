@@ -24,7 +24,19 @@ int uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBufferFram
 		audio.incrementPhases();
 	}
 
-	std::cout << "READ_COUNT : " << READ_COUNT << std::endl;
+	if (audio.set)
+	{
+		audio.set = false;
+		//std::cout << "OFF" << std::endl;
+		int delta = audio.writeCursor - audio.leftPhase;
+		if (delta < 0)
+			delta += audio.getBufferSize();
+		//std::cout << "delta : " << delta << std::endl;
+		audio.samplesToRecover = 735*2 - delta;
+	}
+
+	//std::cout << "READ_COUNT : " << READ_COUNT << std::endl;
+	//std::cout << "READ THEORIC TIME : " << (double)READ_COUNT/44100.0 << std::endl;
 	//std::cout << audio.leftPhase << " " << audio.writeCursor << std::endl;
 
 	return 0;

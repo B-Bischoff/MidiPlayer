@@ -40,9 +40,12 @@ struct AudioData {
 
 	unsigned int targetFPS;
 
-	unsigned int samplesToRecover;
+	int samplesToRecover;
 
 	RtAudio stream;
+
+	bool set;
+	int test;
 
 	std::chrono::time_point<std::chrono::high_resolution_clock> startTime;
 
@@ -59,7 +62,7 @@ struct AudioData {
 
 	void incrementWriteCursor(unsigned int increment = 1)
 	{
-		writeCursor = (writeCursor + increment) % ((int)(sampleRate * bufferDuration) * channels);
+		writeCursor = (writeCursor + increment) % ((unsigned int)(sampleRate * bufferDuration) * channels);
 	}
 };
 

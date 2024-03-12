@@ -51,6 +51,8 @@ GLFWwindow* init(const int WIN_WIDTH, const int WIN_HEIGHT)
 
 int main(void)
 {
+
+	std::cout << "-0--------------------- >" << -41000 % 44100 << std::endl;
 	const int SCREEN_WIDTH = 1920;
 	const int SCREEN_HEIGHT = 1080;
 	GLFWwindow* window = init(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -92,12 +94,12 @@ int main(void)
 
 	memset(audio.buffer, 0, sizeof(float) * audio.getBufferSize());
 
+	audio.startTime = std::chrono::high_resolution_clock::now();
 	rtAudioInit(audio);
 
 	InputManager inputManager;
 	initInput(inputManager);
 
-	audio.startTime = std::chrono::high_resolution_clock::now();
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(100)); // let rtaudio get more stable [TODO] check if that is necessary
 	audio.writeCursor = audio.leftPhase + ((double)audio.sampleRate / (double)audio.targetFPS) * audio.latency * audio.channels;
@@ -115,6 +117,8 @@ int main(void)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
 		auto programElapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(startTime - audio.startTime);
+
+		//std::cout << "MAIN TIME : " << programElapsedTime.count() << std::endl;
 
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -193,10 +197,17 @@ static void handleFrameProcessTime(const time_point& startTime, const std::chron
 		// [TODO] clear buffer skipped region (do not get audio artifcats once buffer looped)
 
 		std::cerr << "[WARNING] : update took longer than expected" << std::endl;
+
+		/*
+		endTime = std::chrono::high_resolution_clock::now();
 		auto overlapTime = deltaTime - targetFrameDuration;
-		std::cout << "Target: " << targetFrameDuration.count() << " start: " << startTimeP.count() << " end: " << endTimeP.count() << " dt: " << deltaTime.count() << " Overlap = " << overlapTime.count() << std::endl;
+		//std::cout << "Target: " << targetFrameDuration.count() << " start: " << startTimeP.count() << " end: " << endTimeP.count() << " dt: " << deltaTime.count() << " Overlap = " << overlapTime.count() << std::endl;
 		unsigned int framesToSkip = ceil((double)audio.sampleRate * overlapTime.count());
-		audio.samplesToRecover = framesToSkip + 2;
+		audio.samplesToRecover = framesToSkip;
+
+		std::cout << "Samples to recover: " << audio.samplesToRecover << std::endl;
+		*/
+
 
 		/*
 		memset(audio.buffer, 0, audio.leftPhase * sizeof(float));
