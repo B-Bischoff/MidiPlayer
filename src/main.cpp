@@ -76,14 +76,15 @@ int main(void)
 
 	AudioData audio = {
 		.sampleRate = 44100,
-		.channels = 1,
-		.bufferDuration = 2,
-		.latency = 2,
+		.channels = 2,
+		.bufferDuration = 1,
+		.latency = 3,
 		.buffer = nullptr,
 		.leftPhase = 0, .rightPhase = 1,
 		.writeCursor = 0,
 		.targetFPS = 60,
 	};
+	audio.samplesToAdjust = 0;
 
 	const std::chrono::duration<double> targetFrameDuration(1.0f / (double)audio.targetFPS);
 
@@ -102,7 +103,7 @@ int main(void)
 
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(100)); // let rtaudio get more stable [TODO] check if that is necessary
-	audio.writeCursor = audio.leftPhase + ((double)audio.sampleRate / (double)audio.targetFPS) * audio.latency * audio.channels;
+	audio.writeCursor = (audio.leftPhase + audio.getLatencyInFramesPerUpdate()) % audio.getBufferSize();
 	//std::cout << "L/R/W : " << audio.leftPhase << " " << audio.rightPhase << " " << audio.writeCursor << std::endl;
 
 	double t = 0.0;
@@ -117,8 +118,6 @@ int main(void)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
 		auto programElapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(startTime - audio.startTime);
-
-		//std::cout << "MAIN TIME : " << programElapsedTime.count() << std::endl;
 
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -181,7 +180,6 @@ static void handleFrameProcessTime(const time_point& startTime, const std::chron
 
 	auto sleepDuration = targetFrameDuration - deltaTime;
 
-
 	auto startTimeP = std::chrono::duration_cast<std::chrono::duration<double>>(startTime - audio.startTime);
 	auto endTimeP = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - audio.startTime);
 
@@ -194,27 +192,7 @@ static void handleFrameProcessTime(const time_point& startTime, const std::chron
 	}
 	else
 	{
-		// [TODO] clear buffer skipped region (do not get audio artifcats once buffer looped)
-
 		std::cerr << "[WARNING] : update took longer than expected" << std::endl;
-
-		/*
-		endTime = std::chrono::high_resolution_clock::now();
-		auto overlapTime = deltaTime - targetFrameDuration;
-		//std::cout << "Target: " << targetFrameDuration.count() << " start: " << startTimeP.count() << " end: " << endTimeP.count() << " dt: " << deltaTime.count() << " Overlap = " << overlapTime.count() << std::endl;
-		unsigned int framesToSkip = ceil((double)audio.sampleRate * overlapTime.count());
-		audio.samplesToRecover = framesToSkip;
-
-		std::cout << "Samples to recover: " << audio.samplesToRecover << std::endl;
-		*/
-
-
-		/*
-		memset(audio.buffer, 0, audio.leftPhase * sizeof(float));
-
-		audio.incrementWriteCursor(framesToSkip);
-		audio.leftPhase = (int)(audio.writeCursor - ((double)audio.sampleRate / (double)audio.targetFPS * audio.latency * audio.channels)) % audio.getBufferSize();
-		audio.rightPhase = (audio.leftPhase + 1) % audio.getBufferSize();
-		*/
+		// [TODO] handle lag whose duration is greater than theoric latency between read & write cursors
 	}
 }

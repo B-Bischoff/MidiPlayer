@@ -18,8 +18,7 @@ void generateAudio(AudioData& audio, InputManager& inputManager, std::vector<sEn
 {
 	static unsigned int WRITE_COUNT = 0;
 	static int TEST = 0;
-	double samplesPerFrame = (double)audio.sampleRate / (double)audio.targetFPS;
-	double fractionalPart = samplesPerFrame - (int)samplesPerFrame;
+	double fractionalPart = audio.getFramesPerUpdate() - (int)audio.getFramesPerUpdate();
 	int complementaryFrame = 0;
 	bool writeOneMoreFrame = false;
 	if (fractionalPart != 0.0)
@@ -31,9 +30,7 @@ void generateAudio(AudioData& audio, InputManager& inputManager, std::vector<sEn
 	//std::cout << writeOneMoreFrame << std::endl;
 	//for (int i = 0; i < audio.sampleRate / audio.targetFPS + (int)writeOneMoreFrame; i++)
 
-	std::cout << (abs(audio.samplesToRecover) > 500 ? "----------------------_" : "" ) << "Samples to recover = " << audio.samplesToRecover << std::endl;
-
-	for (int i = 0; i < audio.sampleRate / audio.targetFPS + writeOneMoreFrame + audio.samplesToRecover; i++)
+	for (int i = 0; i < (int)audio.getFramesPerUpdate() + writeOneMoreFrame + audio.samplesToAdjust; i++)
 	{
 		//std::cout << " >>> " << audio.sampleRate / audio.targetFPS + (i % 3 == 0) << std::endl;
 		double tmp;
@@ -69,13 +66,8 @@ void generateAudio(AudioData& audio, InputManager& inputManager, std::vector<sEn
 		}
 	}
 
-	assert(audio.set == false);
-	audio.set = true;
-	//std::cout << "ON" << std::endl;
-
-	audio.samplesToRecover = 0;
-	//std::cout << time << " WRITE COUNT : " << WRITE_COUNT << std::endl;
-	//std::cout << time << " SAMPLE TIME : " << time << std::endl;
+	assert(audio.syncCursors == false && "Audio callback did not reset syncCursors");
+	audio.syncCursors = true;
 }
 
 static double pianoKeyFrequency(int keyId)

@@ -32,26 +32,35 @@ struct AudioData {
 	unsigned int sampleRate;
 	unsigned int channels;
 	float bufferDuration; // In seconds
-	unsigned int latency; // In frame
+	unsigned int latency; // In frames per update
 
 	float* buffer;
-	unsigned int leftPhase, rightPhase;
+	unsigned int leftPhase, rightPhase; // only leftPhase is used in case of mono (channels = 1)
 	unsigned int writeCursor;
 
 	unsigned int targetFPS;
 
-	int samplesToRecover;
+	int samplesToAdjust; // Used to keep read and write cursors synced in case of lag or inconsistant number of samples read over time
 
 	RtAudio stream;
 
-	bool set;
-	int test;
+	bool syncCursors;
 
 	std::chrono::time_point<std::chrono::high_resolution_clock> startTime;
 
 	unsigned int getBufferSize() const
 	{
 		return sampleRate * bufferDuration * channels;
+	}
+
+	inline double getFramesPerUpdate() const
+	{
+		return (double)sampleRate / (double)targetFPS;
+	}
+
+	unsigned int getLatencyInFramesPerUpdate() const
+	{
+		return latency * getFramesPerUpdate() * channels;
 	}
 
 	void incrementPhases()
