@@ -21,6 +21,8 @@
 
 #include <implot.h>
 
+#include <imgui_node_editor.h>
+
 #define VERBOSE true
 #define USE_KB_AS_MIDI_INPUT true
 

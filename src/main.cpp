@@ -1,4 +1,3 @@
-#include "imgui.h"
 #include "implot.h"
 #include "inc.hpp"
 #include "envelope.hpp"

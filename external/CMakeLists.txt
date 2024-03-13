@@ -20,6 +20,11 @@ set(IMGUI_SOURCES
 	"implot/implot_internal.h"
 	"implot/implot.cpp"
 	"implot/implot_items.cpp"
+
+	# IMGUI NODE EDITOR
+	"imgui-node-editor/imgui_canvas.cpp"
+	"imgui-node-editor/imgui_node_editor.cpp"
+	"imgui-node-editor/imgui_node_editor_api.cpp"
 )
 
 add_library(imgui STATIC ${IMGUI_SOURCES})
@@ -27,4 +32,5 @@ target_include_directories(imgui PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/imgui
 	${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends
 	${CMAKE_CURRENT_SOURCE_DIR}/implot
+	${CMAKE_CURRENT_SOURCE_DIR}/imgui-node-editor
 )

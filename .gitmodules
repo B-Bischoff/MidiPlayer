@@ -10,3 +10,6 @@
 [submodule "external/implot"]
 	path = external/implot
 	url = git@github.com:epezent/implot.git
+[submodule "external/imgui-node-editor"]
+	path = external/imgui-node-editor
+	url = git@github.com:thedmd/imgui-node-editor.git
