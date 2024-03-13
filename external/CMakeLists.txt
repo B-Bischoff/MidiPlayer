@@ -25,6 +25,7 @@ set(IMGUI_SOURCES
 	"imgui-node-editor/imgui_canvas.cpp"
 	"imgui-node-editor/imgui_node_editor.cpp"
 	"imgui-node-editor/imgui_node_editor_api.cpp"
+	"imgui-node-editor/crude_json.cpp"
 )
 
 add_library(imgui STATIC ${IMGUI_SOURCES})

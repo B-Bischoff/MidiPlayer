@@ -1,8 +1,11 @@
+#include "imgui_node_editor.h"
 #include "implot.h"
 #include "inc.hpp"
 #include "envelope.hpp"
 #include <cstring>
 #include <unistd.h>
+
+namespace ed = ax::NodeEditor;
 
 static void handleFrameProcessTime(const time_point& startTime, const std::chrono::duration<double>& targetFrameDuration, AudioData& audio);
 
@@ -63,13 +66,16 @@ int main(void)
 #else
 	const char* glsl_version = "#version 130";
 #endif
-	ImGui::CreateContext();
+	ImGuiContext* imguiContext = ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	ImGui::StyleColorsDark();
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init(glsl_version);
 
+	ImGui::SetCurrentContext(imguiContext);
 	ImPlot::CreateContext();
+
+	ed::EditorContext* nodeEditorContext = ed::CreateEditor();
 
 	std::vector<sEnvelopeADSR> envelopes(16);
 
@@ -157,9 +163,27 @@ int main(void)
 			ImPlot::PlotLine("read cursor", readCursorXArray, cursorY, 2);
 
 			ImPlot::EndPlot();
-		}
 
+
+		}
 		ImGui::End();
+		ed::SetCurrentEditor(nodeEditorContext);
+		ed::Begin("My Editor", ImVec2(0.0, 0.0f));
+		int uniqueId = 1;
+		// Start drawing nodes.
+		ed::BeginNode(uniqueId++);
+			ImGui::Text("Node A");
+			ed::BeginPin(uniqueId++, ed::PinKind::Input);
+				ImGui::Text("-> In");
+			ed::EndPin();
+			ImGui::SameLine();
+			ed::BeginPin(uniqueId++, ed::PinKind::Output);
+				ImGui::Text("Out ->");
+			ed::EndPin();
+		ed::EndNode();
+		ed::End();
+
+
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
