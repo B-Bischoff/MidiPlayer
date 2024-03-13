@@ -3,6 +3,7 @@
 #include "inc.hpp"
 #include "envelope.hpp"
 #include <cstring>
+#include <unistd.h>
 
 static void handleFrameProcessTime(const time_point& startTime, const std::chrono::duration<double>& targetFrameDuration, AudioData& audio);
 
@@ -51,8 +52,7 @@ GLFWwindow* init(const int WIN_WIDTH, const int WIN_HEIGHT)
 
 int main(void)
 {
-
-	std::cout << "-0--------------------- >" << -41000 % 44100 << std::endl;
+	int FRAME_COUNT = 0;
 	const int SCREEN_WIDTH = 1920;
 	const int SCREEN_HEIGHT = 1080;
 	GLFWwindow* window = init(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -126,6 +126,14 @@ int main(void)
 		handleInput(inputManager, envelopes, t);
 		generateAudio(audio, inputManager, envelopes, t);
 
+		/*
+		if (++FRAME_COUNT % 180 == 0)
+		{
+			FRAME_COUNT = 0;
+			usleep(1000000);
+		}
+		*/
+
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
@@ -192,7 +200,22 @@ static void handleFrameProcessTime(const time_point& startTime, const std::chron
 	}
 	else
 	{
-		std::cerr << "[WARNING] : update took longer than expected" << std::endl;
-		// [TODO] handle lag whose duration is greater than theoric latency between read & write cursors
+		//std::cerr << "[WARNING] : update took longer than expected : " << deltaTime.count() << std::endl;
+
+		const double maxAllowedLag = (1.0 / audio.targetFPS) * audio.latency;
+		if (deltaTime.count() - (1.0 / audio.targetFPS) > maxAllowedLag)
+		{
+			// [TODO] handle lag whose duration is greater than theoric latency between read & write cursors
+			// Test showed that handle this kind of lag is not mandatory
+			// It would be nice to supress harsh sounds but is it even possible?
+			std::cerr << "[WARNING] : lag exceeded cursors safety gap" << std::endl;
+			/*
+			memset(audio.buffer, 0, audio.getBufferSize() * sizeof(float));
+			audio.leftPhase = 0;
+			audio.rightPhase = 1;
+			audio.writeCursor = audio.getLatencyInFramesPerUpdate();
+			audio.samplesToAdjust = 0;
+			*/
+		}
 	}
 }
