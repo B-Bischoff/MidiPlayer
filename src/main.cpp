@@ -1,3 +1,4 @@
+#include "imgui.h"
 #include "imgui_node_editor.h"
 #include "implot.h"
 #include "inc.hpp"
@@ -8,6 +9,13 @@
 namespace ed = ax::NodeEditor;
 
 static void handleFrameProcessTime(const time_point& startTime, const std::chrono::duration<double>& targetFrameDuration, AudioData& audio);
+
+struct LinkInfo
+{
+	ed::LinkId Id;
+	ed::PinId  InputId;
+	ed::PinId  OutputId;
+};
 
 GLFWwindow* init(const int WIN_WIDTH, const int WIN_HEIGHT)
 {
@@ -119,6 +127,10 @@ int main(void)
 	bool copyAudioBuffer = true;
 	float* bufferCopy = new float[audio.getBufferSize()];
 
+	bool isFirstFrame = true;
+	ImVector<LinkInfo> links;
+	int nextLinkId = 100; // Counter to help generate link ids. In real application this will probably based on pointer to user data structure.
+
 	while (!glfwWindowShouldClose(window) && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
@@ -167,25 +179,116 @@ int main(void)
 
 		}
 		ImGui::End();
+
+
 		ed::SetCurrentEditor(nodeEditorContext);
 		ed::Begin("My Editor", ImVec2(0.0, 0.0f));
 		int uniqueId = 1;
-		// Start drawing nodes.
-		ed::BeginNode(uniqueId++);
+
+		ed::NodeId nodeA_Id = uniqueId++;
+		ed::PinId nodeA_InputPinId = uniqueId++;
+		ed::PinId nodeA_OutputPinId = uniqueId++;
+
+		if (isFirstFrame)
+			ed::SetNodePosition(nodeA_Id, ImVec2(10, 10));
+		ed::BeginNode(nodeA_Id);
+		{
 			ImGui::Text("Node A");
-			ed::BeginPin(uniqueId++, ed::PinKind::Input);
+			ed::BeginPin(nodeA_InputPinId, ed::PinKind::Input);
 				ImGui::Text("-> In");
 			ed::EndPin();
 			ImGui::SameLine();
-			ed::BeginPin(uniqueId++, ed::PinKind::Output);
+			ed::BeginPin(nodeA_OutputPinId, ed::PinKind::Output);
 				ImGui::Text("Out ->");
 			ed::EndPin();
+		}
 		ed::EndNode();
+
+		ed::NodeId nodeB_Id = uniqueId++;
+		ed::PinId nodeB_InputPinId = uniqueId++;
+		ed::PinId nodeB_OutputPinId = uniqueId++;
+
+		if (isFirstFrame)
+			ed::SetNodePosition(nodeB_Id, ImVec2(150, 10));
+		ed::BeginNode(nodeB_Id);
+		{
+			ImGui::Text("Node B");
+			ed::BeginPin(nodeB_InputPinId, ed::PinKind::Input);
+				ImGui::Text("-> In");
+			ed::EndPin();
+			ImGui::SameLine();
+			ed::BeginPin(nodeB_OutputPinId, ed::PinKind::Output);
+				ImGui::Text("Out ->");
+			ed::EndPin();
+		}
+		ed::EndNode();
+
+
+		for (auto& linkInfo : links)
+			ed::Link(linkInfo.Id, linkInfo.InputId, linkInfo.OutputId);
+
+
+		if (ed::BeginCreate())
+		{
+			ed::PinId inputPinId, outputPinId;
+			if (ed::QueryNewLink(&inputPinId, &outputPinId))
+			{
+				// Link creation logic
+
+				if (inputPinId && outputPinId) // both are valid, let's accept link
+				{
+					if (ed::AcceptNewItem())
+					{
+						// Since we accepted new link, lets add one to our list of links.
+						links.push_back({ ed::LinkId(nextLinkId++), inputPinId, outputPinId });
+
+						// Draw new link.
+						ed::Link(links.back().Id, links.back().InputId, links.back().OutputId);
+					}
+
+					// You may choose to reject connection between these nodes
+					// by calling ed::RejectNewItem(). This will allow editor to give
+					// visual feedback by changing link thickness and color.
+				}
+			}
+		}
+		ed::EndCreate();
+
+
+		// Handle deletion action
+		if (ed::BeginDelete())
+		{
+			// There may be many links marked for deletion, let's loop over them.
+			ed::LinkId deletedLinkId;
+			while (ed::QueryDeletedLink(&deletedLinkId))
+			{
+				// If you agree that link can be deleted, accept deletion.
+				if (ed::AcceptDeletedItem())
+				{
+					// Then remove link from your data.
+					for (auto& link : links)
+					{
+						if (link.Id == deletedLinkId)
+						{
+							links.erase(&link);
+							break;
+						}
+					}
+				}
+
+				// You may reject link deletion by calling:
+				// ed::RejectDeletedItem();
+			}
+		}
+		ed::EndDelete(); // Wrap up deletion action
+
 		ed::End();
 
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+		isFirstFrame = false;
 
 		glfwSwapBuffers(window);
 
