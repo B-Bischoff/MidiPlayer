@@ -10,12 +10,163 @@ namespace ed = ax::NodeEditor;
 
 static void handleFrameProcessTime(const time_point& startTime, const std::chrono::duration<double>& targetFrameDuration, AudioData& audio);
 
+int nextId = 0;
+
+int getNextId()
+{
+	return nextId++;
+}
+
 struct LinkInfo
 {
 	ed::LinkId Id;
 	ed::PinId  InputId;
 	ed::PinId  OutputId;
+	ImColor Color;
 };
+
+struct Node;
+
+enum class PinKind
+{
+	Output,
+	Input
+};
+
+struct Pin
+{
+	ed::PinId id;
+	Node* node;
+	std::string name;
+	//PinType type;
+	PinKind kind;
+
+	Pin()
+	{
+		id = 1;
+		node = nullptr;
+		name.clear();
+		kind = PinKind::Input;
+	}
+
+	Pin(int id, const char* name):
+		id(id), node(nullptr), name(name), kind(PinKind::Input)
+	{
+	}
+};
+
+#define inputPinNb 3
+#define outputPinNb 1
+
+struct DefaultNode
+{
+	ed::NodeId id;
+	std::string name;
+
+	//static const int inputPinNb = 1;
+	Pin inputPin[inputPinNb];
+
+	//static const int outputPinNb = 1;
+	Pin outputPin[outputPinNb];
+
+	DefaultNode()
+	{
+		id = getNextId();
+		name = "Default node " + std::to_string(id.Get());
+
+		// Input pin(s)
+		for (int i = 0; i < inputPinNb; i++)
+		{
+			Pin& pin = inputPin[i];
+			pin.id = getNextId(); // [TODO] create an entity managing ids
+			pin.name = "input " + std::to_string(i);
+			//pin.node = this; // Is this really necessary ?
+			pin.kind = PinKind::Input;
+		}
+
+		// Output pin(s)
+		for (int i = 0; i < outputPinNb; i++)
+		{
+			Pin& pin = outputPin[i];
+			pin.id = getNextId(); // [TODO] create an entity managing ids
+			pin.name = "output " + std::to_string(i);
+			//pin.node = this; // Is this really necessary ?
+			pin.kind = PinKind::Output;
+		}
+	}
+
+	void render()
+	{
+		ed::BeginNode(id);
+
+		ImGui::Text("%s", name.c_str());
+		for (int i = 0; i < std::max(inputPinNb, outputPinNb); i++)
+		{
+			if (i < inputPinNb)
+			{
+				ed::BeginPin(inputPin[i].id, ed::PinKind::Input);
+				ImGui::Text("%s", inputPin[i].name.c_str());
+				ed::EndPin();
+			}
+			if (i < outputPinNb)
+			{
+				ImGui::SameLine();
+				ed::BeginPin(outputPin[i].id, ed::PinKind::Output);
+				ImGui::Text("%s", outputPin[i].name.c_str());
+				ed::EndPin();
+			}
+		}
+
+		ed::EndNode();
+	}
+};
+
+
+struct Node
+{
+	ed::NodeId id;
+	std::string name;
+	std::vector<Pin> inputs;
+	std::vector<Pin> outputs;
+	ImColor color;
+
+	Node(ed::NodeId id, std::string name, ImColor color = ImColor(255, 255, 255))
+		: id(id), name(name), color(color)
+	{
+	}
+};
+
+std::vector<Node> nodes;
+
+void buildNode(Node* node)
+{
+	for (auto& input : node->inputs)
+	{
+		input.node = node;
+		input.kind = PinKind::Input;
+	}
+
+	for (auto& output : node->outputs)
+	{
+		output.node = node;
+		output.kind = PinKind::Output;
+	}
+}
+
+Node* spawnNode()
+{
+	nodes.emplace_back(getNextId(), "Test Node");
+
+	Node* node = &nodes.back();
+	assert(node != nullptr);
+
+	node->inputs.emplace_back(getNextId(), "input");
+	node->outputs.emplace_back(getNextId(), "ouput");
+
+	buildNode(node);
+
+	return node;
+}
 
 GLFWwindow* init(const int WIN_WIDTH, const int WIN_HEIGHT)
 {
@@ -129,7 +280,8 @@ int main(void)
 
 	bool isFirstFrame = true;
 	ImVector<LinkInfo> links;
-	int nextLinkId = 100; // Counter to help generate link ids. In real application this will probably based on pointer to user data structure.
+
+	DefaultNode n;
 
 	while (!glfwWindowShouldClose(window) && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS)
 	{
@@ -144,6 +296,7 @@ int main(void)
 		generateAudio(audio, inputManager, envelopes, t);
 
 		/*
+		// Lag simulator
 		if (++FRAME_COUNT % 180 == 0)
 		{
 			FRAME_COUNT = 0;
@@ -182,15 +335,19 @@ int main(void)
 
 
 		ed::SetCurrentEditor(nodeEditorContext);
-		ed::Begin("My Editor", ImVec2(0.0, 0.0f));
-		int uniqueId = 1;
+		ed::Begin("Node editor", ImVec2(0.0, 0.0f));
 
-		ed::NodeId nodeA_Id = uniqueId++;
-		ed::PinId nodeA_InputPinId = uniqueId++;
-		ed::PinId nodeA_OutputPinId = uniqueId++;
+		n.render();
+		static ed::NodeId nodeA_Id = getNextId();
+		static ed::PinId nodeA_InputPinId = getNextId();
+		static ed::PinId nodeA_OutputPinId = getNextId();
 
 		if (isFirstFrame)
+		{
+			//Node* test = spawnNode();
+			//ed::SetNodePosition(test->id, ImVec2(50, 10));
 			ed::SetNodePosition(nodeA_Id, ImVec2(10, 10));
+		}
 		ed::BeginNode(nodeA_Id);
 		{
 			ImGui::Text("Node A");
@@ -204,9 +361,9 @@ int main(void)
 		}
 		ed::EndNode();
 
-		ed::NodeId nodeB_Id = uniqueId++;
-		ed::PinId nodeB_InputPinId = uniqueId++;
-		ed::PinId nodeB_OutputPinId = uniqueId++;
+		static ed::NodeId nodeB_Id = getNextId();
+		static ed::PinId nodeB_InputPinId = getNextId();
+		static ed::PinId nodeB_OutputPinId = getNextId();
 
 		if (isFirstFrame)
 			ed::SetNodePosition(nodeB_Id, ImVec2(150, 10));
@@ -225,8 +382,10 @@ int main(void)
 
 
 		for (auto& linkInfo : links)
+		{
 			ed::Link(linkInfo.Id, linkInfo.InputId, linkInfo.OutputId);
-
+			std::cout << linkInfo.Id.Get() << std::endl;
+		}
 
 		if (ed::BeginCreate())
 		{
@@ -240,7 +399,7 @@ int main(void)
 					if (ed::AcceptNewItem())
 					{
 						// Since we accepted new link, lets add one to our list of links.
-						links.push_back({ ed::LinkId(nextLinkId++), inputPinId, outputPinId });
+						links.push_back({ ed::LinkId(getNextId()), inputPinId, outputPinId });
 
 						// Draw new link.
 						ed::Link(links.back().Id, links.back().InputId, links.back().OutputId);
@@ -253,7 +412,6 @@ int main(void)
 			}
 		}
 		ed::EndCreate();
-
 
 		// Handle deletion action
 		if (ed::BeginDelete())
