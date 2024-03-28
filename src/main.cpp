@@ -55,73 +55,6 @@ struct Pin
 	}
 };
 
-#define inputPinNb 3
-#define outputPinNb 1
-
-struct DefaultNode
-{
-	ed::NodeId id;
-	std::string name;
-
-	//static const int inputPinNb = 1;
-	Pin inputPin[inputPinNb];
-
-	//static const int outputPinNb = 1;
-	Pin outputPin[outputPinNb];
-
-	DefaultNode()
-	{
-		id = getNextId();
-		name = "Default node " + std::to_string(id.Get());
-
-		// Input pin(s)
-		for (int i = 0; i < inputPinNb; i++)
-		{
-			Pin& pin = inputPin[i];
-			pin.id = getNextId(); // [TODO] create an entity managing ids
-			pin.name = "input " + std::to_string(i);
-			//pin.node = this; // Is this really necessary ?
-			pin.kind = PinKind::Input;
-		}
-
-		// Output pin(s)
-		for (int i = 0; i < outputPinNb; i++)
-		{
-			Pin& pin = outputPin[i];
-			pin.id = getNextId(); // [TODO] create an entity managing ids
-			pin.name = "output " + std::to_string(i);
-			//pin.node = this; // Is this really necessary ?
-			pin.kind = PinKind::Output;
-		}
-	}
-
-	void render()
-	{
-		ed::BeginNode(id);
-
-		ImGui::Text("%s", name.c_str());
-		for (int i = 0; i < std::max(inputPinNb, outputPinNb); i++)
-		{
-			if (i < inputPinNb)
-			{
-				ed::BeginPin(inputPin[i].id, ed::PinKind::Input);
-				ImGui::Text("%s", inputPin[i].name.c_str());
-				ed::EndPin();
-			}
-			if (i < outputPinNb)
-			{
-				ImGui::SameLine();
-				ed::BeginPin(outputPin[i].id, ed::PinKind::Output);
-				ImGui::Text("%s", outputPin[i].name.c_str());
-				ed::EndPin();
-			}
-		}
-
-		ed::EndNode();
-	}
-};
-
-
 struct Node
 {
 	ed::NodeId id;
@@ -130,43 +63,115 @@ struct Node
 	std::vector<Pin> outputs;
 	ImColor color;
 
-	Node(ed::NodeId id, std::string name, ImColor color = ImColor(255, 255, 255))
-		: id(id), name(name), color(color)
+	Node()
+		: id(0), name(""), inputs(), outputs(), color(ImColor(0))
+	{ }
+
+	void render()
 	{
+		ed::BeginNode(id);
+
+		ImGui::Text("%s", name.c_str());
+		for (int i = 0; i < std::max(inputs.size(), outputs.size()); i++)
+		{
+			bool sameLine = false;
+
+			if (i < inputs.size())
+			{
+				ed::BeginPin(inputs[i].id, ed::PinKind::Input);
+				ImGui::Text("%s", inputs[i].name.c_str());
+				ed::EndPin();
+				sameLine = true;
+			}
+			if (i < outputs.size())
+			{
+				std::string spacing;
+
+				if (sameLine)
+					ImGui::SameLine();
+				else if (inputs.size() > 0)
+				{
+					// [TODO] A better way would be to find the max length in all inputs name
+					for (int j = 0; j < inputs[0].name.length(); j++)
+						spacing += " ";
+					spacing += " ";
+				}
+
+				ed::BeginPin(outputs[i].id, ed::PinKind::Output);
+				ImGui::Text("%s%s", spacing.c_str(), outputs[i].name.c_str());
+				ed::EndPin();
+			}
+		}
+
+		ed::EndNode();
 	}
 };
 
-std::vector<Node> nodes;
-
-void buildNode(Node* node)
+struct NodeTypeA : public Node
 {
-	for (auto& input : node->inputs)
+	NodeTypeA()
 	{
-		input.node = node;
-		input.kind = PinKind::Input;
-	}
+		id = getNextId();
+		name = "Node type A " + std::to_string(id.Get());
 
-	for (auto& output : node->outputs)
-	{
-		output.node = node;
-		output.kind = PinKind::Output;
-	}
-}
+		// Input pin(s)
+		for (int i = 0; i < 3; i++)
+		{
+			Pin pin;
+			pin.id = getNextId(); // [TODO] create an entity managing ids
+			pin.name = "input " + std::to_string(i);
+			pin.node = this; // Is this really necessary ?
+			pin.kind = PinKind::Input;
 
-Node* spawnNode()
+			inputs.push_back(pin);
+		}
+
+		// Output pin(s)
+		for (int i = 0; i < 3; i++)
+		{
+			Pin pin;
+			pin.id = getNextId();
+			pin.name = "output " + std::to_string(i);
+			pin.node = this; // Is this really necessary ?
+			pin.kind = PinKind::Output;
+
+			outputs.push_back(pin);
+		}
+	}
+};
+
+struct NodeTypeB : public Node
 {
-	nodes.emplace_back(getNextId(), "Test Node");
+	NodeTypeB()
+	{
+		id = getNextId();
+		name = "Node type A " + std::to_string(id.Get());
 
-	Node* node = &nodes.back();
-	assert(node != nullptr);
+		// Input pin(s)
+		for (int i = 0; i < 1; i++)
+		{
+			Pin pin;
+			pin.id = getNextId(); // [TODO] create an entity managing ids
+			pin.name = "input " + std::to_string(i);
+			pin.node = this; // Is this really necessary ?
+			pin.kind = PinKind::Input;
 
-	node->inputs.emplace_back(getNextId(), "input");
-	node->outputs.emplace_back(getNextId(), "ouput");
+			inputs.push_back(pin);
+		}
 
-	buildNode(node);
+		// Output pin(s)
+		for (int i = 0; i < 4; i++)
+		{
+			Pin pin;
+			pin.id = getNextId();
+			pin.name = "output " + std::to_string(i);
+			pin.node = this; // Is this really necessary ?
+			pin.kind = PinKind::Output;
 
-	return node;
-}
+			outputs.push_back(pin);
+		}
+	}
+};
 
 GLFWwindow* init(const int WIN_WIDTH, const int WIN_HEIGHT)
 {
@@ -281,7 +286,9 @@ int main(void)
 	bool isFirstFrame = true;
 	ImVector<LinkInfo> links;
 
-	DefaultNode n;
+	std::vector<Node> nodes;
+	nodes.push_back(NodeTypeA());
+	nodes.push_back(NodeTypeB());
 
 	while (!glfwWindowShouldClose(window) && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS)
 	{
@@ -337,7 +344,6 @@ int main(void)
 		ed::SetCurrentEditor(nodeEditorContext);
 		ed::Begin("Node editor", ImVec2(0.0, 0.0f));
 
-		n.render();
 		static ed::NodeId nodeA_Id = getNextId();
 		static ed::PinId nodeA_InputPinId = getNextId();
 		static ed::PinId nodeA_OutputPinId = getNextId();
@@ -379,6 +385,9 @@ int main(void)
 			ed::EndPin();
 		}
 		ed::EndNode();
+
+		for (Node node : nodes)
+			node.render();
 
 
 		for (auto& linkInfo : links)
