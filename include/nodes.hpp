@@ -102,6 +102,16 @@ struct Node
 
 		ed::EndNode();
 	}
+
+	bool operator==(const Node& node)
+	{
+		return id == node.id;
+	}
+
+	bool operator!=(const Node& node)
+	{
+		return !(*this == node);
+	}
 };
 
 struct NodeTypeA : public Node

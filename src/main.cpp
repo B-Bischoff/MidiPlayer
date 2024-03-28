@@ -53,6 +53,21 @@ GLFWwindow* init(const int WIN_WIDTH, const int WIN_HEIGHT)
 	return window;
 }
 
+Node& findNodeByPinId(std::vector<Node> nodes, ed::PinId id)
+{
+	for (Node& node : nodes)
+	{
+		for (Pin& pin : node.inputs)
+			if (pin.id == id)
+				return node;
+		for (Pin& pin : node.outputs)
+			if (pin.id == id)
+				return node;
+	}
+
+	assert(0 && "[NODE]: node id does not exits");
+}
+
 int main(void)
 {
 	int FRAME_COUNT = 0;
@@ -181,51 +196,8 @@ int main(void)
 		ed::SetCurrentEditor(nodeEditorContext);
 		ed::Begin("Node editor", ImVec2(0.0, 0.0f));
 
-		static ed::NodeId nodeA_Id = getNextId();
-		static ed::PinId nodeA_InputPinId = getNextId();
-		static ed::PinId nodeA_OutputPinId = getNextId();
-
-		if (isFirstFrame)
-		{
-			//Node* test = spawnNode();
-			//ed::SetNodePosition(test->id, ImVec2(50, 10));
-			ed::SetNodePosition(nodeA_Id, ImVec2(10, 10));
-		}
-		ed::BeginNode(nodeA_Id);
-		{
-			ImGui::Text("Node A");
-			ed::BeginPin(nodeA_InputPinId, ed::PinKind::Input);
-				ImGui::Text("-> In");
-			ed::EndPin();
-			ImGui::SameLine();
-			ed::BeginPin(nodeA_OutputPinId, ed::PinKind::Output);
-				ImGui::Text("Out ->");
-			ed::EndPin();
-		}
-		ed::EndNode();
-
-		static ed::NodeId nodeB_Id = getNextId();
-		static ed::PinId nodeB_InputPinId = getNextId();
-		static ed::PinId nodeB_OutputPinId = getNextId();
-
-		if (isFirstFrame)
-			ed::SetNodePosition(nodeB_Id, ImVec2(150, 10));
-		ed::BeginNode(nodeB_Id);
-		{
-			ImGui::Text("Node B");
-			ed::BeginPin(nodeB_InputPinId, ed::PinKind::Input);
-				ImGui::Text("-> In");
-			ed::EndPin();
-			ImGui::SameLine();
-			ed::BeginPin(nodeB_OutputPinId, ed::PinKind::Output);
-				ImGui::Text("Out ->");
-			ed::EndPin();
-		}
-		ed::EndNode();
-
 		for (Node node : nodes)
 			node.render();
-
 
 		for (auto& linkInfo : links)
 		{
@@ -239,7 +211,8 @@ int main(void)
 			{
 				// Link creation logic
 
-				if (inputPinId && outputPinId) // both are valid, let's accept link
+				if (inputPinId && outputPinId && \
+					findNodeByPinId(nodes, inputPinId) != findNodeByPinId(nodes, outputPinId)) // Do not accept pins from the same node
 				{
 					if (ed::AcceptNewItem())
 					{
