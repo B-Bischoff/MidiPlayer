@@ -14,7 +14,7 @@ int nextId = 0;
 
 int getNextId()
 {
-	return nextId++;
+	return ++nextId;
 }
 
 struct LinkInfo
@@ -384,7 +384,6 @@ int main(void)
 		for (auto& linkInfo : links)
 		{
 			ed::Link(linkInfo.Id, linkInfo.InputId, linkInfo.OutputId);
-			std::cout << linkInfo.Id.Get() << std::endl;
 		}
 
 		if (ed::BeginCreate())
