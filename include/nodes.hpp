@@ -64,6 +64,8 @@ struct Node
 		: id(0), name(""), inputs(), outputs(), color(ImColor(0))
 	{ }
 
+	virtual ~Node() {}
+
 	void render()
 	{
 		ed::BeginNode(id);
@@ -111,6 +113,23 @@ struct Node
 	bool operator!=(const Node& node)
 	{
 		return !(*this == node);
+	}
+};
+
+struct MasterNode : public Node
+{
+	MasterNode()
+		: Node()
+	{
+		id = getNextId();
+		name = "Master";
+
+		Pin pin;
+		pin.id = getNextId(); // [TODO] create an entity managing ids
+		pin.name = "> input";
+		pin.node = this; // Is this really necessary ?
+		pin.kind = PinKind::Input;
+		inputs.push_back(pin);
 	}
 };
 

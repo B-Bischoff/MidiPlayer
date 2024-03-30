@@ -53,19 +53,47 @@ GLFWwindow* init(const int WIN_WIDTH, const int WIN_HEIGHT)
 	return window;
 }
 
-Node& findNodeByPinId(std::vector<Node> nodes, ed::PinId id)
+Node& findNodeByPinId(std::vector<Node*>& nodes, ed::PinId id)
 {
-	for (Node& node : nodes)
+	for (Node* node : nodes)
 	{
-		for (Pin& pin : node.inputs)
+		for (Pin& pin : node->inputs)
 			if (pin.id == id)
-				return node;
-		for (Pin& pin : node.outputs)
+				return *node;
+		for (Pin& pin : node->outputs)
 			if (pin.id == id)
-				return node;
+				return *node;
 	}
 
-	assert(0 && "[NODE]: node id does not exits");
+	assert(0 && "[NODE]: Node id does not exits");
+}
+
+MasterNode& getMasterNode(std::vector<Node*>& nodes)
+{
+	for (Node* n: nodes)
+	{
+		std::cout << n->name << std::endl;
+		MasterNode* masterNode = dynamic_cast<MasterNode*>(n);
+		if (masterNode)
+			return *masterNode;
+	}
+	assert(0 && "[NODE]: Master node does not exists");
+}
+
+void printNodeHierarchy(Node& node, std::vector<Node*>& nodes, ImVector<LinkInfo>& links)
+{
+	for (Pin& pin : node.inputs)
+	{
+		for (LinkInfo& link: links)
+		{
+			if (link.OutputId == pin.id)
+			{
+				Node& linkedNode = findNodeByPinId(nodes, link.InputId);
+				std::cout << linkedNode.name << " -> " << node.name << std::endl;;
+				printNodeHierarchy(linkedNode, nodes, links);
+			}
+		}
+	}
 }
 
 int main(void)
@@ -138,9 +166,16 @@ int main(void)
 	bool isFirstFrame = true;
 	ImVector<LinkInfo> links;
 
-	std::vector<Node> nodes;
-	nodes.push_back(NodeTypeA());
-	nodes.push_back(NodeTypeB());
+	std::vector<Node*> nodes = {};
+
+	// [TODO] create a node manager storing contiguously nodes in memory
+	MasterNode masterNode;
+	nodes.push_back(&masterNode);
+	NodeTypeA typeA;
+	NodeTypeB typeB;
+
+	nodes.push_back(&typeA);
+	nodes.push_back(&typeB);
 
 	while (!glfwWindowShouldClose(window) && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS)
 	{
@@ -196,8 +231,8 @@ int main(void)
 		ed::SetCurrentEditor(nodeEditorContext);
 		ed::Begin("Node editor", ImVec2(0.0, 0.0f));
 
-		for (Node node : nodes)
-			node.render();
+		for (Node* node : nodes)
+			node->render();
 
 		for (auto& linkInfo : links)
 		{
@@ -221,6 +256,9 @@ int main(void)
 
 						// Draw new link.
 						ed::Link(links.back().Id, links.back().InputId, links.back().OutputId);
+
+						// Print links from mater node
+						printNodeHierarchy(getMasterNode(nodes), nodes, links);
 					}
 
 					// You may choose to reject connection between these nodes
