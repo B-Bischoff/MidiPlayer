@@ -79,15 +79,28 @@ struct AudioData {
 	}
 };
 
+// Keyboard
+struct KeyData
+{
+	bool down; // rising edge
+	bool up; // fallign edge
+	bool pressed; // press state
+	bool lastFramePressed;
+};
+
 struct InputManager
 {
+	// Midi events (PortMidi specifics)
 	PmStream* midiStream;
 	PmEvent buffer[32];
+
+#define GLFW_MAX_KEY 348
+	KeyData keys[GLFW_MAX_KEY];
 };
 
 void rtAudioInit(AudioData& audio);
 int uploadBuffer( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
-void handleInput(InputManager& inputManager, std::vector<sEnvelopeADSR>& envelopes, double time);
+void handleInput(GLFWwindow* window, InputManager& inputManager, std::vector<sEnvelopeADSR>& envelopes, double time);
 void initInput(InputManager& inputManger);
 void generateAudio(AudioData& audio, InputManager& inputManager, std::vector<sEnvelopeADSR>& envelopes, double& time);
 int uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);

@@ -211,7 +211,7 @@ int main(void)
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glfwPollEvents();
 
-		handleInput(inputManager, envelopes, t);
+		handleInput(window, inputManager, envelopes, t);
 		generateAudio(audio, inputManager, envelopes, t);
 
 		/*
