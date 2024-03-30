@@ -17,4 +17,7 @@ compile_commands.json
 .cache
 
 # MidiPlayer info dump
-data.txt
+*.txt
+
+# ImGui node editor cache
+*.json
