@@ -4,6 +4,7 @@
 #include <imgui.h>
 #include <imgui_node_editor.h>
 #include <vector>
+#include "inc.hpp"
 
 namespace ed = ax::NodeEditor;
 
@@ -66,10 +67,25 @@ struct Node
 
 	virtual ~Node() {}
 
-	void render()
+	virtual void render()
+	{
+		startRender();
+		renderNameAndPins();
+		endRender();
+	}
+
+	void startRender()
 	{
 		ed::BeginNode(id);
+	}
 
+	void endRender()
+	{
+		ed::EndNode();
+	}
+
+	void renderNameAndPins()
+	{
 		ImGui::Text("%s", name.c_str());
 		for (int i = 0; i < std::max(inputs.size(), outputs.size()); i++)
 		{
@@ -101,8 +117,6 @@ struct Node
 				ed::EndPin();
 			}
 		}
-
-		ed::EndNode();
 	}
 
 	bool operator==(const Node& node)
@@ -119,7 +133,6 @@ struct Node
 struct MasterNode : public Node
 {
 	MasterNode()
-		: Node()
 	{
 		id = getNextId();
 		name = "Master";
@@ -130,6 +143,130 @@ struct MasterNode : public Node
 		pin.node = this; // Is this really necessary ?
 		pin.kind = PinKind::Input;
 		inputs.push_back(pin);
+	}
+};
+
+struct NumberNode : public Node
+{
+	int value;
+
+	NumberNode()
+	{
+		id = getNextId();
+		name = "Number " + std::to_string(id.Get());
+
+		value = 0;
+
+		Pin pin;
+		pin.id = getNextId();
+		pin.name = "output >";
+		pin.node = this;
+		pin.kind = PinKind::Output;
+		outputs.push_back(pin);
+	}
+
+	void render()
+	{
+		Node::startRender();
+		Node::renderNameAndPins();
+
+		std::string dragIntText = "Value " + std::to_string(id.Get());
+		ImGui::SetNextItemWidth(50);
+		ImGui::DragInt(dragIntText.c_str(), &value);
+
+		Node::endRender();
+	}
+};
+
+struct OscNode : public Node
+{
+	OscType type;
+
+	OscNode()
+	{
+		id = getNextId();
+		name = "Osc " + std::to_string(id.Get());
+
+		type = OscType::Sine;
+
+		Pin pin;
+
+		pin.id = getNextId();
+		pin.name = "> input";
+		pin.node = this;
+		pin.kind = PinKind::Input;
+		inputs.push_back(pin);
+
+		pin.id = getNextId();
+		pin.name = "output >";
+		pin.node = this;
+		pin.kind = PinKind::Output;
+		outputs.push_back(pin);
+	}
+
+	void render()
+	{
+		Node::startRender();
+		Node::renderNameAndPins();
+
+		std::string dragIntText = "Value " + std::to_string(id.Get());
+		ImGui::SetNextItemWidth(50);
+
+		static std::string popupText = "Sine";
+		static bool doPopup = false;
+		if (ImGui::Button(popupText.c_str()))
+			doPopup = true;
+
+		Node::endRender();
+
+		ed::Suspend();
+		if (doPopup)
+		{
+			ImGui::OpenPopup("OscTypePopup");
+			doPopup = false;
+		}
+
+		if (ImGui::BeginPopup("OscTypePopup"))
+		{
+			ImGui::TextDisabled("Pick One:");
+			ImGui::BeginChild("popup_scroller", ImVec2(100, 100), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+			if (ImGui::Button("Sine")) {
+				popupText = "Sine";
+				ImGui::CloseCurrentPopup();  // These calls revoke the popup open state, which was set by OpenPopup above.
+			}
+			if (ImGui::Button("Square")) {
+				popupText = "Square";
+				ImGui::CloseCurrentPopup();
+			}
+			if (ImGui::Button("Triangle")) {
+				popupText = "Triangle";
+				ImGui::CloseCurrentPopup();
+			}
+			if (ImGui::Button("Saw_Ana")) {
+				popupText = "Saw_Ana";
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndChild();
+			ImGui::EndPopup(); // Note this does not do anything to the popup open/close state. It just terminates the content declaration.
+		}
+		ed::Resume();
+	}
+};
+
+struct KeyboardFrequencyNode : public Node
+{
+	KeyboardFrequencyNode()
+	{
+		id = getNextId();
+		name = "Keyboard Frequency " + std::to_string(id.Get());
+
+		Pin pin;
+		pin.id = getNextId();
+		pin.name = "frequency >";
+		pin.node = this; // Is this really necessary ?
+		pin.kind = PinKind::Output;
+
+		outputs.push_back(pin);
 	}
 };
 

@@ -30,6 +30,8 @@ typedef std::chrono::time_point<std::chrono::high_resolution_clock> time_point;
 
 struct sEnvelopeADSR;
 
+enum OscType { Sine, Square, Triangle, Saw_Ana, Saw_Dig, Noise };
+
 struct AudioData {
 	unsigned int sampleRate;
 	unsigned int channels;

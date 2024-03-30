@@ -173,9 +173,17 @@ int main(void)
 	nodes.push_back(&masterNode);
 	NodeTypeA typeA;
 	NodeTypeB typeB;
-
 	nodes.push_back(&typeA);
 	nodes.push_back(&typeB);
+
+	NumberNode n1;
+	nodes.push_back(&n1);
+
+	OscNode oscNode;
+	nodes.push_back(&oscNode);
+
+	KeyboardFrequencyNode kbFreqNode;
+	nodes.push_back(&kbFreqNode);
 
 	while (!glfwWindowShouldClose(window) && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS)
 	{
