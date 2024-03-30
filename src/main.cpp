@@ -68,11 +68,28 @@ Node& findNodeByPinId(std::vector<Node*>& nodes, ed::PinId id)
 	assert(0 && "[NODE]: Node id does not exits");
 }
 
+ed::PinKind getPinKind(ed::PinId pinId, std::vector<Node*>& nodes)
+{
+	for (Node* node : nodes)
+	{
+		for (Pin& pin : node->inputs)
+		{
+			if (pin.id == pinId)
+				return ed::PinKind::Input;
+		}
+		for (Pin& pin : node->outputs)
+		{
+			if (pin.id == pinId)
+				return ed::PinKind::Output;
+		}
+	}
+	assert(0 && "[NODE]: Pin id does not exits");
+}
+
 MasterNode& getMasterNode(std::vector<Node*>& nodes)
 {
 	for (Node* n: nodes)
 	{
-		std::cout << n->name << std::endl;
 		MasterNode* masterNode = dynamic_cast<MasterNode*>(n);
 		if (masterNode)
 			return *masterNode;
@@ -259,13 +276,19 @@ int main(void)
 				{
 					if (ed::AcceptNewItem())
 					{
+						if (getPinKind(inputPinId, nodes) == ed::PinKind::Input && getPinKind(outputPinId, nodes) == ed::PinKind::Output)
+						{
+							std::cout << "SWAP" << std::endl;
+							std::swap(inputPinId, outputPinId);
+						}
+
 						// Since we accepted new link, lets add one to our list of links.
 						links.push_back({ ed::LinkId(getNextId()), inputPinId, outputPinId });
 
 						// Draw new link.
 						ed::Link(links.back().Id, links.back().InputId, links.back().OutputId);
 
-						// Print links from mater node
+						// Print links from master node
 						printNodeHierarchy(getMasterNode(nodes), nodes, links);
 					}
 
