@@ -29,6 +29,7 @@
 typedef std::chrono::time_point<std::chrono::high_resolution_clock> time_point;
 
 struct sEnvelopeADSR;
+struct Master;
 
 enum OscType { Sine, Square, Triangle, Saw_Ana, Saw_Dig, Noise };
 
@@ -102,7 +103,7 @@ void rtAudioInit(AudioData& audio);
 int uploadBuffer( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
 void handleInput(GLFWwindow* window, InputManager& inputManager, std::vector<sEnvelopeADSR>& envelopes, double time);
 void initInput(InputManager& inputManger);
-void generateAudio(AudioData& audio, InputManager& inputManager, std::vector<sEnvelopeADSR>& envelopes, double& time);
+void generateAudio(AudioData& audio, Master& master, std::vector<sEnvelopeADSR>& envelopes, double& time);
 int uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
 
 static void exitError(const char* str)

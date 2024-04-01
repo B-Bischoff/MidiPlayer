@@ -1,58 +1,5 @@
 #include "inc.hpp"
-#include "envelope.hpp"
-
-static double pianoKeyFrequency(int keyId);
-static double osc(double hertz, double time, double LFOHertz = 0.0, double LFOAmplitude = 0.0);
-
-struct Base {
-	virtual ~Base() {};
-	virtual double process() = 0;
-	static double time;
-};
-
-double Base::time = 0.0;
-
-struct Master : public Base {
-	Base* input;
-	double process()
-	{
-		double value = input->process();
-		return value;
-	}
-};
-
-struct KeyboardFrequency : public Base {
-	static unsigned int keyIndex;
-
-	double process()
-	{
-		return pianoKeyFrequency(keyIndex);
-	}
-};
-
-struct ADSR : public Base {
-	Base* input;
-	sEnvelopeADSR* envelope;
-
-	double process()
-	{
-		double value = input->process() * envelope->GetAmplitude(time);
-		return value;
-	}
-};
-
-unsigned int KeyboardFrequency::keyIndex = 0;
-
-struct Oscillator : public Base {
-	Base* input;
-
-	double process()
-	{
-		double frequency = input->process();
-		double value = osc(frequency, time);
-		return value;
-	}
-};
+#include "audio_backend.hpp"
 
 void applyLowPassFilter(double& sample)
 {
@@ -63,7 +10,7 @@ void applyLowPassFilter(double& sample)
 }
 
 // [TODO] think to group everything (or not?) in a class/struct
-void generateAudio(AudioData& audio, InputManager& inputManager, std::vector<sEnvelopeADSR>& envelopes, double& time)
+void generateAudio(AudioData& audio, Master& master, std::vector<sEnvelopeADSR>& envelopes, double& time)
 {
 	static int TEST = 0;
 	double fractionalPart = audio.getFramesPerUpdate() - (int)audio.getFramesPerUpdate();
@@ -78,15 +25,6 @@ void generateAudio(AudioData& audio, InputManager& inputManager, std::vector<sEn
 	//std::cout << writeOneMoreFrame << std::endl;
 	//for (int i = 0; i < audio.sampleRate / audio.targetFPS + (int)writeOneMoreFrame; i++)
 
-	static Master master;
-	static Oscillator oscillator;
-	static KeyboardFrequency kb;
-	static ADSR adsr;
-
-	master.input = &adsr;
-	adsr.input = &oscillator;
-	oscillator.input = &kb;
-
 	for (int i = 0; i < (int)audio.getFramesPerUpdate() + writeOneMoreFrame + audio.samplesToAdjust; i++)
 	{
 		//std::cout << " >>> " << audio.sampleRate / audio.targetFPS + (i % 3 == 0) << std::endl;
@@ -100,7 +38,7 @@ void generateAudio(AudioData& audio, InputManager& inputManager, std::vector<sEn
 			{
 				//double amplitude = e.GetAmplitude(time);
 				KeyboardFrequency::keyIndex = e.keyIndex;
-				adsr.envelope = &e;
+				ADSR::envelope = &e;
 
 				//for (int j = 1; j < 10; j++)
 				//	value += osc(pianoKeyFrequency(e.keyIndex) * j, time) * 0.2 * (1.0 / (double)j) * amplitude;
@@ -130,7 +68,7 @@ void generateAudio(AudioData& audio, InputManager& inputManager, std::vector<sEn
 	audio.syncCursors = true;
 }
 
-static double pianoKeyFrequency(int keyId)
+double pianoKeyFrequency(int keyId)
 {
 
 	// Frequency of key A4 (A440) is 440 Hz
@@ -155,7 +93,7 @@ static double freqToAngularVelocity(double hertz)
 	return hertz * 2.0 * M_PI;
 }
 
-static double osc(double hertz, double time, double LFOHertz, double LFOAmplitude)
+double osc(double hertz, double time, double LFOHertz, double LFOAmplitude)
 {
 	double t = freqToAngularVelocity(hertz) * time + LFOAmplitude * hertz * (sin(freqToAngularVelocity(LFOHertz) * time));
 	t = sin(t); // SINE oscillator

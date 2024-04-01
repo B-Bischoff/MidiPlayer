@@ -8,6 +8,8 @@
 
 namespace ed = ax::NodeEditor;
 
+enum UI_NodeType { NodeUI, MasterUI, NumberUI, OscUI, ADSRUI, KbFreqUI };
+
 int nextId = 0;
 
 int getNextId()
@@ -60,9 +62,10 @@ struct Node
 	std::vector<Pin> inputs;
 	std::vector<Pin> outputs;
 	ImColor color;
+	UI_NodeType type;
 
 	Node()
-		: id(0), name(""), inputs(), outputs(), color(ImColor(0))
+		: id(0), name(""), inputs(), outputs(), color(ImColor(0)), type(NodeUI)
 	{ }
 
 	virtual ~Node() {}
@@ -136,6 +139,7 @@ struct MasterNode : public Node
 	{
 		id = getNextId();
 		name = "Master";
+		type = MasterUI;
 
 		Pin pin;
 		pin.id = getNextId(); // [TODO] create an entity managing ids
@@ -154,6 +158,7 @@ struct NumberNode : public Node
 	{
 		id = getNextId();
 		name = "Number " + std::to_string(id.Get());
+		type = NumberUI;
 
 		value = 0;
 
@@ -180,14 +185,15 @@ struct NumberNode : public Node
 
 struct OscNode : public Node
 {
-	OscType type;
+	OscType oscType;
 
 	OscNode()
 	{
 		id = getNextId();
 		name = "Osc " + std::to_string(id.Get());
+		type = OscUI;
 
-		type = OscType::Sine;
+		oscType = OscType::Sine;
 
 		Pin pin;
 
@@ -258,6 +264,7 @@ struct ADSR_Node : public Node {
 	{
 		id = getNextId();
 		name = "ADSR " + std::to_string(id.Get());
+		type = ADSRUI;
 
 		Pin pin;
 		pin.id = getNextId();
@@ -280,6 +287,7 @@ struct KeyboardFrequencyNode : public Node
 	{
 		id = getNextId();
 		name = "Keyboard Frequency " + std::to_string(id.Get());
+		type = KbFreqUI;
 
 		Pin pin;
 		pin.id = getNextId();

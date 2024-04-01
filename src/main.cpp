@@ -5,10 +5,14 @@
 #include <unistd.h>
 
 #include "inc.hpp"
-#include "envelope.hpp"
-#include "nodes.hpp"
+#include "nodes.hpp" // [TODO] rename this to "nodes_ui.hpp"
+#include "audio_backend.hpp"
 
 static void handleFrameProcessTime(const time_point& startTime, const std::chrono::duration<double>& targetFrameDuration, AudioData& audio);
+
+double Base::time = 0.0;
+unsigned int KeyboardFrequency::keyIndex = 0;
+sEnvelopeADSR* ADSR::envelope = nullptr;
 
 GLFWwindow* init(const int WIN_WIDTH, const int WIN_HEIGHT)
 {
@@ -97,7 +101,22 @@ MasterNode& getMasterNode(std::vector<Node*>& nodes)
 	assert(0 && "[NODE]: Master node does not exists");
 }
 
-void printNodeHierarchy(Node& node, std::vector<Node*>& nodes, ImVector<LinkInfo>& links)
+Base* createBaseFromNodeUI(UI_NodeType type)
+{
+//enum UI_NodeType { NodeUI, MasterUI, NumberUI, OscUI, ADSRUI, KbFreqUI };
+	switch (type)
+	{
+		case NodeUI: std::cout << "node" << std::endl; break;
+		case MasterUI: std::cout << "master" << std::endl; break;
+		case NumberUI: std::cout << "number" << std::endl; break;
+		case OscUI: std::cout << "osc" << std::endl; return new Oscillator();
+		case ADSRUI: std::cout << "adsr" << std::endl; return new ADSR();
+		case KbFreqUI: std::cout << "kb freq" << std::endl; return new KeyboardFrequency();
+	}
+	assert(0 && "Invalid type");
+}
+
+void printNodeHierarchy(Node& node, Base& base, std::vector<Node*>& nodes, ImVector<LinkInfo>& links)
 {
 	for (Pin& pin : node.inputs)
 	{
@@ -107,7 +126,8 @@ void printNodeHierarchy(Node& node, std::vector<Node*>& nodes, ImVector<LinkInfo
 			{
 				Node& linkedNode = findNodeByPinId(nodes, link.InputId);
 				std::cout << linkedNode.name << " -> " << node.name << std::endl;;
-				printNodeHierarchy(linkedNode, nodes, links);
+				base.input = createBaseFromNodeUI(linkedNode.type);
+				printNodeHierarchy(linkedNode, *base.input, nodes, links);
 			}
 		}
 	}
@@ -205,6 +225,8 @@ int main(void)
 	ADSR_Node adsrNode;
 	nodes.push_back(&adsrNode);
 
+	Master master;
+
 	while (!glfwWindowShouldClose(window) && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
@@ -215,7 +237,7 @@ int main(void)
 		glfwPollEvents();
 
 		handleInput(window, inputManager, envelopes, t);
-		generateAudio(audio, inputManager, envelopes, t);
+		generateAudio(audio, master, envelopes, t);
 
 		/*
 		// Lag simulator
@@ -292,7 +314,7 @@ int main(void)
 						ed::Link(links.back().Id, links.back().InputId, links.back().OutputId);
 
 						// Print links from master node
-						printNodeHierarchy(getMasterNode(nodes), nodes, links);
+						printNodeHierarchy(getMasterNode(nodes), master, nodes, links);
 					}
 
 					// You may choose to reject connection between these nodes
