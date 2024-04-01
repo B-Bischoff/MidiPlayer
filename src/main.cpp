@@ -202,6 +202,9 @@ int main(void)
 	KeyboardFrequencyNode kbFreqNode;
 	nodes.push_back(&kbFreqNode);
 
+	ADSR_Node adsrNode;
+	nodes.push_back(&adsrNode);
+
 	while (!glfwWindowShouldClose(window) && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();

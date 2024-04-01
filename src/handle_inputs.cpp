@@ -48,7 +48,7 @@ void handleInput(GLFWwindow* window, InputManager& inputManager, std::vector<sEn
 			{
 				// Extract MIDI status and data bytes
 				int status = 0;
-				int keyIndex = 20;
+				int keyIndex = i - 40;
 				int velocity = 127;
 
 				if (key.down)

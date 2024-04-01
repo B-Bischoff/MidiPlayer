@@ -253,6 +253,27 @@ struct OscNode : public Node
 	}
 };
 
+struct ADSR_Node : public Node {
+	ADSR_Node()
+	{
+		id = getNextId();
+		name = "ADSR " + std::to_string(id.Get());
+
+		Pin pin;
+		pin.id = getNextId();
+		pin.name = "output >";
+		pin.node = this;
+		pin.kind = PinKind::Output;
+		outputs.push_back(pin);
+
+		pin.id = getNextId();
+		pin.name = "> input";
+		pin.node = this;
+		pin.kind = PinKind::Input;
+		inputs.push_back(pin);
+	}
+};
+
 struct KeyboardFrequencyNode : public Node
 {
 	KeyboardFrequencyNode()

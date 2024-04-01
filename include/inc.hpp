@@ -24,7 +24,7 @@
 #include <imgui_node_editor.h>
 
 #define VERBOSE true
-#define USE_KB_AS_MIDI_INPUT true
+#define USE_KB_AS_MIDI_INPUT false
 
 typedef std::chrono::time_point<std::chrono::high_resolution_clock> time_point;
 
