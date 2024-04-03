@@ -10,7 +10,7 @@
 
 static void handleFrameProcessTime(const time_point& startTime, const std::chrono::duration<double>& targetFrameDuration, AudioData& audio);
 
-double Base::time = 0.0;
+double AudioComponent::time = 0.0;
 unsigned int KeyboardFrequency::keyIndex = 0;
 sEnvelopeADSR* ADSR::envelope = nullptr;
 
@@ -101,7 +101,7 @@ MasterNode& getMasterNode(std::vector<Node*>& nodes)
 	assert(0 && "[NODE]: Master node does not exists");
 }
 
-Base* createBaseFromNodeUI(UI_NodeType type)
+AudioComponent* allocateAudioComponent(UI_NodeType type)
 {
 //enum UI_NodeType { NodeUI, MasterUI, NumberUI, OscUI, ADSRUI, KbFreqUI };
 	switch (type)
@@ -116,7 +116,16 @@ Base* createBaseFromNodeUI(UI_NodeType type)
 	assert(0 && "Invalid type");
 }
 
-void printNodeHierarchy(Node& node, Base& base, std::vector<Node*>& nodes, ImVector<LinkInfo>& links)
+void deleteComponentAndInputs(AudioComponent* component)
+{
+	if (!component || !component->input)
+		return;
+
+	deleteComponentAndInputs(component->input);
+	delete component;
+}
+
+void createAudioComponentsFromNodes(AudioComponent& component, Node& node, std::vector<Node*>& nodes, ImVector<LinkInfo>& links)
 {
 	for (Pin& pin : node.inputs)
 	{
@@ -125,12 +134,19 @@ void printNodeHierarchy(Node& node, Base& base, std::vector<Node*>& nodes, ImVec
 			if (link.OutputId == pin.id)
 			{
 				Node& linkedNode = findNodeByPinId(nodes, link.InputId);
-				std::cout << linkedNode.name << " -> " << node.name << std::endl;;
-				base.input = createBaseFromNodeUI(linkedNode.type);
-				printNodeHierarchy(linkedNode, *base.input, nodes, links);
+				//std::cout << linkedNode.name << " -> " << node.name << std::endl;;
+				component.input = allocateAudioComponent(linkedNode.type);
+				createAudioComponentsFromNodes(*component.input, linkedNode, nodes, links);
 			}
 		}
 	}
+}
+
+// [TODO] keep the function name for different models types (e.g file)
+void updateAudioComponents(AudioComponent& master, Node& node, std::vector<Node*>& nodes, ImVector<LinkInfo>& links)
+{
+	deleteComponentAndInputs(master.input);
+	createAudioComponentsFromNodes(master, node, nodes, links);
 }
 
 int main(void)
@@ -272,11 +288,9 @@ int main(void)
 			ImPlot::PlotLine("read cursor", readCursorXArray, cursorY, 2);
 
 			ImPlot::EndPlot();
-
-
 		}
-		ImGui::End();
 
+		ImGui::End();
 
 		ed::SetCurrentEditor(nodeEditorContext);
 		ed::Begin("Node editor", ImVec2(0.0, 0.0f));
@@ -284,10 +298,8 @@ int main(void)
 		for (Node* node : nodes)
 			node->render();
 
-		for (auto& linkInfo : links)
-		{
+		for (auto& linkInfo : links) // Render links
 			ed::Link(linkInfo.Id, linkInfo.InputId, linkInfo.OutputId);
-		}
 
 		if (ed::BeginCreate())
 		{
@@ -301,11 +313,9 @@ int main(void)
 				{
 					if (ed::AcceptNewItem())
 					{
+						// input & output pins may be reversed depending on the selection order of the nodes link
 						if (getPinKind(inputPinId, nodes) == ed::PinKind::Input && getPinKind(outputPinId, nodes) == ed::PinKind::Output)
-						{
-							std::cout << "SWAP" << std::endl;
 							std::swap(inputPinId, outputPinId);
-						}
 
 						// Since we accepted new link, lets add one to our list of links.
 						links.push_back({ ed::LinkId(getNextId()), inputPinId, outputPinId });
@@ -314,7 +324,7 @@ int main(void)
 						ed::Link(links.back().Id, links.back().InputId, links.back().OutputId);
 
 						// Print links from master node
-						printNodeHierarchy(getMasterNode(nodes), master, nodes, links);
+						updateAudioComponents(master, getMasterNode(nodes), nodes, links);
 					}
 
 					// You may choose to reject connection between these nodes

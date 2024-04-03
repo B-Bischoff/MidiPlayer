@@ -55,7 +55,7 @@ void generateAudio(AudioData& audio, Master& master, std::vector<sEnvelopeADSR>&
 		//std::cout << "TIME : " << time << " " << value << " " << std::endl;
 		//t += (double)audio.sampleRate / (double)audio.targetFPS;
 		time += 1.0 / (double)audio.sampleRate;
-		Base::time = time;
+		AudioComponent::time = time;
 
 		for (int j = 0; j < audio.channels; j++)
 		{

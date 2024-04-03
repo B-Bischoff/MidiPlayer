@@ -3,16 +3,16 @@
 double osc(double hertz, double time, double LFOHertz = 0.0, double LFOAmplitude = 0.0);
 double pianoKeyFrequency(int keyId);
 
-struct Base {
-	Base() : input(nullptr) {}
-	virtual ~Base() {};
+struct AudioComponent {
+	AudioComponent() : input(nullptr) { }
+	virtual ~AudioComponent() {};
 	virtual double process() = 0;
 
 	static double time;
-	Base* input;
+	AudioComponent* input;
 };
 
-struct Master : public Base {
+struct Master : public AudioComponent {
 	double process()
 	{
 		if (!input)
@@ -27,7 +27,7 @@ struct Master : public Base {
 	}
 };
 
-struct KeyboardFrequency : public Base {
+struct KeyboardFrequency : public AudioComponent {
 	static unsigned int keyIndex;
 
 	double process()
@@ -37,7 +37,7 @@ struct KeyboardFrequency : public Base {
 	}
 };
 
-struct ADSR : public Base {
+struct ADSR : public AudioComponent {
 	static sEnvelopeADSR* envelope;
 
 	double process()
@@ -48,7 +48,7 @@ struct ADSR : public Base {
 	}
 };
 
-struct Oscillator : public Base {
+struct Oscillator : public AudioComponent {
 	double process()
 	{
 		double frequency = input->process();
