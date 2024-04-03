@@ -22,7 +22,6 @@ struct Master : public AudioComponent {
 		}
 
 		double value = input->process();
-		std::cout << "master" << std::endl;
 		return value;
 	}
 };
@@ -32,7 +31,6 @@ struct KeyboardFrequency : public AudioComponent {
 
 	double process()
 	{
-		std::cout << "kb freq" << std::endl;
 		return pianoKeyFrequency(keyIndex);
 	}
 };
@@ -42,8 +40,10 @@ struct ADSR : public AudioComponent {
 
 	double process()
 	{
+		if (!input)
+			return 0.0;
+
 		double value = input->process() * envelope->GetAmplitude(time);
-		std::cout << "adsr" << std::endl;
 		return value;
 	}
 };
@@ -51,9 +51,11 @@ struct ADSR : public AudioComponent {
 struct Oscillator : public AudioComponent {
 	double process()
 	{
+		if (!input)
+			return 0.0;
+
 		double frequency = input->process();
 		double value = osc(frequency, time);
-		std::cout << "osc" << std::endl;
 		return value;
 	}
 };

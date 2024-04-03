@@ -146,6 +146,8 @@ void createAudioComponentsFromNodes(AudioComponent& component, Node& node, std::
 void updateAudioComponents(AudioComponent& master, Node& node, std::vector<Node*>& nodes, ImVector<LinkInfo>& links)
 {
 	deleteComponentAndInputs(master.input);
+	master.input = nullptr;
+
 	createAudioComponentsFromNodes(master, node, nodes, links);
 }
 
@@ -224,10 +226,6 @@ int main(void)
 	// [TODO] create a node manager storing contiguously nodes in memory
 	MasterNode masterNode;
 	nodes.push_back(&masterNode);
-	NodeTypeA typeA;
-	NodeTypeB typeB;
-	nodes.push_back(&typeA);
-	nodes.push_back(&typeB);
 
 	NumberNode n1;
 	nodes.push_back(&n1);
@@ -323,7 +321,6 @@ int main(void)
 						// Draw new link.
 						ed::Link(links.back().Id, links.back().InputId, links.back().OutputId);
 
-						// Print links from master node
 						updateAudioComponents(master, getMasterNode(nodes), nodes, links);
 					}
 
@@ -351,6 +348,8 @@ int main(void)
 						if (link.Id == deletedLinkId)
 						{
 							links.erase(&link);
+
+							updateAudioComponents(master, getMasterNode(nodes), nodes, links);
 							break;
 						}
 					}
