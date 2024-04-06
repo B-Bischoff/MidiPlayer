@@ -57,6 +57,8 @@ struct Node
 	ImColor color;
 	UI_NodeType type;
 
+	static bool propertyChanged;
+
 	Node()
 		: id(0), name(""), inputs(), outputs(), color(ImColor(0)), type(NodeUI)
 	{ }
@@ -237,26 +239,30 @@ struct OscNode : public Node
 		{
 			ImGui::TextDisabled("Pick One:");
 			ImGui::BeginChild("popup_scroller", ImVec2(100, 100), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
-			if (ImGui::Button("Sine")) {
-				popupText = "Sine";
-				ImGui::CloseCurrentPopup();  // These calls revoke the popup open state, which was set by OpenPopup above.
-			}
-			if (ImGui::Button("Square")) {
-				popupText = "Square";
-				ImGui::CloseCurrentPopup();
-			}
-			if (ImGui::Button("Triangle")) {
-				popupText = "Triangle";
-				ImGui::CloseCurrentPopup();
-			}
-			if (ImGui::Button("Saw_Ana")) {
-				popupText = "Saw_Ana";
-				ImGui::CloseCurrentPopup();
-			}
+
+			updateButtonInPopUp(OscType::Sine, "Sine", popupText);
+			updateButtonInPopUp(OscType::Square, "Square", popupText);
+			updateButtonInPopUp(OscType::Triangle, "Triangle", popupText);
+			updateButtonInPopUp(OscType::Saw_Ana, "Saw_Ana", popupText);
+			updateButtonInPopUp(OscType::Saw_Dig, "Saw_Dig", popupText);
+			updateButtonInPopUp(OscType::Noise, "Noise", popupText);
+
 			ImGui::EndChild();
 			ImGui::EndPopup(); // Note this does not do anything to the popup open/close state. It just terminates the content declaration.
 		}
 		ed::Resume();
+	}
+
+private:
+	void updateButtonInPopUp(OscType oscType, std::string oscTypeText, std::string& popupText)
+	{
+		if (ImGui::Button(oscTypeText.c_str())) {
+			this->oscType = oscType;
+			popupText = oscTypeText;
+			ImGui::CloseCurrentPopup();
+
+			Node::propertyChanged = true;
+		}
 	}
 };
 

@@ -14,6 +14,7 @@
 #include <assert.h>
 #include <thread>
 #include <cstring>
+#include <limits>
 
 #include <implot.h>
 #include <imgui_node_editor.h>
@@ -26,6 +27,7 @@ typedef std::chrono::time_point<std::chrono::high_resolution_clock> time_point;
 struct sEnvelopeADSR;
 struct Master;
 
+// [TODO] Rename enums to OscSine, OscSquare, ... (?)
 enum OscType { Sine, Square, Triangle, Saw_Ana, Saw_Dig, Noise };
 
 struct AudioData {

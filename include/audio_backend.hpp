@@ -1,8 +1,9 @@
 #pragma once
 
 #include "envelope.hpp"
+#include "inc.hpp"
 
-double osc(double hertz, double time, double LFOHertz = 0.0, double LFOAmplitude = 0.0);
+double osc(double hertz, double time, OscType type = Sine, double LFOHertz = 0.0, double LFOAmplitude = 0.0);
 double pianoKeyFrequency(int keyId);
 
 struct AudioComponent {
@@ -51,13 +52,15 @@ struct ADSR : public AudioComponent {
 };
 
 struct Oscillator : public AudioComponent {
+	OscType type;
+
 	double process()
 	{
 		if (!input)
 			return 0.0;
 
 		double frequency = input->process();
-		double value = osc(frequency, time);
+		double value = osc(frequency, time, type);
 		return value;
 	}
 };

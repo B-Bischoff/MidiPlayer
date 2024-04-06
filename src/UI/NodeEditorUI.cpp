@@ -1,5 +1,6 @@
 #include "NodeEditorUI.hpp"
 
+bool Node::propertyChanged = false;
 int MasterNode::nextId = 0;
 
 Node& findNodeByPinId(std::vector<Node*>& nodes, ed::PinId id)
@@ -46,17 +47,25 @@ MasterNode& getMasterNode(std::vector<Node*>& nodes)
 	assert(0 && "[NODE]: Master node does not exists");
 }
 
-AudioComponent* allocateAudioComponent(UI_NodeType type)
+AudioComponent* allocateAudioComponent(Node& node)
 {
-//enum UI_NodeType { NodeUI, MasterUI, NumberUI, OscUI, ADSRUI, KbFreqUI };
+	UI_NodeType type = node.type;
+
 	switch (type)
 	{
-		case NodeUI: std::cout << "node" << std::endl; break;
-		case MasterUI: std::cout << "master" << std::endl; break;
-		case NumberUI: std::cout << "number" << std::endl; break;
-		case OscUI: std::cout << "osc" << std::endl; return new Oscillator();
-		case ADSRUI: std::cout << "adsr" << std::endl; return new ADSR();
-		case KbFreqUI: std::cout << "kb freq" << std::endl; return new KeyboardFrequency();
+		case NodeUI: break;
+		case MasterUI: break;
+		case NumberUI: break;
+		case OscUI: {
+			OscNode* oscUI = dynamic_cast<OscNode*>(&node);
+			assert(oscUI);
+			Oscillator* osc = new Oscillator();
+			osc->type = oscUI->oscType;
+						std::cout << "osc : " << osc->type << std::endl;
+			return osc;
+		}
+		case ADSRUI: return new ADSR();
+		case KbFreqUI: return new KeyboardFrequency();
 	}
 	assert(0 && "Invalid type");
 }
@@ -80,7 +89,7 @@ void createAudioComponentsFromNodes(AudioComponent& component, Node& node, std::
 			{
 				Node& linkedNode = findNodeByPinId(nodes, link.InputId);
 				//std::cout << linkedNode.name << " -> " << node.name << std::endl;;
-				component.input = allocateAudioComponent(linkedNode.type);
+				component.input = allocateAudioComponent(linkedNode);
 				createAudioComponentsFromNodes(*component.input, linkedNode, nodes, links);
 			}
 		}
@@ -182,4 +191,11 @@ void NodeEditorUI::update(Master& master)
 	ed::EndDelete(); // Wrap up deletion action
 
 	ed::End();
+
+	if (Node::propertyChanged)
+	{
+		std::cout << "Property changed" << std::endl;
+		Node::propertyChanged = false;
+		updateAudioComponents(master, getMasterNode(_nodes), _nodes, _links);
+	}
 }
