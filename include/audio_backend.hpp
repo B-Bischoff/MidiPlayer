@@ -1,3 +1,5 @@
+#pragma once
+
 #include "envelope.hpp"
 
 double osc(double hertz, double time, double LFOHertz = 0.0, double LFOAmplitude = 0.0);

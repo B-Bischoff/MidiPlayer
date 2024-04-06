@@ -15,12 +15,7 @@
 #include <thread>
 #include <cstring>
 
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
-
 #include <implot.h>
-
 #include <imgui_node_editor.h>
 
 #define VERBOSE true

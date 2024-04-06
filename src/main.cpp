@@ -5,8 +5,8 @@
 #include <unistd.h>
 
 #include "inc.hpp"
-#include "nodes.hpp" // [TODO] rename this to "nodes_ui.hpp"
-#include "audio_backend.hpp"
+
+#include "UI/UI.hpp"
 
 static void handleFrameProcessTime(const time_point& startTime, const std::chrono::duration<double>& targetFrameDuration, AudioData& audio);
 
@@ -57,124 +57,12 @@ GLFWwindow* init(const int WIN_WIDTH, const int WIN_HEIGHT)
 	return window;
 }
 
-Node& findNodeByPinId(std::vector<Node*>& nodes, ed::PinId id)
-{
-	for (Node* node : nodes)
-	{
-		for (Pin& pin : node->inputs)
-			if (pin.id == id)
-				return *node;
-		for (Pin& pin : node->outputs)
-			if (pin.id == id)
-				return *node;
-	}
-
-	assert(0 && "[NODE]: Node id does not exits");
-}
-
-ed::PinKind getPinKind(ed::PinId pinId, std::vector<Node*>& nodes)
-{
-	for (Node* node : nodes)
-	{
-		for (Pin& pin : node->inputs)
-		{
-			if (pin.id == pinId)
-				return ed::PinKind::Input;
-		}
-		for (Pin& pin : node->outputs)
-		{
-			if (pin.id == pinId)
-				return ed::PinKind::Output;
-		}
-	}
-	assert(0 && "[NODE]: Pin id does not exits");
-}
-
-MasterNode& getMasterNode(std::vector<Node*>& nodes)
-{
-	for (Node* n: nodes)
-	{
-		MasterNode* masterNode = dynamic_cast<MasterNode*>(n);
-		if (masterNode)
-			return *masterNode;
-	}
-	assert(0 && "[NODE]: Master node does not exists");
-}
-
-AudioComponent* allocateAudioComponent(UI_NodeType type)
-{
-//enum UI_NodeType { NodeUI, MasterUI, NumberUI, OscUI, ADSRUI, KbFreqUI };
-	switch (type)
-	{
-		case NodeUI: std::cout << "node" << std::endl; break;
-		case MasterUI: std::cout << "master" << std::endl; break;
-		case NumberUI: std::cout << "number" << std::endl; break;
-		case OscUI: std::cout << "osc" << std::endl; return new Oscillator();
-		case ADSRUI: std::cout << "adsr" << std::endl; return new ADSR();
-		case KbFreqUI: std::cout << "kb freq" << std::endl; return new KeyboardFrequency();
-	}
-	assert(0 && "Invalid type");
-}
-
-void deleteComponentAndInputs(AudioComponent* component)
-{
-	if (!component || !component->input)
-		return;
-
-	deleteComponentAndInputs(component->input);
-	delete component;
-}
-
-void createAudioComponentsFromNodes(AudioComponent& component, Node& node, std::vector<Node*>& nodes, ImVector<LinkInfo>& links)
-{
-	for (Pin& pin : node.inputs)
-	{
-		for (LinkInfo& link: links)
-		{
-			if (link.OutputId == pin.id)
-			{
-				Node& linkedNode = findNodeByPinId(nodes, link.InputId);
-				//std::cout << linkedNode.name << " -> " << node.name << std::endl;;
-				component.input = allocateAudioComponent(linkedNode.type);
-				createAudioComponentsFromNodes(*component.input, linkedNode, nodes, links);
-			}
-		}
-	}
-}
-
-// [TODO] keep the function name for different models types (e.g file)
-void updateAudioComponents(AudioComponent& master, Node& node, std::vector<Node*>& nodes, ImVector<LinkInfo>& links)
-{
-	deleteComponentAndInputs(master.input);
-	master.input = nullptr;
-
-	createAudioComponentsFromNodes(master, node, nodes, links);
-}
-
 int main(void)
 {
 	int FRAME_COUNT = 0;
 	const int SCREEN_WIDTH = 1920;
 	const int SCREEN_HEIGHT = 1080;
 	GLFWwindow* window = init(SCREEN_WIDTH, SCREEN_HEIGHT);
-
-#if defined(IMGUI_IMPL_OPENGL_ES2)
-	const char* glsl_version = "#version 100";
-#elif defined(__APPLE__)
-	const char* glsl_version = "#version 150";
-#else
-	const char* glsl_version = "#version 130";
-#endif
-	ImGuiContext* imguiContext = ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	ImGui::StyleColorsDark();
-	ImGui_ImplGlfw_InitForOpenGL(window, true);
-	ImGui_ImplOpenGL3_Init(glsl_version);
-
-	ImGui::SetCurrentContext(imguiContext);
-	ImPlot::CreateContext();
-
-	ed::EditorContext* nodeEditorContext = ed::CreateEditor();
 
 	std::vector<sEnvelopeADSR> envelopes(16);
 
@@ -205,10 +93,11 @@ int main(void)
 	InputManager inputManager;
 	initInput(inputManager);
 
-
 	std::this_thread::sleep_for(std::chrono::milliseconds(100)); // let rtaudio get more stable [TODO] check if that is necessary
 	audio.writeCursor = (audio.leftPhase + audio.getLatencyInFramesPerUpdate()) % audio.getBufferSize();
 	//std::cout << "L/R/W : " << audio.leftPhase << " " << audio.rightPhase << " " << audio.writeCursor << std::endl;
+
+	UI ui(window, audio);
 
 	double t = 0.0;
 
@@ -218,27 +107,7 @@ int main(void)
 	bool copyAudioBuffer = true;
 	float* bufferCopy = new float[audio.getBufferSize()];
 
-	bool isFirstFrame = true;
 	ImVector<LinkInfo> links;
-
-	std::vector<Node*> nodes = {};
-
-	// [TODO] create a node manager storing contiguously nodes in memory
-	MasterNode masterNode;
-	nodes.push_back(&masterNode);
-
-	NumberNode n1;
-	nodes.push_back(&n1);
-
-	OscNode oscNode;
-	nodes.push_back(&oscNode);
-
-	KeyboardFrequencyNode kbFreqNode;
-	nodes.push_back(&kbFreqNode);
-
-	ADSR_Node adsrNode;
-	nodes.push_back(&adsrNode);
-
 	Master master;
 
 	while (!glfwWindowShouldClose(window) && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS)
@@ -262,112 +131,8 @@ int main(void)
 		}
 		*/
 
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
-
-		ImGui::Begin("Test");
-		ImGui::Checkbox("Copy audio buffer", &copyAudioBuffer);
-		ImPlotFlags f;
-		if (ImPlot::BeginPlot("Plot", ImVec2(1600, 800)))
-		{
-			if (true)
-			{
-				for (int i = 0; i < 1000; i++)
-					memcpy(bufferCopy, audio.buffer, audio.getBufferSize() * sizeof(float));
-			}
-			ImPlot::PlotLine("line", timeArray, bufferCopy, audio.getBufferSize());
-			double writeCursorX = audio.writeCursor / (double)audio.sampleRate;
-			double readCursorX = audio.leftPhase / (double)audio.sampleRate;
-			double writeCursorXArray[2] = { writeCursorX, writeCursorX };
-			double readCursorXArray[2] = { readCursorX, readCursorX };
-			double cursorY[2] = { 0.0, 1.0 };
-			ImPlot::PlotLine("write cursor", writeCursorXArray, cursorY, 2);
-			ImPlot::PlotLine("read cursor", readCursorXArray, cursorY, 2);
-
-			ImPlot::EndPlot();
-		}
-
-		ImGui::End();
-
-		ed::SetCurrentEditor(nodeEditorContext);
-		ed::Begin("Node editor", ImVec2(0.0, 0.0f));
-
-		for (Node* node : nodes)
-			node->render();
-
-		for (auto& linkInfo : links) // Render links
-			ed::Link(linkInfo.Id, linkInfo.InputId, linkInfo.OutputId);
-
-		if (ed::BeginCreate())
-		{
-			ed::PinId inputPinId, outputPinId;
-			if (ed::QueryNewLink(&inputPinId, &outputPinId))
-			{
-				// Link creation logic
-
-				if (inputPinId && outputPinId && \
-					findNodeByPinId(nodes, inputPinId) != findNodeByPinId(nodes, outputPinId)) // Do not accept pins from the same node
-				{
-					if (ed::AcceptNewItem())
-					{
-						// input & output pins may be reversed depending on the selection order of the nodes link
-						if (getPinKind(inputPinId, nodes) == ed::PinKind::Input && getPinKind(outputPinId, nodes) == ed::PinKind::Output)
-							std::swap(inputPinId, outputPinId);
-
-						// Since we accepted new link, lets add one to our list of links.
-						links.push_back({ ed::LinkId(getNextId()), inputPinId, outputPinId });
-
-						// Draw new link.
-						ed::Link(links.back().Id, links.back().InputId, links.back().OutputId);
-
-						updateAudioComponents(master, getMasterNode(nodes), nodes, links);
-					}
-
-					// You may choose to reject connection between these nodes
-					// by calling ed::RejectNewItem(). This will allow editor to give
-					// visual feedback by changing link thickness and color.
-				}
-			}
-		}
-		ed::EndCreate();
-
-		// Handle deletion action
-		if (ed::BeginDelete())
-		{
-			// There may be many links marked for deletion, let's loop over them.
-			ed::LinkId deletedLinkId;
-			while (ed::QueryDeletedLink(&deletedLinkId))
-			{
-				// If you agree that link can be deleted, accept deletion.
-				if (ed::AcceptDeletedItem())
-				{
-					// Then remove link from your data.
-					for (auto& link : links)
-					{
-						if (link.Id == deletedLinkId)
-						{
-							links.erase(&link);
-
-							updateAudioComponents(master, getMasterNode(nodes), nodes, links);
-							break;
-						}
-					}
-				}
-
-				// You may reject link deletion by calling:
-				// ed::RejectDeletedItem();
-			}
-		}
-		ed::EndDelete(); // Wrap up deletion action
-
-		ed::End();
-
-
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-		isFirstFrame = false;
+		ui.update(audio, master);
+		ui.render();
 
 		glfwSwapBuffers(window);
 

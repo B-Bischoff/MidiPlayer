@@ -10,13 +10,6 @@ namespace ed = ax::NodeEditor;
 
 enum UI_NodeType { NodeUI, MasterUI, NumberUI, OscUI, ADSRUI, KbFreqUI };
 
-int nextId = 0;
-
-int getNextId()
-{
-	return ++nextId;
-}
-
 struct LinkInfo
 {
 	ed::LinkId Id;
@@ -135,6 +128,9 @@ struct Node
 
 struct MasterNode : public Node
 {
+private:
+	static int nextId;
+public:
 	MasterNode()
 	{
 		id = getNextId();
@@ -148,6 +144,11 @@ struct MasterNode : public Node
 		pin.kind = PinKind::Input;
 		inputs.push_back(pin);
 	}
+
+	static int getNextId()
+	{
+		return ++nextId;
+	}
 };
 
 struct NumberNode : public Node
@@ -156,14 +157,14 @@ struct NumberNode : public Node
 
 	NumberNode()
 	{
-		id = getNextId();
+		id = MasterNode::getNextId();
 		name = "Number " + std::to_string(id.Get());
 		type = NumberUI;
 
 		value = 0;
 
 		Pin pin;
-		pin.id = getNextId();
+		pin.id = MasterNode::getNextId();
 		pin.name = "output >";
 		pin.node = this;
 		pin.kind = PinKind::Output;
@@ -189,7 +190,7 @@ struct OscNode : public Node
 
 	OscNode()
 	{
-		id = getNextId();
+		id = MasterNode::getNextId();
 		name = "Osc " + std::to_string(id.Get());
 		type = OscUI;
 
@@ -197,13 +198,13 @@ struct OscNode : public Node
 
 		Pin pin;
 
-		pin.id = getNextId();
+		pin.id = MasterNode::getNextId();
 		pin.name = "> input";
 		pin.node = this;
 		pin.kind = PinKind::Input;
 		inputs.push_back(pin);
 
-		pin.id = getNextId();
+		pin.id = MasterNode::getNextId();
 		pin.name = "output >";
 		pin.node = this;
 		pin.kind = PinKind::Output;
@@ -262,18 +263,18 @@ struct OscNode : public Node
 struct ADSR_Node : public Node {
 	ADSR_Node()
 	{
-		id = getNextId();
+		id = MasterNode::getNextId();
 		name = "ADSR " + std::to_string(id.Get());
 		type = ADSRUI;
 
 		Pin pin;
-		pin.id = getNextId();
+		pin.id = MasterNode::getNextId();
 		pin.name = "output >";
 		pin.node = this;
 		pin.kind = PinKind::Output;
 		outputs.push_back(pin);
 
-		pin.id = getNextId();
+		pin.id = MasterNode::getNextId();
 		pin.name = "> input";
 		pin.node = this;
 		pin.kind = PinKind::Input;
@@ -285,12 +286,12 @@ struct KeyboardFrequencyNode : public Node
 {
 	KeyboardFrequencyNode()
 	{
-		id = getNextId();
+		id = MasterNode::getNextId();
 		name = "Keyboard Frequency " + std::to_string(id.Get());
 		type = KbFreqUI;
 
 		Pin pin;
-		pin.id = getNextId();
+		pin.id = MasterNode::getNextId();
 		pin.name = "frequency >";
 		pin.node = this; // Is this really necessary ?
 		pin.kind = PinKind::Output;
