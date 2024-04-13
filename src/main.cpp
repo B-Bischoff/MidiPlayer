@@ -12,7 +12,7 @@ static void handleFrameProcessTime(const time_point& startTime, const std::chron
 
 double AudioComponent::time = 0.0;
 unsigned int KeyboardFrequency::keyIndex = 0;
-sEnvelopeADSR* ADSR::envelope = nullptr;
+//sEnvelopeADSR* ADSR::envelope = nullptr;
 
 GLFWwindow* init(const int WIN_WIDTH, const int WIN_HEIGHT)
 {
@@ -110,6 +110,8 @@ int main(void)
 	ImVector<LinkInfo> links;
 	Master master;
 
+	std::vector<MidiInfo> keyPressed;
+
 	while (!glfwWindowShouldClose(window) && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
@@ -119,8 +121,13 @@ int main(void)
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glfwPollEvents();
 
-		handleInput(window, inputManager, envelopes, t);
-		generateAudio(audio, master, envelopes, t);
+		handleInput(window, inputManager, envelopes, keyPressed, t);
+
+		//for (auto it = keyPressed.begin(); it != keyPressed.end(); it++)
+		//	std::cout << it->keyIndex << " ";
+		//std::cout << std::endl;
+
+		generateAudio(audio, master, envelopes, keyPressed, t);
 
 		/*
 		// Lag simulator

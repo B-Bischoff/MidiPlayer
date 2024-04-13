@@ -77,6 +77,13 @@ struct AudioData {
 	}
 };
 
+struct MidiInfo
+{
+	int keyIndex;
+	int velocity; // between 0 and 255
+	bool risingEdge; // Only true for the first frame, becomes false when holding key
+};
+
 // Keyboard
 struct KeyData
 {
@@ -98,9 +105,9 @@ struct InputManager
 
 void rtAudioInit(AudioData& audio);
 int uploadBuffer( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
-void handleInput(GLFWwindow* window, InputManager& inputManager, std::vector<sEnvelopeADSR>& envelopes, double time);
+void handleInput(GLFWwindow* window, InputManager& inputManager, std::vector<sEnvelopeADSR>& envelopes, std::vector<MidiInfo>& keyPressed, double time);
 void initInput(InputManager& inputManger);
-void generateAudio(AudioData& audio, Master& master, std::vector<sEnvelopeADSR>& envelopes, double& time);
+void generateAudio(AudioData& audio, Master& master, std::vector<sEnvelopeADSR>& envelopes, std::vector<MidiInfo>& keyPressed, double& time);
 int uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
 
 static void exitError(const char* str)

@@ -27,7 +27,7 @@ void initInput(InputManager& inputManger) // [TODO] Should this be in a construc
 	Pm_OpenInput(&inputManger.midiStream, 3, NULL, 512, NULL, NULL);
 }
 
-void handleInput(GLFWwindow* window, InputManager& inputManager, std::vector<sEnvelopeADSR>& envelopes, double time)
+void handleInput(GLFWwindow* window, InputManager& inputManager, std::vector<sEnvelopeADSR>& envelopes, std::vector<MidiInfo>& keyPressed, double time)
 {
 	if (USE_KB_AS_MIDI_INPUT)
 	{
@@ -85,6 +85,9 @@ void handleInput(GLFWwindow* window, InputManager& inputManager, std::vector<sEn
 		return;
 	}
 
+	for (MidiInfo& info : keyPressed)
+		info.risingEdge = false;
+
 	int numEvents = Pm_Read(inputManager.midiStream, inputManager.buffer, 32);
 
 	for (int i = 0; i < numEvents; i++)
@@ -97,27 +100,47 @@ void handleInput(GLFWwindow* window, InputManager& inputManager, std::vector<sEn
 		int keyIndex = Pm_MessageData1(message);
 		int velocity = Pm_MessageData2(message);
 
+
 		//std::cout << " state " << status << " key " << (int)keyIndex << " vel " << (int)velocity << std::endl;
 		if ((status == 145 || status == 155) && velocity != 0.0)
 		{
+			MidiInfo info = {
+				.keyIndex = keyIndex,
+				.velocity = velocity,
+				.risingEdge = true,
+			};
+
+			keyPressed.push_back(info);
+
+			int index = 0;
 			for (sEnvelopeADSR& e : envelopes)
 			{
 				if (e.phase == Phase::Inactive)
 				{
-					//std::cout << keyIndex << " on " << std::endl;
+					std::cout << keyIndex << " on | envelope id : " << index << std::endl;
 					e.NoteOn(time);
 					e.keyIndex = keyIndex;
 					break;
 				}
+				index++;
 			}
 		}
 		else
 		{
+			for (auto it = keyPressed.begin(); it != keyPressed.end(); it++)
+			{
+				if (it->keyIndex == keyIndex)
+				{
+					keyPressed.erase(it);
+					break;
+				}
+			}
+
 			for (sEnvelopeADSR& e : envelopes)
 			{
 				if (e.keyIndex == keyIndex)
 				{
-					//std::cout << keyIndex << " off " << std::endl;
+					std::cout << keyIndex << " off " << std::endl;
 					e.NoteOff(time);
 					break;
 				}

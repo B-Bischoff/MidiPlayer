@@ -30,7 +30,7 @@ struct sEnvelopeADSR
 		decayTime = .05,
 		attackAmplitude = 1.0;
 		sustainAmplitude = 0.8;
-		releaseTime = 0.05;
+		releaseTime = 0.5;
 		noteOn = false;
 		triggerOffTime = 0.0;
 		triggerOnTime = 0.0;
@@ -116,7 +116,6 @@ struct sEnvelopeADSR
 
 			case Phase::Inactive :
 				amplitude = 0.0;
-				keyIndex = 0;
 				triggerOnTime = 0;
 				triggerOffTime = 0;
 				amplitudeAtOffTrigger = 0;
