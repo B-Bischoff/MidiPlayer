@@ -102,7 +102,6 @@ struct ADSR : public AudioComponent {
 
 					if (info.risingEdge)
 					{
-						std::cout << "Retrigger : " << envelope.keyIndex << std::endl;
 						envelope.NoteOn(time);
 					}
 				}

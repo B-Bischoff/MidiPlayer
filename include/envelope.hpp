@@ -44,7 +44,6 @@ struct sEnvelopeADSR
 		//std::cout << "note on " << dTimeOn << std::endl;
 		triggerOnTime = dTimeOn;
 		noteOn = true;
-		phase = Phase::Attack;
 	}
 
 	void NoteOff(double dTimeOff)
