@@ -34,7 +34,15 @@ public:
 
 		showWarning = true;
 
-		double value = input->process(keyPressed);
+		double value = 0.0;
+
+
+		int i = 0;
+		do
+		{
+			value += input->process(keyPressed, i);
+		} while (++i < keyPressed.size());
+
 		return value;
 	}
 };
@@ -44,8 +52,10 @@ struct KeyboardFrequency : public AudioComponent {
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0)
 	{
-		return pianoKeyFrequency(currentKey);
-		//return pianoKeyFrequency(keyIndex);
+		if (!keyPressed.size())
+			return 0.0;
+
+		return pianoKeyFrequency(keyPressed[currentKey].keyIndex);
 	}
 };
 
@@ -57,9 +67,6 @@ struct ADSR : public AudioComponent {
 	{
 		if (!input)
 			return 0.0;
-
-		//double value = input->process(keyPressed) * envelope->GetAmplitude(time);
-
 
 		// When key is no longer on, set envelope notOff
 		for (sEnvelopeADSR& envelope : envelopes)
@@ -117,13 +124,39 @@ struct ADSR : public AudioComponent {
 
 		double value = 0.0;
 
-		// Loop on envelopes
-		for (int i = 0; i < envelopes.size(); i++)
+		// Play note in release (because they do not appear in keyPressed)
+		if (currentKey == 0)
 		{
-			value += input->process(keyPressed, envelopes[i].keyIndex) * envelopes[i].GetAmplitude(time);
+			for (sEnvelopeADSR& envelope : envelopes)
+			{
+				if (!envelope.noteOn)
+				{
+					//std::cout << "playing release note" << std::endl;
+					std::vector<MidiInfo> tempKeyPressed;
+					MidiInfo info = {
+						.keyIndex = (int)envelope.keyIndex,
+						.velocity = 0, // TO DEFINE (OR TO STORE BEFORE NOTE GETS OFF)
+						.risingEdge = false,
+					};
+					tempKeyPressed.push_back(info);
+					value += input->process(tempKeyPressed, 0) * envelope.GetAmplitude(time);
+				}
+			}
 		}
 
-		//for (int i = 0; i < envelopes.size(); i++)
+		if (keyPressed.size())
+		{
+			// Find envelope corresponding to keyPressed[currentKey]
+			for (sEnvelopeADSR& envelope : envelopes)
+			{
+				if (keyPressed[currentKey].keyIndex == envelope.keyIndex)
+				{
+					value += input->process(keyPressed, currentKey) * envelope.GetAmplitude(time);
+
+					return value;
+				}
+			}
+		}
 
 		return value;
 	}
