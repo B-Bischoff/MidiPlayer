@@ -124,12 +124,19 @@ struct ADSR : public AudioComponent {
 
 		double value = 0.0;
 
-		// Play note in release (because they do not appear in keyPressed)
+		// Play note in release because they do not appear in keyPressed
 		if (currentKey == 0)
 		{
 			for (sEnvelopeADSR& envelope : envelopes)
 			{
-				if (!envelope.noteOn)
+				// Make sure note is not played if its in keyPressed
+				// This may happen if the note is pressed right after it is relesed
+				bool isInKeyPressed = false;
+				for (MidiInfo& info : keyPressed)
+					if (info.keyIndex == envelope.keyIndex)
+						isInKeyPressed = true;
+
+				if (!envelope.noteOn && !isInKeyPressed)
 				{
 					//std::cout << "playing release note" << std::endl;
 					std::vector<MidiInfo> tempKeyPressed;
@@ -152,8 +159,7 @@ struct ADSR : public AudioComponent {
 				if (keyPressed[currentKey].keyIndex == envelope.keyIndex)
 				{
 					value += input->process(keyPressed, currentKey) * envelope.GetAmplitude(time);
-
-					return value;
+					break;
 				}
 			}
 		}
