@@ -115,9 +115,9 @@ NodeEditorUI::NodeEditorUI()
 
 	// [TODO] create a node manager storing contiguously nodes in memory
 	_nodes.push_back(new MasterNode());
-	//_nodes.push_back(new NumberNode());
-	//_nodes.push_back(new OscNode());
-	//_nodes.push_back(new ADSR_Node());
+	_nodes.push_back(new NumberNode());
+	_nodes.push_back(new OscNode());
+	_nodes.push_back(new ADSR_Node());
 	_nodes.push_back(new OscNode());
 	_nodes.push_back(new KeyboardFrequencyNode());
 	_nodes.push_back(new ADSR_Node());

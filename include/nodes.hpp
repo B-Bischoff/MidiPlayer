@@ -149,7 +149,7 @@ public:
 
 	static int getNextId()
 	{
-		return ++nextId;
+		return ++nextId; // Id should start at 1 and not 0
 	}
 };
 
@@ -189,6 +189,8 @@ struct NumberNode : public Node
 struct OscNode : public Node
 {
 	OscType oscType;
+	bool doPopup = false;
+	std::string popupText = "Sine";
 
 	OscNode()
 	{
@@ -211,6 +213,8 @@ struct OscNode : public Node
 		pin.node = this;
 		pin.kind = PinKind::Output;
 		outputs.push_back(pin);
+
+		popupText += std::to_string(id.Get());
 	}
 
 	void render()
@@ -221,8 +225,6 @@ struct OscNode : public Node
 		std::string dragIntText = "Value " + std::to_string(id.Get());
 		ImGui::SetNextItemWidth(50);
 
-		static std::string popupText = "Sine";
-		static bool doPopup = false;
 		if (ImGui::Button(popupText.c_str()))
 			doPopup = true;
 
@@ -231,13 +233,12 @@ struct OscNode : public Node
 		ed::Suspend();
 		if (doPopup)
 		{
-			ImGui::OpenPopup("OscTypePopup");
+			ImGui::OpenPopup(appendId("OscTypePopup").c_str());
 			doPopup = false;
 		}
 
-		if (ImGui::BeginPopup("OscTypePopup"))
+		if (ImGui::BeginPopup(appendId("OscTypePopup").c_str()))
 		{
-			ImGui::TextDisabled("Pick One:");
 			ImGui::BeginChild("popup_scroller", ImVec2(100, 100), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
 			updateButtonInPopUp(OscType::Sine, "Sine", popupText);
@@ -258,11 +259,18 @@ private:
 	{
 		if (ImGui::Button(oscTypeText.c_str())) {
 			this->oscType = oscType;
+			std::cout << "--_> " << this << std::endl;
 			popupText = oscTypeText;
 			ImGui::CloseCurrentPopup();
+			std::cout << "new type : " << oscTypeText << std::endl;
 
 			Node::propertyChanged = true;
 		}
+	}
+
+	std::string appendId(const std::string& str)
+	{
+		return str + std::to_string(id.Get());
 	}
 };
 
