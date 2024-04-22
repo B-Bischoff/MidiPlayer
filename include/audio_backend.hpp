@@ -7,12 +7,12 @@ double osc(double hertz, double time, OscType type = Sine, double LFOHertz = 0.0
 double pianoKeyFrequency(int keyId);
 
 struct AudioComponent {
-	AudioComponent() : input(nullptr) { }
+	AudioComponent() { inputs.clear(); }
 	virtual ~AudioComponent() {};
 	virtual double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) = 0;
 
 	static double time;
-	AudioComponent* input;
+	std::vector<AudioComponent*> inputs;
 };
 
 struct Master : public AudioComponent {
@@ -22,7 +22,7 @@ private:
 public:
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0)
 	{
-		if (!input)
+		if (!inputs.size())
 		{
 			if (showWarning)
 			{
@@ -37,11 +37,14 @@ public:
 		double value = 0.0;
 
 
-		int i = 0;
-		do
+		for (AudioComponent* input : inputs)
 		{
-			value += input->process(keyPressed, i);
-		} while (++i < keyPressed.size());
+			int i = 0;
+			do
+			{
+				value += input->process(keyPressed, i);
+			} while (++i < keyPressed.size());
+		}
 
 		return value;
 	}
@@ -65,8 +68,9 @@ struct ADSR : public AudioComponent {
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0)
 	{
-		if (!input)
+		if (!inputs.size())
 			return 0.0;
+		AudioComponent* input = inputs.at(0);
 
 		// When key is no longer on, set envelope notOff
 		for (sEnvelopeADSR& envelope : envelopes)
@@ -173,8 +177,9 @@ struct Oscillator : public AudioComponent {
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0)
 	{
-		if (!input)
+		if (!inputs.size())
 			return 0.0;
+		AudioComponent* input = inputs.at(0);
 
 		double frequency = input->process(keyPressed, currentKey);
 		double value = osc(frequency, time, type);

@@ -70,12 +70,14 @@ AudioComponent* allocateAudioComponent(Node& node)
 	assert(0 && "Invalid type");
 }
 
+// [TODO] I'm pretty sure this function causes leaks
 void deleteComponentAndInputs(AudioComponent* component)
 {
-	if (!component || !component->input)
+	if (!component || !component->inputs.size())
 		return;
 
-	deleteComponentAndInputs(component->input);
+	for (AudioComponent* input : component->inputs)
+		deleteComponentAndInputs(input);
 	delete component;
 }
 
@@ -89,8 +91,9 @@ void createAudioComponentsFromNodes(AudioComponent& component, Node& node, std::
 			{
 				Node& linkedNode = findNodeByPinId(nodes, link.InputId);
 				//std::cout << linkedNode.name << " -> " << node.name << std::endl;;
-				component.input = allocateAudioComponent(linkedNode);
-				createAudioComponentsFromNodes(*component.input, linkedNode, nodes, links);
+				component.inputs.push_back(allocateAudioComponent(linkedNode));
+				for (AudioComponent* input : component.inputs)
+					createAudioComponentsFromNodes(*input, linkedNode, nodes, links);
 			}
 		}
 	}
@@ -99,8 +102,9 @@ void createAudioComponentsFromNodes(AudioComponent& component, Node& node, std::
 // [TODO] keep the function name for different models types (e.g file)
 void updateAudioComponents(AudioComponent& master, Node& node, std::vector<Node*>& nodes, ImVector<LinkInfo>& links)
 {
-	deleteComponentAndInputs(master.input);
-	master.input = nullptr;
+	for (AudioComponent* input : master.inputs)
+		deleteComponentAndInputs(input);
+	master.inputs.clear();
 
 	createAudioComponentsFromNodes(master, node, nodes, links);
 }
