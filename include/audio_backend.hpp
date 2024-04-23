@@ -70,7 +70,6 @@ struct ADSR : public AudioComponent {
 	{
 		if (!inputs.size())
 			return 0.0;
-		AudioComponent* input = inputs.at(0);
 
 		// When key is no longer on, set envelope notOff
 		for (sEnvelopeADSR& envelope : envelopes)
@@ -150,20 +149,24 @@ struct ADSR : public AudioComponent {
 						.risingEdge = false,
 					};
 					tempKeyPressed.push_back(info);
-					value += input->process(tempKeyPressed, 0) * envelope.GetAmplitude(time);
+					for (AudioComponent* input : inputs)
+						value += input->process(tempKeyPressed, 0) * envelope.GetAmplitude(time);
 				}
 			}
 		}
 
 		if (keyPressed.size())
 		{
-			// Find envelope corresponding to keyPressed[currentKey]
-			for (sEnvelopeADSR& envelope : envelopes)
+			for (AudioComponent* input : inputs)
 			{
-				if (keyPressed[currentKey].keyIndex == envelope.keyIndex)
+				// Find envelope corresponding to keyPressed[currentKey]
+				for (sEnvelopeADSR& envelope : envelopes)
 				{
-					value += input->process(keyPressed, currentKey) * envelope.GetAmplitude(time);
-					break;
+					if (keyPressed[currentKey].keyIndex == envelope.keyIndex)
+					{
+						value += input->process(keyPressed, currentKey) * envelope.GetAmplitude(time);
+						break;
+					}
 				}
 			}
 		}
