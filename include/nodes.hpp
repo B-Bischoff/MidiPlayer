@@ -84,7 +84,9 @@ struct Node
 
 	void renderNameAndPins()
 	{
+		ImGui::PushID(appendId(name).c_str());
 		ImGui::Text("%s", name.c_str());
+		ImGui::PopID();
 		for (int i = 0; i < std::max(inputs.size(), outputs.size()); i++)
 		{
 			bool sameLine = false;
@@ -126,6 +128,12 @@ struct Node
 	{
 		return !(*this == node);
 	}
+
+protected:
+	std::string appendId(const std::string& str)
+	{
+		return str + std::to_string(id.Get());
+	}
 };
 
 struct MasterNode : public Node
@@ -149,7 +157,7 @@ public:
 
 	static int getNextId()
 	{
-		return ++nextId; // Id should start at 1 and not 0
+		return ++nextId; // Id must start at 1 and not 0
 	}
 };
 
@@ -160,7 +168,7 @@ struct NumberNode : public Node
 	NumberNode()
 	{
 		id = MasterNode::getNextId();
-		name = "Number " + std::to_string(id.Get());
+		name = "Number";
 		type = NumberUI;
 
 		value = 0;
@@ -195,7 +203,7 @@ struct OscNode : public Node
 	OscNode()
 	{
 		id = MasterNode::getNextId();
-		name = "Osc " + std::to_string(id.Get());
+		name = "Osc";
 		type = OscUI;
 
 		oscType = OscType::Sine;
@@ -213,8 +221,6 @@ struct OscNode : public Node
 		pin.node = this;
 		pin.kind = PinKind::Output;
 		outputs.push_back(pin);
-
-		popupText += std::to_string(id.Get());
 	}
 
 	void render()
@@ -225,8 +231,10 @@ struct OscNode : public Node
 		std::string dragIntText = "Value " + std::to_string(id.Get());
 		ImGui::SetNextItemWidth(50);
 
+		ImGui::PushID(appendId("popup").c_str());
 		if (ImGui::Button(popupText.c_str()))
 			doPopup = true;
+		ImGui::PopID();
 
 		Node::endRender();
 
@@ -267,18 +275,13 @@ private:
 			Node::propertyChanged = true;
 		}
 	}
-
-	std::string appendId(const std::string& str)
-	{
-		return str + std::to_string(id.Get());
-	}
 };
 
 struct ADSR_Node : public Node {
 	ADSR_Node()
 	{
 		id = MasterNode::getNextId();
-		name = "ADSR " + std::to_string(id.Get());
+		name = "ADSR";
 		type = ADSRUI;
 
 		Pin pin;
@@ -301,7 +304,7 @@ struct KeyboardFrequencyNode : public Node
 	KeyboardFrequencyNode()
 	{
 		id = MasterNode::getNextId();
-		name = "Keyboard Frequency " + std::to_string(id.Get());
+		name = "Keyboard Frequency";
 		type = KbFreqUI;
 
 		Pin pin;
