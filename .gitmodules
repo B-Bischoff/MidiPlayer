@@ -13,3 +13,9 @@
 [submodule "external/imgui-node-editor"]
 	path = external/imgui-node-editor
 	url = git@github.com:thedmd/imgui-node-editor.git
+[submodule "external/glfw"]
+	path = external/glfw
+	url = git@github.com:glfw/glfw.git
+[submodule "external/glew"]
+	path = external/glew
+	url = git@github.com:nigels-com/glew.git

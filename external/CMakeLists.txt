@@ -4,6 +4,7 @@ target_include_directories(portmidi PUBLIC
 )
 
 add_subdirectory(rtaudio)
+add_subdirectory(glfw)
 
 # IMGUI
 set(IMGUI_SOURCES
