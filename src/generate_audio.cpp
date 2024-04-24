@@ -98,7 +98,6 @@ static double freqToAngularVelocity(double hertz)
 
 double osc(double hertz, double time, OscType type, double LFOHertz, double LFOAmplitude)
 {
-
 	double t = freqToAngularVelocity(hertz) * time + LFOAmplitude * hertz * (sin(freqToAngularVelocity(LFOHertz) * time));
 
 	switch(type)

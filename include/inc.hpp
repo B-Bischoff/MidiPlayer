@@ -4,6 +4,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include <forward_list>
 #include <portmidi.h>
 #include <RtAudio.h>
 
@@ -23,6 +24,9 @@
 #define USE_KB_AS_MIDI_INPUT false
 
 typedef std::chrono::time_point<std::chrono::high_resolution_clock> time_point;
+
+struct AudioComponent;
+typedef std::forward_list<AudioComponent*> Components;
 
 struct sEnvelopeADSR;
 struct Master;

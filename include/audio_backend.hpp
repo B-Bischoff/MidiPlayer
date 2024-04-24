@@ -7,12 +7,17 @@ double osc(double hertz, double time, OscType type = Sine, double LFOHertz = 0.0
 double pianoKeyFrequency(int keyId);
 
 struct AudioComponent {
-	AudioComponent() { inputs.clear(); }
+	AudioComponent() { }
 	virtual ~AudioComponent() {};
+
 	virtual double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) = 0;
+	virtual Components getInputs() = 0;
+	virtual void addInput(const std::string& inputName, AudioComponent* input) {
+		assert(0 && "Node does not have input");
+	}
+	virtual void clearInputs() { }
 
 	static double time;
-	std::vector<AudioComponent*> inputs;
 };
 
 struct Master : public AudioComponent {
@@ -20,7 +25,28 @@ private:
 	bool showWarning = true;
 
 public:
-	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0)
+	std::vector<AudioComponent*> inputs;
+
+	Components getInputs() override
+	{
+		Components components;
+		for (AudioComponent* input : inputs)
+			components.push_front(input);
+		return components;
+	}
+
+	void addInput(const std::string& inputName, AudioComponent* input) override
+	{
+		// [TODO] check inputName even thought it is not necessary for 1 input nodes ?
+		inputs.push_back(input);
+	}
+
+	void clearInputs() override
+	{
+		inputs.clear();
+	}
+
+	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
 		if (!inputs.size())
 		{
@@ -53,7 +79,12 @@ public:
 struct KeyboardFrequency : public AudioComponent {
 	static unsigned int keyIndex;
 
-	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0)
+	Components getInputs() override
+	{
+		return Components();
+	}
+
+	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
 		if (!keyPressed.size())
 			return 0.0;
@@ -65,8 +96,27 @@ struct KeyboardFrequency : public AudioComponent {
 struct ADSR : public AudioComponent {
 	sEnvelopeADSR reference; // Used to store envelope settings value
 	std::vector<sEnvelopeADSR> envelopes;
+	std::vector<AudioComponent*> inputs;
 
-	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0)
+	Components getInputs() override
+	{
+		Components components;
+		for (AudioComponent* input : inputs)
+			components.push_front(input);
+		return components;
+	}
+
+	void clearInputs() override
+	{
+		inputs.clear();
+	}
+
+	void addInput(const std::string& inputName, AudioComponent* input) override
+	{
+		inputs.push_back(input);
+	}
+
+	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
 		if (!inputs.size())
 			return 0.0;
@@ -177,12 +227,46 @@ struct ADSR : public AudioComponent {
 
 struct Oscillator : public AudioComponent {
 	OscType type;
+	std::vector<AudioComponent*> freq;
+	std::vector<AudioComponent*> LFO_Hz;
+	std::vector<AudioComponent*> LFO_Amplitude;
 
-	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0)
+	Components getInputs() override
 	{
-		if (!inputs.size())
+		Components components;
+		for (AudioComponent* input : freq)
+			components.push_front(input);
+		for (AudioComponent* input : LFO_Hz)
+			components.push_front(input);
+		for (AudioComponent* input : LFO_Amplitude)
+			components.push_front(input);
+		return components;
+	}
+
+	void clearInputs() override
+	{
+		freq.clear();
+		LFO_Hz.clear();
+		LFO_Amplitude.clear();
+	}
+
+	void addInput(const std::string& inputName, AudioComponent* input) override
+	{
+		if (inputName == "> freq") // [TODO] remove those "> "
+			freq.push_back(input);
+		else if (inputName == "> LFO Hz")
+			LFO_Hz.push_back(input);
+		else if (inputName == "> LFO Amplitude")
+			LFO_Amplitude.push_back(input);
+		else
+			assert(0 && "[Oscillator node] unknown input");
+	}
+
+	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	{
+		if (!freq.size())
 			return 0.0;
-		AudioComponent* input = inputs.at(0);
+		AudioComponent* input = freq.at(0);
 
 		double frequency = input->process(keyPressed, currentKey);
 		double value = osc(frequency, time, type);

@@ -70,29 +70,38 @@ AudioComponent* allocateAudioComponent(Node& node)
 	assert(0 && "Invalid type");
 }
 
-// [TODO] I'm pretty sure this function causes leaks
 void deleteComponentAndInputs(AudioComponent* component)
 {
-	if (!component || !component->inputs.size())
+	if (!component)
 		return;
+	Components inputs = component->getInputs();
+	if (inputs.empty())
+	{
+		delete component;
+		return;
+	}
 
-	for (AudioComponent* input : component->inputs)
+	for (AudioComponent* input : inputs)
 		deleteComponentAndInputs(input);
+
 	delete component;
 }
 
-void createAudioComponentsFromNodes(AudioComponent& component, Node& node, std::vector<Node*>& nodes, ImVector<LinkInfo>& links)
+void createAudioComponentsFromNodes(AudioComponent& component, Node& outputNode, std::vector<Node*>& nodes, ImVector<LinkInfo>& links)
 {
-	for (Pin& pin : node.inputs)
+	for (Pin& pin : outputNode.inputs)
 	{
 		for (LinkInfo& link: links)
 		{
 			if (link.OutputId == pin.id)
 			{
+				Node& inputNode = findNodeByPinId(nodes, link.InputId);
+
+				//std::cout << inputNode.name << " [" << pin.name << "] " << " -> " << outputNode.name << std::endl;;
 				Node& linkedNode = findNodeByPinId(nodes, link.InputId);
-				//std::cout << linkedNode.name << " -> " << node.name << std::endl;;
-				component.inputs.push_back(allocateAudioComponent(linkedNode));
-				for (AudioComponent* input : component.inputs)
+				component.addInput(pin.name, allocateAudioComponent(linkedNode));
+				Components inputs = component.getInputs();
+				for (AudioComponent* input : inputs)
 					createAudioComponentsFromNodes(*input, linkedNode, nodes, links);
 			}
 		}
@@ -102,9 +111,11 @@ void createAudioComponentsFromNodes(AudioComponent& component, Node& node, std::
 // [TODO] keep the function name for different models types (e.g file)
 void updateAudioComponents(AudioComponent& master, Node& node, std::vector<Node*>& nodes, ImVector<LinkInfo>& links)
 {
-	for (AudioComponent* input : master.inputs)
+	Components inputs = master.getInputs();
+	for (AudioComponent* input : inputs)
 		deleteComponentAndInputs(input);
-	master.inputs.clear();
+
+	master.clearInputs();
 
 	createAudioComponentsFromNodes(master, node, nodes, links);
 }

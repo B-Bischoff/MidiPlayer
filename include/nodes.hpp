@@ -211,7 +211,19 @@ struct OscNode : public Node
 		Pin pin;
 
 		pin.id = MasterNode::getNextId();
-		pin.name = "> input";
+		pin.name = "> freq";
+		pin.node = this;
+		pin.kind = PinKind::Input;
+		inputs.push_back(pin);
+
+		pin.id = MasterNode::getNextId();
+		pin.name = "> LFO Hz";
+		pin.node = this;
+		pin.kind = PinKind::Input;
+		inputs.push_back(pin);
+
+		pin.id = MasterNode::getNextId();
+		pin.name = "> LFO Amplitude";
 		pin.node = this;
 		pin.kind = PinKind::Input;
 		inputs.push_back(pin);
