@@ -11,11 +11,11 @@ struct AudioComponent {
 	virtual ~AudioComponent() {};
 
 	virtual double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) = 0;
-	virtual Components getInputs() = 0;
+	virtual Components getInputs() { return Components(); }
+	virtual void clearInputs() { }
 	virtual void addInput(const std::string& inputName, AudioComponent* input) {
 		assert(0 && "Node does not have input");
 	}
-	virtual void clearInputs() { }
 
 	static double time;
 };
@@ -78,11 +78,6 @@ public:
 
 struct KeyboardFrequency : public AudioComponent {
 	static unsigned int keyIndex;
-
-	Components getInputs() override
-	{
-		return Components();
-	}
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
@@ -222,6 +217,16 @@ struct ADSR : public AudioComponent {
 		}
 
 		return value;
+	}
+};
+
+struct Number : public AudioComponent {
+	int number;
+
+	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	{
+		//std::cout << "returning " << number << std::endl;
+		return number;
 	}
 };
 

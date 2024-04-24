@@ -188,7 +188,8 @@ struct NumberNode : public Node
 
 		std::string dragIntText = "Value " + std::to_string(id.Get());
 		ImGui::SetNextItemWidth(50);
-		ImGui::DragInt(dragIntText.c_str(), &value);
+		if (ImGui::DragInt(dragIntText.c_str(), &value))
+			Node::propertyChanged = true;
 
 		Node::endRender();
 	}

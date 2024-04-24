@@ -55,7 +55,14 @@ AudioComponent* allocateAudioComponent(Node& node)
 	{
 		case NodeUI: break;
 		case MasterUI: break;
-		case NumberUI: break;
+		case NumberUI: {
+			NumberNode* numberNode = dynamic_cast<NumberNode*>(&node);
+			assert(numberNode);
+			Number* number = new Number();
+			number->number = numberNode->value;
+			std::cout << "create with " << number->number << std::endl;
+			return number;
+		}
 		case OscUI: {
 			OscNode* oscUI = dynamic_cast<OscNode*>(&node);
 			assert(oscUI);
