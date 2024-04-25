@@ -284,3 +284,42 @@ struct Oscillator : public AudioComponent {
 		return value;
 	}
 };
+
+struct Multiplier : public AudioComponent {
+	std::vector<AudioComponent*> inputsA;
+	std::vector<AudioComponent*> inputsB;
+
+	Components getInputs() override
+	{
+		Components components;
+		for (AudioComponent* input : inputsA)
+			components.push_front(input);
+		for (AudioComponent* input : inputsB)
+			components.push_front(input);
+		return components;
+	}
+
+	void clearInputs() override
+	{
+		inputsA.clear();
+		inputsB.clear();
+	}
+
+	void addInput(const std::string& inputName, AudioComponent* input) override
+	{
+		if (inputName == "> input A") // [TODO] remove those "> "
+			inputsA.push_back(input);
+		else if (inputName == "> input B")
+			inputsB.push_back(input);
+		else
+			assert(0 && "[Oscillator node] unknown input");
+	}
+
+	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	{
+		double valueA = getInputsValue(inputsA, keyPressed, currentKey);
+		double valueB = getInputsValue(inputsB, keyPressed, currentKey);
+		std::cout << valueA << std::endl;
+		return valueA * valueB;
+	}
+};

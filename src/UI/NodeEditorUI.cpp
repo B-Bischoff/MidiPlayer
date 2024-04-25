@@ -1,7 +1,7 @@
 #include "NodeEditorUI.hpp"
 
 bool Node::propertyChanged = false;
-int MasterNode::nextId = 0;
+int Node::nextId = 0;
 
 Node& findNodeByPinId(std::vector<Node*>& nodes, ed::PinId id)
 {
@@ -73,6 +73,7 @@ AudioComponent* allocateAudioComponent(Node& node)
 		}
 		case ADSRUI: return new ADSR();
 		case KbFreqUI: return new KeyboardFrequency();
+		case MultUI: return new Multiplier();
 	}
 	assert(0 && "Invalid type");
 }
@@ -141,6 +142,7 @@ NodeEditorUI::NodeEditorUI()
 	_nodes.push_back(new OscNode());
 	_nodes.push_back(new KeyboardFrequencyNode());
 	_nodes.push_back(new ADSR_Node());
+	_nodes.push_back(new MultNode());
 }
 
 void NodeEditorUI::update(Master& master)

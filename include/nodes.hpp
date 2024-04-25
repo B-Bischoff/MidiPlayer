@@ -8,7 +8,7 @@
 
 namespace ed = ax::NodeEditor;
 
-enum UI_NodeType { NodeUI, MasterUI, NumberUI, OscUI, ADSRUI, KbFreqUI };
+enum UI_NodeType { NodeUI, MasterUI, NumberUI, OscUI, ADSRUI, KbFreqUI, MultUI };
 
 struct LinkInfo
 {
@@ -50,6 +50,10 @@ struct Pin
 
 struct Node
 {
+private:
+	static int nextId; // [TODO] create an entity managing ids
+
+public:
 	ed::NodeId id;
 	std::string name;
 	std::vector<Pin> inputs;
@@ -129,17 +133,30 @@ struct Node
 		return !(*this == node);
 	}
 
+	static int getNextId()
+	{
+		return ++nextId; // Id must start at 1 and not 0
+	}
 protected:
 	std::string appendId(const std::string& str)
 	{
 		return str + std::to_string(id.Get());
 	}
+
+	Pin createPin(const std::string& name, PinKind kind)
+	{
+		Pin pin;
+		pin.id = getNextId();
+		pin.name = name;
+		pin.node = this; // Is this really necessary ?
+		pin.kind = kind;
+
+		return pin;
+	}
 };
 
 struct MasterNode : public Node
 {
-private:
-	static int nextId;
 public:
 	MasterNode()
 	{
@@ -147,17 +164,7 @@ public:
 		name = "Master";
 		type = MasterUI;
 
-		Pin pin;
-		pin.id = getNextId(); // [TODO] create an entity managing ids
-		pin.name = "> input";
-		pin.node = this; // Is this really necessary ?
-		pin.kind = PinKind::Input;
-		inputs.push_back(pin);
-	}
-
-	static int getNextId()
-	{
-		return ++nextId; // Id must start at 1 and not 0
+		inputs.push_back(createPin("> input", PinKind::Input));
 	}
 };
 
@@ -172,13 +179,7 @@ struct NumberNode : public Node
 		type = NumberUI;
 
 		value = 0.0f;
-
-		Pin pin;
-		pin.id = MasterNode::getNextId();
-		pin.name = "output >";
-		pin.node = this;
-		pin.kind = PinKind::Output;
-		outputs.push_back(pin);
+		outputs.push_back(createPin("output >", PinKind::Output));
 	}
 
 	void render()
@@ -210,31 +211,10 @@ struct OscNode : public Node
 
 		oscType = OscType::Sine;
 
-		Pin pin;
-
-		pin.id = MasterNode::getNextId();
-		pin.name = "> freq";
-		pin.node = this;
-		pin.kind = PinKind::Input;
-		inputs.push_back(pin);
-
-		pin.id = MasterNode::getNextId();
-		pin.name = "> LFO Hz";
-		pin.node = this;
-		pin.kind = PinKind::Input;
-		inputs.push_back(pin);
-
-		pin.id = MasterNode::getNextId();
-		pin.name = "> LFO Amplitude";
-		pin.node = this;
-		pin.kind = PinKind::Input;
-		inputs.push_back(pin);
-
-		pin.id = MasterNode::getNextId();
-		pin.name = "output >";
-		pin.node = this;
-		pin.kind = PinKind::Output;
-		outputs.push_back(pin);
+		inputs.push_back(createPin("> freq", PinKind::Input));
+		inputs.push_back(createPin("> LFO Hz", PinKind::Input));
+		inputs.push_back(createPin("> LFO Amplitude", PinKind::Input));
+		outputs.push_back(createPin("output >", PinKind::Output));
 	}
 
 	void render()
@@ -298,35 +278,31 @@ struct ADSR_Node : public Node {
 		name = "ADSR";
 		type = ADSRUI;
 
-		Pin pin;
-		pin.id = MasterNode::getNextId();
-		pin.name = "output >";
-		pin.node = this;
-		pin.kind = PinKind::Output;
-		outputs.push_back(pin);
-
-		pin.id = MasterNode::getNextId();
-		pin.name = "> input";
-		pin.node = this;
-		pin.kind = PinKind::Input;
-		inputs.push_back(pin);
+		outputs.push_back(createPin("output >", PinKind::Output));
+		inputs.push_back(createPin("> input", PinKind::Input));
 	}
 };
 
-struct KeyboardFrequencyNode : public Node
-{
+struct KeyboardFrequencyNode : public Node {
 	KeyboardFrequencyNode()
 	{
 		id = MasterNode::getNextId();
 		name = "Keyboard Frequency";
 		type = KbFreqUI;
 
-		Pin pin;
-		pin.id = MasterNode::getNextId();
-		pin.name = "frequency >";
-		pin.node = this; // Is this really necessary ?
-		pin.kind = PinKind::Output;
+		outputs.push_back(createPin("frequency >", PinKind::Output));
+	}
+};
 
-		outputs.push_back(pin);
+struct MultNode : public Node {
+	MultNode()
+	{
+		id = MasterNode::getNextId();
+		name = "Multiplier";
+		type = MultUI;
+
+		inputs.push_back(createPin("> input A", PinKind::Input));
+		inputs.push_back(createPin("> input B", PinKind::Input));
+		outputs.push_back(createPin("output >", PinKind::Output));
 	}
 };
