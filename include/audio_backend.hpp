@@ -221,7 +221,7 @@ struct ADSR : public AudioComponent {
 };
 
 struct Number : public AudioComponent {
-	int number;
+	float number;
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{

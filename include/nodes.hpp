@@ -163,7 +163,7 @@ public:
 
 struct NumberNode : public Node
 {
-	int value;
+	float value;
 
 	NumberNode()
 	{
@@ -171,7 +171,7 @@ struct NumberNode : public Node
 		name = "Number";
 		type = NumberUI;
 
-		value = 0;
+		value = 0.0f;
 
 		Pin pin;
 		pin.id = MasterNode::getNextId();
@@ -188,7 +188,7 @@ struct NumberNode : public Node
 
 		std::string dragIntText = "Value " + std::to_string(id.Get());
 		ImGui::SetNextItemWidth(50);
-		if (ImGui::DragInt(dragIntText.c_str(), &value))
+		if (ImGui::DragFloat(dragIntText.c_str(), &value, 0.001))
 			Node::propertyChanged = true;
 
 		Node::endRender();
