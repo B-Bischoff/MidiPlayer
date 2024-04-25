@@ -16,6 +16,12 @@ struct AudioComponent {
 	virtual void addInput(const std::string& inputName, AudioComponent* input) {
 		assert(0 && "Node does not have input");
 	}
+	virtual double getInputsValue(std::vector<AudioComponent*>& inputs, std::vector<MidiInfo>& keyPressed, int currentKey = 0) {
+		double value = 0.0;
+		for (AudioComponent* input : inputs)
+			value += input->process(keyPressed, currentKey);
+		return value;
+	}
 
 	static double time;
 };
@@ -271,10 +277,10 @@ struct Oscillator : public AudioComponent {
 	{
 		if (!freq.size())
 			return 0.0;
-		AudioComponent* input = freq.at(0);
-
-		double frequency = input->process(keyPressed, currentKey);
-		double value = osc(frequency, time, type);
+		double frequencyValue = getInputsValue(freq, keyPressed, currentKey);
+		double LFO_Hz_Value = getInputsValue(LFO_Hz, keyPressed, currentKey);
+		double LFO_Amplitude_Value = getInputsValue(LFO_Amplitude, keyPressed, currentKey);
+		double value = osc(frequencyValue, time, type, LFO_Hz_Value, LFO_Amplitude_Value);
 		return value;
 	}
 };

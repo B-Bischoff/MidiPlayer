@@ -186,10 +186,11 @@ struct NumberNode : public Node
 		Node::startRender();
 		Node::renderNameAndPins();
 
-		std::string dragIntText = "Value " + std::to_string(id.Get());
 		ImGui::SetNextItemWidth(50);
-		if (ImGui::DragFloat(dragIntText.c_str(), &value, 0.001))
+		ImGui::PushID(appendId("NumberValue").c_str());
+		if (ImGui::DragFloat("Value", &value, 0.001))
 			Node::propertyChanged = true;
+		ImGui::PopID();
 
 		Node::endRender();
 	}
