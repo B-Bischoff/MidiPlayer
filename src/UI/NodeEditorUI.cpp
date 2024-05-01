@@ -3,6 +3,29 @@
 bool Node::propertyChanged = false;
 int Node::nextId = 0;
 
+Node& findNoteById(std::vector<Node*>& nodes, ed::NodeId id)
+{
+	for (Node* node : nodes)
+	{
+		if (node->id == id)
+			return *node;
+	}
+	assert(0 && "[NODE]: Could not find node by id");
+}
+
+std::vector<Node*>::iterator removeNode(std::vector<Node*>& nodes, Node& nodeToDelete)
+{
+	for (auto it = nodes.begin(); it != nodes.end(); it++)
+	{
+		Node* node = *it;
+		assert(node);
+
+		if (node->id == nodeToDelete.id)
+			return nodes.erase(it);
+	}
+	assert(0 && "[NODE]: Could not erase node");
+}
+
 Node& findNodeByPinId(std::vector<Node*>& nodes, ed::PinId id)
 {
 	for (Node* node : nodes)
@@ -16,6 +39,19 @@ Node& findNodeByPinId(std::vector<Node*>& nodes, ed::PinId id)
 	}
 
 	assert(0 && "[NODE]: Node id does not exits");
+}
+
+void removeLinkContainingId(ImVector<LinkInfo>& links, std::vector<Node*>& nodes, ed::NodeId id)
+{
+	for (auto it = links.begin(); it != links.end(); it++)
+	{
+		LinkInfo& link = *it;
+		Node& inputNode = findNodeByPinId(nodes, link.InputId);
+		Node& outputNode = findNodeByPinId(nodes, link.InputId);
+
+		if (inputNode.id == id || outputNode.id == id)
+			it = links.erase(it);
+	}
 }
 
 ed::PinKind getPinKind(ed::PinId pinId, std::vector<Node*>& nodes)
@@ -153,16 +189,33 @@ void NodeEditorUI::update(Master& master)
 
 	ImVec2 openPopupPosition = ImGui::GetMousePos();
 	static Pin* newNodeLinkPin = nullptr;
+	static ed::NodeId contextNodeId = 0;
 
 	ed::Suspend();
 	if (ed::ShowBackgroundContextMenu())
-	{
 		ImGui::OpenPopup("Create New Node");
-		newNodeLinkPin = nullptr;
-	}
+	else if (ed::ShowNodeContextMenu(&contextNodeId))
+		ImGui::OpenPopup("Node Context Menu");
 	ed::Resume();
 
 	ed::Suspend();
+
+	if (ImGui::BeginPopup("Node Context Menu"))
+	{
+		//Node& node = findNoteById(_nodes, contextNodeId);
+
+		ImGui::TextUnformatted("Node Context Menu");
+		ImGui::Separator();
+		if (ImGui::MenuItem("Delete"))
+		{
+			removeLinkContainingId(_links, _nodes, contextNodeId);
+			ed::DeleteNode(contextNodeId);
+			removeNode(_nodes, findNoteById(_nodes, contextNodeId));
+			Node::propertyChanged = true;
+		}
+		ImGui::EndPopup();
+	}
+
 	if (ImGui::BeginPopup("Create New Node"))
 	{
 		Node* node = nullptr;
