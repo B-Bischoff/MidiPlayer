@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.0)
 project(MidiPlayer)
 
 # find_package(glfw3 REQUIRED)
-find_package(GLEW REQUIRED)
+# find_package(GLEW REQUIRED)
 
 set(CMAKE_CXX_STANDARD 14)
 
@@ -21,7 +21,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE pthread)
 target_link_libraries(${PROJECT_NAME} PRIVATE portmidi)
 target_link_libraries(${PROJECT_NAME} PRIVATE rtaudio)
 target_link_libraries(${PROJECT_NAME} PRIVATE imgui)
-target_link_libraries(${PROJECT_NAME} PRIVATE GLEW::GLEW)
+target_link_libraries(${PROJECT_NAME} PRIVATE GLEW)
 target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
 target_link_libraries(${PROJECT_NAME} PRIVATE GL)
 target_link_libraries(${PROJECT_NAME} PRIVATE dl)

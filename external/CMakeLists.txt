@@ -6,6 +6,23 @@ target_include_directories(portmidi PUBLIC
 add_subdirectory(rtaudio)
 add_subdirectory(glfw)
 
+# GLEW
+add_definitions(
+	-DTW_STATIC
+	-DTW_NO_LIB_PRAGMA
+	-DTW_NO_DIRECT3D
+	-DGLEW_STATIC
+	-D_CRT_SECURE_NO_WARNINGS
+)
+
+include_directories(
+	glew-2.2.0/include
+)
+
+add_library(GLEW STATIC
+	glew-2.2.0/src/glew.c
+)
+
 # IMGUI
 set(IMGUI_SOURCES
 	"imgui/imgui.cpp"
