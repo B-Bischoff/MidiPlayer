@@ -146,12 +146,69 @@ void NodeEditorUI::update(Master& master)
 	ed::SetCurrentEditor(_context);
 	ed::Begin("Node editor", ImVec2(0.0, 0.0f));
 
+	render();
+
+	handleLinkCreation(master);
+	handleLinkDeletion(master);
+
+	ImVec2 openPopupPosition = ImGui::GetMousePos();
+	static Pin* newNodeLinkPin = nullptr;
+
+	ed::Suspend();
+	if (ed::ShowBackgroundContextMenu())
+	{
+		ImGui::OpenPopup("Create New Node");
+		newNodeLinkPin = nullptr;
+	}
+	ed::Resume();
+
+	ed::Suspend();
+	if (ImGui::BeginPopup("Create New Node"))
+	{
+		Node* node = nullptr;
+
+		if (ImGui::MenuItem("Number"))
+			node = addNode<NumberNode>();
+		if (ImGui::MenuItem("Oscillator"))
+			node = addNode<OscNode>();
+		if (ImGui::MenuItem("ADSR Envelope"))
+			node = addNode<ADSR_Node>();
+		if (ImGui::MenuItem("Keyboard Frequency"))
+			node = addNode<KeyboardFrequencyNode>();
+		if (ImGui::MenuItem("Multiply"))
+			node = addNode<MultNode>();
+
+		if (node)
+		{
+			ImVec2 newNodePosition = openPopupPosition;
+			ed::SetNodePosition(node->id, newNodePosition);
+		}
+
+		ImGui::EndPopup();
+	}
+	ed::Resume();
+
+	ed::End();
+
+	if (Node::propertyChanged)
+	{
+		std::cout << "Property changed" << std::endl;
+		Node::propertyChanged = false;
+		updateAudioComponents(master, getMasterNode(_nodes), _nodes, _links);
+	}
+}
+
+void NodeEditorUI::render()
+{
 	for (Node* node : _nodes)
 		node->render();
 
 	for (auto& linkInfo : _links) // Render links
 		ed::Link(linkInfo.Id, linkInfo.InputId, linkInfo.OutputId);
+}
 
+void NodeEditorUI::handleLinkCreation(Master& master)
+{
 	if (ed::BeginCreate())
 	{
 		ed::PinId inputPinId, outputPinId;
@@ -184,8 +241,10 @@ void NodeEditorUI::update(Master& master)
 		}
 	}
 	ed::EndCreate();
+}
 
-	// Handle deletion action
+void NodeEditorUI::handleLinkDeletion(Master& master)
+{
 	if (ed::BeginDelete())
 	{
 		// There may be many links marked for deletion, let's loop over them.
@@ -212,14 +271,13 @@ void NodeEditorUI::update(Master& master)
 			// ed::RejectDeletedItem();
 		}
 	}
-	ed::EndDelete(); // Wrap up deletion action
+	ed::EndDelete();
+}
 
-	ed::End();
-
-	if (Node::propertyChanged)
-	{
-		std::cout << "Property changed" << std::endl;
-		Node::propertyChanged = false;
-		updateAudioComponents(master, getMasterNode(_nodes), _nodes, _links);
-	}
+template<typename T>
+Node* NodeEditorUI::addNode()
+{
+	Node* node = new T();
+	_nodes.push_back(node);
+	return node;
 }

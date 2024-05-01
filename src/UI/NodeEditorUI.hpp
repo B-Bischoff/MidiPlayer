@@ -15,4 +15,13 @@ public:
 	NodeEditorUI();
 
 	void update(Master& master);
+
+private:
+	void render();
+	void handleLinkCreation(Master& master);
+	void handleLinkDeletion(Master& master);
+
+
+	template<typename T>
+		Node* addNode();
 };
