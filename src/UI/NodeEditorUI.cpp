@@ -58,9 +58,8 @@ AudioComponent* allocateAudioComponent(Node& node)
 		case NumberUI: {
 			NumberNode* numberNode = dynamic_cast<NumberNode*>(&node);
 			assert(numberNode);
-			Number* number = new Number();
+			Number* number = new Number(); // [TODO] create adequate constructor
 			number->number = numberNode->value;
-			std::cout << "create with " << number->number << std::endl;
 			return number;
 		}
 		case OscUI: {
@@ -68,7 +67,6 @@ AudioComponent* allocateAudioComponent(Node& node)
 			assert(oscUI);
 			Oscillator* osc = new Oscillator();
 			osc->type = oscUI->oscType;
-						std::cout << "osc : " << osc->type << std::endl;
 			return osc;
 		}
 		case ADSRUI: return new ADSR();
@@ -97,20 +95,18 @@ void deleteComponentAndInputs(AudioComponent* component)
 
 void createAudioComponentsFromNodes(AudioComponent& component, Node& outputNode, std::vector<Node*>& nodes, ImVector<LinkInfo>& links)
 {
-	for (Pin& pin : outputNode.inputs)
+	for (Pin& pin : outputNode.inputs) // Loop through current node input pins
 	{
-		for (LinkInfo& link: links)
+		for (LinkInfo& link: links) // Check for every link that points to the current node input
 		{
 			if (link.OutputId == pin.id)
 			{
-				Node& inputNode = findNodeByPinId(nodes, link.InputId);
+				Node& inputNode = findNodeByPinId(nodes, link.InputId); // Get node plugged to the input pin
 
-				//std::cout << inputNode.name << " [" << pin.name << "] " << " -> " << outputNode.name << std::endl;;
-				Node& linkedNode = findNodeByPinId(nodes, link.InputId);
-				component.addInput(pin.name, allocateAudioComponent(linkedNode));
-				Components inputs = component.getInputs();
-				for (AudioComponent* input : inputs)
-					createAudioComponentsFromNodes(*input, linkedNode, nodes, links);
+				AudioComponent* newInput = allocateAudioComponent(inputNode); // Create an AudioComponent version of that node
+				component.addInput(pin.name, newInput); // Plug this node into the current node input
+
+				createAudioComponentsFromNodes(*newInput, inputNode, nodes, links); // Recursively follow input nodes
 			}
 		}
 	}

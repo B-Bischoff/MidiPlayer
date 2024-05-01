@@ -281,6 +281,7 @@ struct Oscillator : public AudioComponent {
 		double LFO_Hz_Value = getInputsValue(LFO_Hz, keyPressed, currentKey);
 		double LFO_Amplitude_Value = getInputsValue(LFO_Amplitude, keyPressed, currentKey);
 		double value = osc(frequencyValue, time, type, LFO_Hz_Value, LFO_Amplitude_Value);
+
 		return value;
 	}
 };
@@ -319,7 +320,6 @@ struct Multiplier : public AudioComponent {
 	{
 		double valueA = getInputsValue(inputsA, keyPressed, currentKey);
 		double valueB = getInputsValue(inputsB, keyPressed, currentKey);
-		std::cout << valueA << std::endl;
 		return valueA * valueB;
 	}
 };
