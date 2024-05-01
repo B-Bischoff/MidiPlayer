@@ -1,8 +1,4 @@
 add_subdirectory(portmidi)
-target_include_directories(portmidi PUBLIC
-	${CMAKE_CURRENT_SOURCE_DIR}/portmidi/pm_common
-)
-
 add_subdirectory(rtaudio)
 add_subdirectory(glfw)
 

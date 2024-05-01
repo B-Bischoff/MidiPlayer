@@ -2,14 +2,12 @@ cmake_minimum_required(VERSION 3.0)
 
 project(MidiPlayer)
 
-# find_package(glfw3 REQUIRED)
-# find_package(GLEW REQUIRED)
-
 set(CMAKE_CXX_STANDARD 14)
 
 add_subdirectory(external)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/portmidi/pm_common)
 
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
