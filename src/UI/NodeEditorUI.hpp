@@ -18,9 +18,14 @@ public:
 
 private:
 	void render();
-	void handleLinkCreation(Master& master);
-	void handleLinkDeletion(Master& master);
 
+	void handleCreation(Master& master);
+	void handleLinkCreation(Master& master);
+	void handleNodeCreation();
+
+	void handleDeletion(Master& master);
+	void handleLinkDeletion(Master& master);
+	void handleNodeDeletion();
 
 	template<typename T>
 		Node* addNode();

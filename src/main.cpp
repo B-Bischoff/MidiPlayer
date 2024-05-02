@@ -123,10 +123,6 @@ int main(void)
 
 		handleInput(window, inputManager, envelopes, keyPressed, t);
 
-		//for (auto it = keyPressed.begin(); it != keyPressed.end(); it++)
-		//	std::cout << it->keyIndex << " ";
-		//std::cout << std::endl;
-
 		generateAudio(audio, master, envelopes, keyPressed, t);
 
 		/*

@@ -11,6 +11,7 @@ Node& findNoteById(std::vector<Node*>& nodes, ed::NodeId id)
 			return *node;
 	}
 	assert(0 && "[NODE]: Could not find node by id");
+	return *nodes[0];
 }
 
 std::vector<Node*>::iterator removeNode(std::vector<Node*>& nodes, Node& nodeToDelete)
@@ -24,6 +25,7 @@ std::vector<Node*>::iterator removeNode(std::vector<Node*>& nodes, Node& nodeToD
 			return nodes.erase(it);
 	}
 	assert(0 && "[NODE]: Could not erase node");
+	return nodes.begin();
 }
 
 Node& findNodeByPinId(std::vector<Node*>& nodes, ed::PinId id)
@@ -39,6 +41,7 @@ Node& findNodeByPinId(std::vector<Node*>& nodes, ed::PinId id)
 	}
 
 	assert(0 && "[NODE]: Node id does not exits");
+	return *nodes[0];
 }
 
 void removeLinkContainingId(ImVector<LinkInfo>& links, std::vector<Node*>& nodes, ed::NodeId id)
@@ -51,6 +54,9 @@ void removeLinkContainingId(ImVector<LinkInfo>& links, std::vector<Node*>& nodes
 
 		if (inputNode.id == id || outputNode.id == id)
 			it = links.erase(it);
+
+		if (it == links.end())
+			break;
 	}
 }
 
@@ -70,6 +76,7 @@ ed::PinKind getPinKind(ed::PinId pinId, std::vector<Node*>& nodes)
 		}
 	}
 	assert(0 && "[NODE]: Pin id does not exits");
+	return ed::PinKind::Output;
 }
 
 MasterNode& getMasterNode(std::vector<Node*>& nodes)
@@ -81,6 +88,7 @@ MasterNode& getMasterNode(std::vector<Node*>& nodes)
 			return *masterNode;
 	}
 	assert(0 && "[NODE]: Master node does not exists");
+	return *(MasterNode*)nodes[0];
 }
 
 AudioComponent* allocateAudioComponent(Node& node)
@@ -110,6 +118,7 @@ AudioComponent* allocateAudioComponent(Node& node)
 		case MultUI: return new Multiplier();
 	}
 	assert(0 && "Invalid type");
+	return nullptr;
 }
 
 void deleteComponentAndInputs(AudioComponent* component)
@@ -184,11 +193,39 @@ void NodeEditorUI::update(Master& master)
 
 	render();
 
+	handleCreation(master);
+	handleDeletion(master);
+
+	ed::End();
+
+	if (Node::propertyChanged)
+	{
+		std::cout << "Property changed" << std::endl;
+		Node::propertyChanged = false;
+		updateAudioComponents(master, getMasterNode(_nodes), _nodes, _links);
+	}
+}
+
+void NodeEditorUI::render()
+{
+	for (Node* node : _nodes)
+		node->render();
+
+	for (auto& linkInfo : _links) // Render links
+		ed::Link(linkInfo.Id, linkInfo.InputId, linkInfo.OutputId);
+}
+
+void NodeEditorUI::handleCreation(Master& master)
+{
+	handleNodeCreation();
 	handleLinkCreation(master);
-	handleLinkDeletion(master);
+}
+
+void NodeEditorUI::handleNodeCreation()
+{
 
 	ImVec2 openPopupPosition = ImGui::GetMousePos();
-	static Pin* newNodeLinkPin = nullptr;
+	static Pin* newNodeLinkPin = nullptr; // [TODO] remove those static variables
 	static ed::NodeId contextNodeId = 0;
 
 	ed::Suspend();
@@ -202,8 +239,6 @@ void NodeEditorUI::update(Master& master)
 
 	if (ImGui::BeginPopup("Node Context Menu"))
 	{
-		//Node& node = findNoteById(_nodes, contextNodeId);
-
 		ImGui::TextUnformatted("Node Context Menu");
 		ImGui::Separator();
 		if (ImGui::MenuItem("Delete"))
@@ -240,24 +275,6 @@ void NodeEditorUI::update(Master& master)
 		ImGui::EndPopup();
 	}
 	ed::Resume();
-
-	ed::End();
-
-	if (Node::propertyChanged)
-	{
-		std::cout << "Property changed" << std::endl;
-		Node::propertyChanged = false;
-		updateAudioComponents(master, getMasterNode(_nodes), _nodes, _links);
-	}
-}
-
-void NodeEditorUI::render()
-{
-	for (Node* node : _nodes)
-		node->render();
-
-	for (auto& linkInfo : _links) // Render links
-		ed::Link(linkInfo.Id, linkInfo.InputId, linkInfo.OutputId);
 }
 
 void NodeEditorUI::handleLinkCreation(Master& master)
@@ -296,35 +313,64 @@ void NodeEditorUI::handleLinkCreation(Master& master)
 	ed::EndCreate();
 }
 
-void NodeEditorUI::handleLinkDeletion(Master& master)
+void NodeEditorUI::handleDeletion(Master& master)
 {
 	if (ed::BeginDelete())
 	{
-		// There may be many links marked for deletion, let's loop over them.
-		ed::LinkId deletedLinkId;
-		while (ed::QueryDeletedLink(&deletedLinkId))
-		{
-			// If you agree that link can be deleted, accept deletion.
-			if (ed::AcceptDeletedItem())
-			{
-				// Then remove link from your data.
-				for (auto& link : _links)
-				{
-					if (link.Id == deletedLinkId)
-					{
-						_links.erase(&link);
+		handleNodeDeletion();
+		handleLinkDeletion(master);
+	}
+	ed::EndDelete();
+}
 
-						updateAudioComponents(master, getMasterNode(_nodes), _nodes, _links);
-						break;
+void NodeEditorUI::handleNodeDeletion()
+{
+	ed::NodeId nodeId = 0;
+	while (ed::QueryDeletedNode(&nodeId))
+	{
+		if (ed::AcceptDeletedItem())
+		{
+			for (Node* node : _nodes)
+			{
+
+				if (node->id == nodeId)
+				{
+					if (node->type != UI_NodeType::MasterUI)
+					{
+						removeLinkContainingId(_links, _nodes, nodeId);
+						removeNode(_nodes, findNoteById(_nodes, nodeId));
+						ed::DeleteNode(nodeId);
+						Node::propertyChanged = true;
 					}
 				}
 			}
-
-			// You may reject link deletion by calling:
-			// ed::RejectDeletedItem();
 		}
 	}
-	ed::EndDelete();
+}
+
+void NodeEditorUI::handleLinkDeletion(Master& master)
+{
+	// There may be many links marked for deletion, let's loop over them.
+	ed::LinkId deletedLinkId;
+	while (ed::QueryDeletedLink(&deletedLinkId))
+	{
+		// If you agree that link can be deleted, accept deletion.
+		if (ed::AcceptDeletedItem())
+		{
+			for (auto& link : _links)
+			{
+				if (link.Id == deletedLinkId)
+				{
+					_links.erase(&link);
+
+					updateAudioComponents(master, getMasterNode(_nodes), _nodes, _links);
+					break;
+				}
+			}
+		}
+		// You may reject link deletion by calling:
+		// ed::RejectDeletedItem();
+	}
 }
 
 template<typename T>

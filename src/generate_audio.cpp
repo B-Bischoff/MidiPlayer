@@ -33,25 +33,6 @@ void generateAudio(AudioData& audio, Master& master, std::vector<sEnvelopeADSR>&
 		double value = 0.0;
 
 		value = master.process(keyPressed) * 0.3;
-		/*
-		for (sEnvelopeADSR& e : envelopes)
-		{
-			if (e.noteOn || e.phase != Phase::Inactive)
-			{
-				//double amplitude = e.GetAmplitude(time);
-				KeyboardFrequency::keyIndex = e.keyIndex;
-				ADSR::envelope = &e;
-
-				//for (int j = 1; j < 10; j++)
-				//	value += osc(pianoKeyFrequency(e.keyIndex) * j, time) * 0.2 * (1.0 / (double)j) * amplitude;
-
-				//value += osc(pianoKeyFrequency(e.keyIndex), time, 20.0, 0.02) * 0.3 * e.GetAmplitude(time);
-				//value += osc(pianoKeyFrequency(e.keyIndex), time) * 0.3 * e.GetAmplitude(time);
-				value += master.process(keyPressed) * 0.3;// * e.GetAmplitude(time);
-				//applyLowPassFilter(value);
-			}
-		}
-		*/
 
 		//if (writeOneMoreFrame && i == audio.sampleRate/audio.targetFPS)
 		//	value = 0;
@@ -73,7 +54,6 @@ void generateAudio(AudioData& audio, Master& master, std::vector<sEnvelopeADSR>&
 
 double pianoKeyFrequency(int keyId)
 {
-
 	// Frequency of key A4 (A440) is 440 Hz
 	double A4Frequency = 440.0;
 
