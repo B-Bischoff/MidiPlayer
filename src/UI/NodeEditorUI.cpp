@@ -188,6 +188,12 @@ NodeEditorUI::NodeEditorUI()
 
 void NodeEditorUI::update(Master& master)
 {
+	if (ImGui::Button("Save Instrument: "))
+		serialize();
+	static char instrumentFilename[128] = "";
+	ImGui::SameLine();
+	ImGui::InputText("filename", instrumentFilename, IM_ARRAYSIZE(instrumentFilename));
+
 	ed::SetCurrentEditor(_context);
 	ed::Begin("Node editor", ImVec2(0.0, 0.0f));
 
@@ -223,7 +229,6 @@ void NodeEditorUI::handleCreation(Master& master)
 
 void NodeEditorUI::handleNodeCreation()
 {
-
 	ImVec2 openPopupPosition = ImGui::GetMousePos();
 	static Pin* newNodeLinkPin = nullptr; // [TODO] remove those static variables
 	static ed::NodeId contextNodeId = 0;
@@ -376,4 +381,9 @@ void NodeEditorUI::removeNodeAndDependencies(ed::NodeId nodeId)
 		ed::DeleteNode(nodeId);
 		Node::propertyChanged = true;
 	}
+}
+
+void NodeEditorUI::serialize()
+{
+
 }

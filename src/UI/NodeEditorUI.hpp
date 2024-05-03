@@ -30,4 +30,6 @@ private:
 	template<typename T>
 		Node* addNode();
 	void removeNodeAndDependencies(ed::NodeId nodeId);
+
+	void serialize();
 };

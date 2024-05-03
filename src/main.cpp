@@ -1,5 +1,4 @@
 #include "imgui.h"
-#include "imgui_node_editor.h"
 #include "implot.h"
 #include <cstring>
 #include <unistd.h>
@@ -12,7 +11,6 @@ static void handleFrameProcessTime(const time_point& startTime, const std::chron
 
 double AudioComponent::time = 0.0;
 unsigned int KeyboardFrequency::keyIndex = 0;
-//sEnvelopeADSR* ADSR::envelope = nullptr;
 
 GLFWwindow* init(const int WIN_WIDTH, const int WIN_HEIGHT)
 {

@@ -49,3 +49,7 @@ target_include_directories(imgui PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/implot
 	${CMAKE_CURRENT_SOURCE_DIR}/imgui-node-editor
 )
+
+#CEREAL
+add_library(cereal INTERFACE)
+target_include_directories(cereal INTERFACE ./cereal/include)

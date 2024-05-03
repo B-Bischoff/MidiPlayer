@@ -19,3 +19,6 @@
 [submodule "external/glew"]
 	path = external/glew
 	url = git@github.com:nigels-com/glew.git
+[submodule "external/cereal"]
+	path = external/cereal
+	url = git@github.com:USCiLab/cereal.git
