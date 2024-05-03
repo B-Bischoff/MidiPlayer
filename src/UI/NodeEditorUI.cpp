@@ -242,12 +242,7 @@ void NodeEditorUI::handleNodeCreation()
 		ImGui::TextUnformatted("Node Context Menu");
 		ImGui::Separator();
 		if (ImGui::MenuItem("Delete"))
-		{
-			removeLinkContainingId(_links, _nodes, contextNodeId);
-			ed::DeleteNode(contextNodeId);
-			removeNode(_nodes, findNoteById(_nodes, contextNodeId));
-			Node::propertyChanged = true;
-		}
+			removeNodeAndDependencies(contextNodeId);
 		ImGui::EndPopup();
 	}
 
@@ -329,22 +324,7 @@ void NodeEditorUI::handleNodeDeletion()
 	while (ed::QueryDeletedNode(&nodeId))
 	{
 		if (ed::AcceptDeletedItem())
-		{
-			for (Node* node : _nodes)
-			{
-
-				if (node->id == nodeId)
-				{
-					if (node->type != UI_NodeType::MasterUI)
-					{
-						removeLinkContainingId(_links, _nodes, nodeId);
-						removeNode(_nodes, findNoteById(_nodes, nodeId));
-						ed::DeleteNode(nodeId);
-						Node::propertyChanged = true;
-					}
-				}
-			}
-		}
+			removeNodeAndDependencies(nodeId);
 	}
 }
 
@@ -379,4 +359,21 @@ Node* NodeEditorUI::addNode()
 	Node* node = new T();
 	_nodes.push_back(node);
 	return node;
+}
+
+void NodeEditorUI::removeNodeAndDependencies(ed::NodeId nodeId)
+{
+	for (Node* node : _nodes)
+	{
+		if (node->id != nodeId)
+			continue;
+
+		if (node->type == UI_NodeType::MasterUI)
+			return; // [TODO] Display some "Cannot erase master node" message
+
+		removeLinkContainingId(_links, _nodes, nodeId);
+		removeNode(_nodes, findNoteById(_nodes, nodeId));
+		ed::DeleteNode(nodeId);
+		Node::propertyChanged = true;
+	}
 }
