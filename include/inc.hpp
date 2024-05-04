@@ -8,6 +8,9 @@
 #include <portmidi.h>
 #include <RtAudio.h>
 
+#include <cereal/archives/json.hpp>
+#include <cereal/types/vector.hpp>
+
 #include <iostream>
 #include <chrono>
 #include <chrono>

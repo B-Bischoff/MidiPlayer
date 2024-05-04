@@ -137,6 +137,7 @@ public:
 	{
 		return ++nextId; // Id must start at 1 and not 0
 	}
+
 protected:
 	std::string appendId(const std::string& str)
 	{

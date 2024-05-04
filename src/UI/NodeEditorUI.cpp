@@ -385,5 +385,13 @@ void NodeEditorUI::removeNodeAndDependencies(ed::NodeId nodeId)
 
 void NodeEditorUI::serialize()
 {
+	std::ofstream file("serialization.json");
 
+	{
+		cereal::JSONOutputArchive outputArchive(file);
+		for (Node* node : _nodes)
+			outputArchive(*node);
+		for (LinkInfo& link : _links)
+			outputArchive(link);
+	}
 }
