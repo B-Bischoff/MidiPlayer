@@ -373,6 +373,7 @@ void NodeEditorUI::removeNodeAndDependencies(ed::NodeId nodeId)
 		removeNode(_nodes, findNoteById(_nodes, nodeId));
 		ed::DeleteNode(nodeId);
 		Node::propertyChanged = true;
+		return;
 	}
 }
 
