@@ -76,9 +76,9 @@ static double freqToAngularVelocity(double hertz)
 	return hertz * 2.0 * M_PI;
 }
 
-double osc(double hertz, double time, OscType type, double LFOHertz, double LFOAmplitude)
+double osc(double hertz, double phase, double time, OscType type, double LFOHertz, double LFOAmplitude)
 {
-	double t = freqToAngularVelocity(hertz) * time + LFOAmplitude * hertz * (sin(freqToAngularVelocity(LFOHertz) * time));
+	double t = freqToAngularVelocity(hertz) * time + LFOAmplitude * hertz * (sin(freqToAngularVelocity(LFOHertz) * time)) + phase;
 
 	switch(type)
 	{
