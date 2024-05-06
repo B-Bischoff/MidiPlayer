@@ -3,9 +3,9 @@
 bool Node::propertyChanged = false;
 int Node::nextId = 0;
 
-Node& findNoteById(std::vector<Node*>& nodes, ed::NodeId id)
+Node& findNoteById(std::vector<std::shared_ptr<Node>>& nodes, ed::NodeId id)
 {
-	for (Node* node : nodes)
+	for (std::shared_ptr<Node>& node : nodes)
 	{
 		if (node->id == id)
 			return *node;
@@ -14,11 +14,11 @@ Node& findNoteById(std::vector<Node*>& nodes, ed::NodeId id)
 	return *nodes[0];
 }
 
-std::vector<Node*>::iterator removeNode(std::vector<Node*>& nodes, Node& nodeToDelete)
+std::vector<std::shared_ptr<Node>>::iterator removeNode(std::vector<std::shared_ptr<Node>>& nodes, Node& nodeToDelete)
 {
 	for (auto it = nodes.begin(); it != nodes.end(); it++)
 	{
-		Node* node = *it;
+		Node* node = it->get();
 		assert(node);
 
 		if (node->id == nodeToDelete.id)
@@ -28,9 +28,9 @@ std::vector<Node*>::iterator removeNode(std::vector<Node*>& nodes, Node& nodeToD
 	return nodes.begin();
 }
 
-Node& findNodeByPinId(std::vector<Node*>& nodes, ed::PinId id)
+Node& findNodeByPinId(std::vector<std::shared_ptr<Node>>& nodes, ed::PinId id)
 {
-	for (Node* node : nodes)
+	for (std::shared_ptr<Node>& node : nodes)
 	{
 		for (Pin& pin : node->inputs)
 			if (pin.id == id)
@@ -44,7 +44,7 @@ Node& findNodeByPinId(std::vector<Node*>& nodes, ed::PinId id)
 	return *nodes[0];
 }
 
-void removeLinkContainingId(ImVector<LinkInfo>& links, std::vector<Node*>& nodes, ed::NodeId id)
+void removeLinkContainingId(ImVector<LinkInfo>& links, std::vector<std::shared_ptr<Node>>& nodes, ed::NodeId id)
 {
 	for (auto it = links.begin(); it != links.end(); it++)
 	{
@@ -60,9 +60,9 @@ void removeLinkContainingId(ImVector<LinkInfo>& links, std::vector<Node*>& nodes
 	}
 }
 
-ed::PinKind getPinKind(ed::PinId pinId, std::vector<Node*>& nodes)
+ed::PinKind getPinKind(ed::PinId pinId, std::vector<std::shared_ptr<Node>>& nodes)
 {
-	for (Node* node : nodes)
+	for (std::shared_ptr<Node>& node : nodes)
 	{
 		for (Pin& pin : node->inputs)
 		{
@@ -79,16 +79,16 @@ ed::PinKind getPinKind(ed::PinId pinId, std::vector<Node*>& nodes)
 	return ed::PinKind::Output;
 }
 
-MasterNode& getMasterNode(std::vector<Node*>& nodes)
+MasterNode& getMasterNode(std::vector<std::shared_ptr<Node>>& nodes)
 {
-	for (Node* n: nodes)
+	for (std::shared_ptr<Node>& node : nodes)
 	{
-		MasterNode* masterNode = dynamic_cast<MasterNode*>(n);
+		MasterNode* masterNode = dynamic_cast<MasterNode*>(node.get());
 		if (masterNode)
 			return *masterNode;
 	}
 	assert(0 && "[NODE]: Master node does not exists");
-	return *(MasterNode*)nodes[0];
+	return *(MasterNode*)nodes[0].get();
 }
 
 AudioComponent* allocateAudioComponent(Node& node)
@@ -138,7 +138,7 @@ void deleteComponentAndInputs(AudioComponent* component)
 	delete component;
 }
 
-void createAudioComponentsFromNodes(AudioComponent& component, Node& outputNode, std::vector<Node*>& nodes, ImVector<LinkInfo>& links)
+void createAudioComponentsFromNodes(AudioComponent& component, Node& outputNode, std::vector<std::shared_ptr<Node>>& nodes, ImVector<LinkInfo>& links)
 {
 	for (Pin& pin : outputNode.inputs) // Loop through current node input pins
 	{
@@ -158,7 +158,7 @@ void createAudioComponentsFromNodes(AudioComponent& component, Node& outputNode,
 }
 
 // [TODO] keep the function name for different models types (e.g file)
-void updateAudioComponents(AudioComponent& master, Node& node, std::vector<Node*>& nodes, ImVector<LinkInfo>& links)
+void updateAudioComponents(AudioComponent& master, Node& node, std::vector<std::shared_ptr<Node>>& nodes, ImVector<LinkInfo>& links)
 {
 	Components inputs = master.getInputs();
 	for (AudioComponent* input : inputs)
@@ -174,16 +174,9 @@ NodeEditorUI::NodeEditorUI()
 	_context = ed::CreateEditor();
 
 	// [TODO] create a node manager storing contiguously nodes in memory
-	_nodes.push_back(new MasterNode());
-	_nodes.push_back(new NumberNode());
-	_nodes.push_back(new NumberNode());
-	_nodes.push_back(new NumberNode());
-	_nodes.push_back(new OscNode());
-	_nodes.push_back(new ADSR_Node());
-	_nodes.push_back(new OscNode());
-	_nodes.push_back(new KeyboardFrequencyNode());
-	_nodes.push_back(new ADSR_Node());
-	_nodes.push_back(new MultNode());
+	_nodes.push_back(std::make_shared<MasterNode>());
+	_nodes.push_back(std::make_shared<OscNode>());
+	_nodes.push_back(std::make_shared<NumberNode>());
 }
 
 void NodeEditorUI::update(Master& master)
@@ -214,7 +207,7 @@ void NodeEditorUI::update(Master& master)
 
 void NodeEditorUI::render()
 {
-	for (Node* node : _nodes)
+	for (std::shared_ptr<Node>& node : _nodes)
 		node->render();
 
 	for (auto& linkInfo : _links) // Render links
@@ -361,14 +354,14 @@ void NodeEditorUI::handleLinkDeletion(Master& master)
 template<typename T>
 Node* NodeEditorUI::addNode()
 {
-	Node* node = new T();
+	std::shared_ptr<Node> node = std::make_shared<T>();
 	_nodes.push_back(node);
-	return node;
+	return node.get();
 }
 
 void NodeEditorUI::removeNodeAndDependencies(ed::NodeId nodeId)
 {
-	for (Node* node : _nodes)
+	for (std::shared_ptr<Node>& node : _nodes)
 	{
 		if (node->id != nodeId)
 			continue;
@@ -388,10 +381,12 @@ void NodeEditorUI::serialize()
 	std::ofstream file("serialization.json");
 
 	{
+		/*
 		cereal::JSONOutputArchive outputArchive(file);
-		for (Node* node : _nodes)
+		for (std::shared_ptr<Node>& node : _nodes)
 			outputArchive(*node);
 		for (LinkInfo& link : _links)
 			outputArchive(link);
+			*/
 	}
 }

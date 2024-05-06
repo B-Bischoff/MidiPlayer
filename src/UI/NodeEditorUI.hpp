@@ -1,13 +1,15 @@
 #pragma once
 
+#include <fstream>
+#include <memory>
 #include <imgui_node_editor.h>
 #include "audio_backend.hpp"
 #include "nodes.hpp"
 #include "inc.hpp"
-#include <fstream>
 
 // SERIALIZE HELPERS
 
+/*
 template<class Archive>
 void serialize(Archive& archive, const Node& node)
 {
@@ -53,13 +55,15 @@ void serialize(Archive& archive, const LinkInfo& link)
 		//CEREAL_NVP(link.Color)
 	);
 }
+*/
 
 // ---------------------
 
 class NodeEditorUI {
 private:
 	ed::EditorContext* _context;
-	std::vector<Node*> _nodes;
+	//std::vector<Node*> _nodes;
+	std::vector<std::shared_ptr<Node>> _nodes;
 	ImVector<LinkInfo> _links;
 
 public:
