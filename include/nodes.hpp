@@ -213,6 +213,7 @@ struct OscNode : public Node
 		oscType = OscType::Sine;
 
 		inputs.push_back(createPin("> freq", PinKind::Input));
+		inputs.push_back(createPin("> phase", PinKind::Input));
 		inputs.push_back(createPin("> LFO Hz", PinKind::Input));
 		inputs.push_back(createPin("> LFO Amplitude", PinKind::Input));
 		outputs.push_back(createPin("output >", PinKind::Output));

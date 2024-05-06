@@ -3,7 +3,7 @@
 #include "envelope.hpp"
 #include "inc.hpp"
 
-double osc(double hertz, double time, OscType type = Sine, double LFOHertz = 0.0, double LFOAmplitude = 0.0);
+double osc(double hertz, double phase, double time, OscType type = Sine, double LFOHertz = 0.0, double LFOAmplitude = 0.0);
 double pianoKeyFrequency(int keyId);
 
 struct AudioComponent {
@@ -239,6 +239,7 @@ struct Number : public AudioComponent {
 struct Oscillator : public AudioComponent {
 	OscType type;
 	std::vector<AudioComponent*> freq;
+	std::vector<AudioComponent*> phase;
 	std::vector<AudioComponent*> LFO_Hz;
 	std::vector<AudioComponent*> LFO_Amplitude;
 
@@ -246,6 +247,8 @@ struct Oscillator : public AudioComponent {
 	{
 		Components components;
 		for (AudioComponent* input : freq)
+			components.push_front(input);
+		for (AudioComponent* input : phase)
 			components.push_front(input);
 		for (AudioComponent* input : LFO_Hz)
 			components.push_front(input);
@@ -257,6 +260,7 @@ struct Oscillator : public AudioComponent {
 	void clearInputs() override
 	{
 		freq.clear();
+		phase.clear();
 		LFO_Hz.clear();
 		LFO_Amplitude.clear();
 	}
@@ -265,6 +269,8 @@ struct Oscillator : public AudioComponent {
 	{
 		if (inputName == "> freq") // [TODO] remove those "> "
 			freq.push_back(input);
+		else if (inputName == "> phase")
+			phase.push_back(input);
 		else if (inputName == "> LFO Hz")
 			LFO_Hz.push_back(input);
 		else if (inputName == "> LFO Amplitude")
@@ -278,9 +284,10 @@ struct Oscillator : public AudioComponent {
 		if (!freq.size())
 			return 0.0;
 		double frequencyValue = getInputsValue(freq, keyPressed, currentKey);
+		double phaseValue = getInputsValue(phase, keyPressed, currentKey);
 		double LFO_Hz_Value = getInputsValue(LFO_Hz, keyPressed, currentKey);
 		double LFO_Amplitude_Value = getInputsValue(LFO_Amplitude, keyPressed, currentKey);
-		double value = osc(frequencyValue, time, type, LFO_Hz_Value, LFO_Amplitude_Value);
+		double value = osc(frequencyValue, M_PI * phaseValue, time, type, LFO_Hz_Value, LFO_Amplitude_Value);
 
 		return value;
 	}

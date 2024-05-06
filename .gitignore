@@ -21,3 +21,6 @@ compile_commands.json
 
 # ImGui node editor cache
 *.json
+
+# Emacs dir locals
+.dir-locals.el
