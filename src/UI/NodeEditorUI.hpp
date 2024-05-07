@@ -13,34 +13,21 @@
 #include "nodes.hpp"
 #include "inc.hpp"
 
-
-
 // SERIALIZE HELPERS
 
-//template<class Archive>
-//void serialize(Archive& archive, const ImColor& color)
-//{
-//	archive(
-//		CEREAL_NVP(color.Value.x),
-//		CEREAL_NVP(color.Value.y),
-//		CEREAL_NVP(color.Value.z),
-//		CEREAL_NVP(color.Value.w)
-//	);
-//}
-
 template<class Archive>
-void serialize(Archive& archive, Pin pin)
+void serialize(Archive& archive, Pin& pin)
 {
 	archive(
-		cereal::make_nvp("pin_id", pin.id.Get()),
-		cereal::make_nvp("node_id", pin.node->id.Get()),
+		cereal::make_nvp("pin_id", pin.id),
+		cereal::make_nvp("node_id", pin.node->id),
 		cereal::make_nvp("pin_name", pin.name),
 		cereal::make_nvp("pin_kind", (int)pin.kind)
 	);
 }
 
 template<class Archive>
-void serialize(Archive& archive, LinkInfo link)
+void serialize(Archive& archive, LinkInfo& link)
 {
 	archive(
 		cereal::make_nvp("link_id", link.Id.Get()),
@@ -51,7 +38,7 @@ void serialize(Archive& archive, LinkInfo link)
 }
 
 template<class Archive>
-void serialize(Archive& archive, ImVec2 v)
+void serialize(Archive& archive, ImVec2& v)
 {
 	archive(
 		cereal::make_nvp("x", v.x),
@@ -64,7 +51,6 @@ void serialize(Archive& archive, ImVec2 v)
 class NodeEditorUI {
 private:
 	ed::EditorContext* _context;
-	//std::vector<Node*> _nodes;
 	std::vector<std::shared_ptr<Node>> _nodes;
 	ImVector<LinkInfo> _links;
 
@@ -85,8 +71,9 @@ private:
 	void handleNodeDeletion();
 
 	template<typename T>
-		Node* addNode();
+	Node* addNode();
 	void removeNodeAndDependencies(ed::NodeId nodeId);
 
 	void serialize();
+	void loadFile(Master& master, const std::string& name);
 };

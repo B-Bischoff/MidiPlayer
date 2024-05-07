@@ -30,7 +30,7 @@ enum class PinKind
 
 struct Pin
 {
-	ed::PinId id;
+	unsigned int id;
 	Node* node;
 	std::string name;
 	PinKind kind;
@@ -54,7 +54,7 @@ private:
 	static int nextId; // [TODO] create an entity managing ids
 
 public:
-	ed::NodeId id;
+	unsigned int id;
 	std::string name;
 	std::vector<Pin> inputs;
 	std::vector<Pin> outputs;
@@ -127,12 +127,11 @@ public:
 	void serialize(Archive& archive)
 	{
 		archive(
-			cereal::make_nvp("node_id", id.Get()),
+			cereal::make_nvp("node_id", id),
 			cereal::make_nvp("node_name", name),
 			cereal::make_nvp("node_type", (int)type),
 			cereal::make_nvp("node_inputs", inputs),
-			cereal::make_nvp("node_outputs", outputs),
-			cereal::make_nvp("node_position", ed::GetNodePosition(id))
+			cereal::make_nvp("node_outputs", outputs)
 			// cereal::make_nvp("color", color) // [TODO] work on node/link colors
 		);
 	}
@@ -155,7 +154,7 @@ public:
 protected:
 	std::string appendId(const std::string& str)
 	{
-		return str + std::to_string(id.Get());
+		return str + std::to_string(id);
 	}
 
 	Pin createPin(const std::string& name, PinKind kind)
@@ -256,7 +255,7 @@ struct OscNode : public Node
 		Node::startRender();
 		Node::renderNameAndPins();
 
-		std::string dragIntText = "Value " + std::to_string(id.Get());
+		std::string dragIntText = "Value " + std::to_string(id);
 		ImGui::SetNextItemWidth(50);
 
 		ImGui::PushID(appendId("popup").c_str());

@@ -1,4 +1,5 @@
 #include "NodeEditorUI.hpp"
+#include "imgui_node_editor.h"
 
 bool Node::propertyChanged = false;
 int Node::nextId = 0;
@@ -7,7 +8,7 @@ Node& findNoteById(std::vector<std::shared_ptr<Node>>& nodes, ed::NodeId id)
 {
 	for (std::shared_ptr<Node>& node : nodes)
 	{
-		if (node->id == id)
+		if (node->id == id.Get())
 			return *node;
 	}
 	assert(0 && "[NODE]: Could not find node by id");
@@ -33,10 +34,10 @@ Node& findNodeByPinId(std::vector<std::shared_ptr<Node>>& nodes, ed::PinId id)
 	for (std::shared_ptr<Node>& node : nodes)
 	{
 		for (Pin& pin : node->inputs)
-			if (pin.id == id)
+			if (pin.id == id.Get())
 				return *node;
 		for (Pin& pin : node->outputs)
-			if (pin.id == id)
+			if (pin.id == id.Get())
 				return *node;
 	}
 
@@ -52,7 +53,7 @@ void removeLinkContainingId(ImVector<LinkInfo>& links, std::vector<std::shared_p
 		Node& inputNode = findNodeByPinId(nodes, link.InputId);
 		Node& outputNode = findNodeByPinId(nodes, link.InputId);
 
-		if (inputNode.id == id || outputNode.id == id)
+		if (inputNode.id == id.Get() || outputNode.id == id.Get())
 			it = links.erase(it);
 
 		if (it == links.end())
@@ -66,12 +67,12 @@ ed::PinKind getPinKind(ed::PinId pinId, std::vector<std::shared_ptr<Node>>& node
 	{
 		for (Pin& pin : node->inputs)
 		{
-			if (pin.id == pinId)
+			if (pin.id == pinId.Get())
 				return ed::PinKind::Input;
 		}
 		for (Pin& pin : node->outputs)
 		{
-			if (pin.id == pinId)
+			if (pin.id == pinId.Get())
 				return ed::PinKind::Output;
 		}
 	}
@@ -144,7 +145,7 @@ void createAudioComponentsFromNodes(AudioComponent& component, Node& outputNode,
 	{
 		for (LinkInfo& link: links) // Check for every link that points to the current node input
 		{
-			if (link.OutputId == pin.id)
+			if (link.OutputId.Get() == pin.id)
 			{
 				Node& inputNode = findNodeByPinId(nodes, link.InputId); // Get node plugged to the input pin
 
@@ -183,6 +184,8 @@ void NodeEditorUI::update(Master& master)
 {
 	if (ImGui::Button("Save Instrument: "))
 		serialize();
+	if (ImGui::Button("Load Instrument: "))
+		loadFile(master, "serialization.json");
 	static char instrumentFilename[128] = "";
 	ImGui::SameLine();
 	ImGui::InputText("filename", instrumentFilename, IM_ARRAYSIZE(instrumentFilename));
@@ -199,7 +202,6 @@ void NodeEditorUI::update(Master& master)
 
 	if (Node::propertyChanged)
 	{
-		std::cout << "Property changed" << std::endl;
 		Node::propertyChanged = false;
 		updateAudioComponents(master, getMasterNode(_nodes), _nodes, _links);
 	}
@@ -277,8 +279,6 @@ void NodeEditorUI::handleLinkCreation(Master& master)
 		ed::PinId inputPinId, outputPinId;
 		if (ed::QueryNewLink(&inputPinId, &outputPinId))
 		{
-			// Link creation logic
-
 			if (inputPinId && outputPinId && \
 				findNodeByPinId(_nodes, inputPinId) != findNodeByPinId(_nodes, outputPinId)) // Do not accept pins from the same node
 			{
@@ -290,9 +290,6 @@ void NodeEditorUI::handleLinkCreation(Master& master)
 
 					// Since we accepted new link, lets add one to our list of links.
 					_links.push_back({ ed::LinkId(MasterNode::getNextId()), inputPinId, outputPinId });
-
-					// Draw new link.
-					ed::Link(_links.back().Id, _links.back().InputId, _links.back().OutputId);
 
 					updateAudioComponents(master, getMasterNode(_nodes), _nodes, _links);
 				}
@@ -363,7 +360,7 @@ void NodeEditorUI::removeNodeAndDependencies(ed::NodeId nodeId)
 {
 	for (std::shared_ptr<Node>& node : _nodes)
 	{
-		if (node->id != nodeId)
+		if (node->id != nodeId.Get())
 			continue;
 
 		if (node->type == UI_NodeType::MasterUI)
@@ -379,15 +376,85 @@ void NodeEditorUI::removeNodeAndDependencies(ed::NodeId nodeId)
 
 void NodeEditorUI::serialize()
 {
-	std::ofstream file("serialization.json");
+	const std::string filename = "serialization1.json";
 
+	std::ofstream file(filename);
 	{
 		cereal::JSONOutputArchive outputArchive(file);
 
-		outputArchive(
-			cereal::make_nvp("nodes", _nodes)
-		);
+		for (auto& node : _nodes)
+		{
+			outputArchive(
+				cereal::make_nvp("node", node),
+				cereal::make_nvp("node_position", ed::GetNodePosition(node->id))
+			);
+		}
 		for (LinkInfo& link : _links)
-			outputArchive(link);
+			outputArchive(cereal::make_nvp("link", link));
 	}
+}
+
+void NodeEditorUI::loadFile(Master& master, const std::string& name)
+{
+	std::ifstream file(name);
+	assert(file.is_open());
+
+	std::vector<std::shared_ptr<Node>> nodes;
+	ImVector<LinkInfo> links;
+
+	{
+		cereal::JSONInputArchive archive(file);
+
+		// Load nodes
+		try{
+			while (true)
+			{
+				std::shared_ptr<Node> node;
+				archive(node);
+
+				ImVec2 pos;
+				archive(pos);
+
+				nodes.push_back(node);
+
+				ed::SetNodePosition(node->id, pos);
+			}
+		}
+		catch (std::exception& e)
+		{ }
+	}
+
+	file.close();
+	file.open(name);
+
+	cereal::JSONInputArchive archive(file);
+	archive.setNextName("link");
+
+	try{
+		int i = 0;
+		while (true)
+		{
+			archive.startNode();
+			int id, inputId, outputId;
+			archive(id, inputId, outputId);
+			archive.finishNode();
+
+			LinkInfo link = {
+				.Id = id,
+				.InputId = inputId,
+				.OutputId = outputId,
+			};
+			links.push_back(link);
+		}
+	}
+	catch (std::exception& e)
+	{ }
+
+	_nodes.clear();
+	_nodes = nodes;
+
+	_links.clear();
+	_links = links;
+
+	updateAudioComponents(master, getMasterNode(_nodes), _nodes, _links);
 }
