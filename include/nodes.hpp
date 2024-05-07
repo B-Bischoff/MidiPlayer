@@ -6,6 +6,8 @@
 #include <vector>
 #include "inc.hpp"
 
+#include "cereal/types/polymorphic.hpp"
+
 namespace ed = ax::NodeEditor;
 
 enum UI_NodeType { NodeUI, MasterUI, NumberUI, OscUI, ADSRUI, KbFreqUI, MultUI };
@@ -31,7 +33,6 @@ struct Pin
 	ed::PinId id;
 	Node* node;
 	std::string name;
-	//PinType type;
 	PinKind kind;
 
 	Pin()
@@ -44,8 +45,7 @@ struct Pin
 
 	Pin(int id, const char* name):
 		id(id), node(nullptr), name(name), kind(PinKind::Input)
-	{
-	}
+	{ }
 };
 
 struct Node
@@ -123,6 +123,19 @@ public:
 		}
 	}
 
+	template<class Archive>
+	void serialize(Archive& archive)
+	{
+		archive(
+			cereal::make_nvp("node_id", id.Get()),
+			cereal::make_nvp("node_name", name),
+			cereal::make_nvp("node_type", (int)type),
+			cereal::make_nvp("node_inputs", inputs),
+			cereal::make_nvp("node_outputs", outputs)
+			// cereal::make_nvp("color", color) // [TODO] work on node/link colors
+		);
+	}
+
 	bool operator==(const Node& node)
 	{
 		return id == node.id;
@@ -168,6 +181,8 @@ public:
 		inputs.push_back(createPin("> input", PinKind::Input));
 	}
 };
+CEREAL_REGISTER_TYPE(MasterNode)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, MasterNode)
 
 struct NumberNode : public Node
 {
@@ -217,6 +232,13 @@ struct OscNode : public Node
 		inputs.push_back(createPin("> LFO Hz", PinKind::Input));
 		inputs.push_back(createPin("> LFO Amplitude", PinKind::Input));
 		outputs.push_back(createPin("output >", PinKind::Output));
+	}
+
+	template<class Archive>
+	void serialize(Archive& archive)
+	{
+		std::cout << "OSC" << std::endl;
+		archive(cereal::base_class<Node>(this), oscType);
 	}
 
 	void render()
@@ -308,3 +330,5 @@ struct MultNode : public Node {
 		outputs.push_back(createPin("output >", PinKind::Output));
 	}
 };
+
+CEREAL_REGISTER_TYPE(OscNode)

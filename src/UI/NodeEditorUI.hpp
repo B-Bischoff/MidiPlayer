@@ -1,5 +1,11 @@
 #pragma once
 
+#include <cereal/archives/json.hpp>
+#include <cereal/types/vector.hpp>
+#include <cereal/types/string.hpp>
+#include <cereal/types/base_class.hpp>
+#include <cereal/types/memory.hpp>
+
 #include <fstream>
 #include <memory>
 #include <imgui_node_editor.h>
@@ -7,21 +13,9 @@
 #include "nodes.hpp"
 #include "inc.hpp"
 
-// SERIALIZE HELPERS
 
-/*
-template<class Archive>
-void serialize(Archive& archive, const Node& node)
-{
-	archive(
-		CEREAL_NVP(node.id.Get()),
-		CEREAL_NVP(node.name),
-		CEREAL_NVP(node.inputs),
-		CEREAL_NVP(node.outputs),
-		//CEREAL_NVP(node.color),
-		CEREAL_NVP(node.type)
-	);
-}
+
+// SERIALIZE HELPERS
 
 //template<class Archive>
 //void serialize(Archive& archive, const ImColor& color)
@@ -35,27 +29,26 @@ void serialize(Archive& archive, const Node& node)
 //}
 
 template<class Archive>
-void serialize(Archive& archive, const Pin& pin)
+void serialize(Archive& archive, Pin& pin)
 {
 	archive(
-		CEREAL_NVP(pin.id.Get()),
-		CEREAL_NVP(pin.node->id.Get()),
-		CEREAL_NVP(pin.name),
-		CEREAL_NVP(pin.kind)
+		cereal::make_nvp("pin_id", pin.id.Get()),
+		cereal::make_nvp("node_id", pin.node->id.Get()),
+		cereal::make_nvp("pin_name", pin.name),
+		cereal::make_nvp("pin_kind", (int)pin.kind)
 	);
 }
 
 template<class Archive>
-void serialize(Archive& archive, const LinkInfo& link)
+void serialize(Archive& archive, LinkInfo& link)
 {
 	archive(
-		CEREAL_NVP(link.Id.Get()),
-		CEREAL_NVP(link.InputId.Get()),
-		CEREAL_NVP(link.OutputId.Get())
+		cereal::make_nvp("link_id", link.Id.Get()),
+		cereal::make_nvp("link_input_id", link.InputId.Get()),
+		cereal::make_nvp("link_output_id", link.OutputId.Get())
 		//CEREAL_NVP(link.Color)
 	);
 }
-*/
 
 // ---------------------
 

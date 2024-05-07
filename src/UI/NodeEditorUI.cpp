@@ -382,12 +382,11 @@ void NodeEditorUI::serialize()
 	std::ofstream file("serialization.json");
 
 	{
-		/*
 		cereal::JSONOutputArchive outputArchive(file);
-		for (std::shared_ptr<Node>& node : _nodes)
-			outputArchive(*node);
+		outputArchive(
+			cereal::make_nvp("nodes", _nodes)
+		);
 		for (LinkInfo& link : _links)
 			outputArchive(link);
-			*/
 	}
 }
