@@ -131,7 +131,8 @@ public:
 			cereal::make_nvp("node_name", name),
 			cereal::make_nvp("node_type", (int)type),
 			cereal::make_nvp("node_inputs", inputs),
-			cereal::make_nvp("node_outputs", outputs)
+			cereal::make_nvp("node_outputs", outputs),
+			cereal::make_nvp("node_position", ed::GetNodePosition(id))
 			// cereal::make_nvp("color", color) // [TODO] work on node/link colors
 		);
 	}
@@ -181,8 +182,6 @@ public:
 		inputs.push_back(createPin("> input", PinKind::Input));
 	}
 };
-CEREAL_REGISTER_TYPE(MasterNode)
-CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, MasterNode)
 
 struct NumberNode : public Node
 {
@@ -211,6 +210,15 @@ struct NumberNode : public Node
 
 		Node::endRender();
 	}
+
+	template<class Archive>
+	void serialize(Archive& archive)
+	{
+		archive(
+			cereal::make_nvp("base_node", cereal::base_class<Node>(this)),
+			cereal::make_nvp("number_value", value)
+		);
+	}
 };
 
 struct OscNode : public Node
@@ -237,8 +245,10 @@ struct OscNode : public Node
 	template<class Archive>
 	void serialize(Archive& archive)
 	{
-		std::cout << "OSC" << std::endl;
-		archive(cereal::base_class<Node>(this), oscType);
+		archive(
+			cereal::make_nvp("base_node", cereal::base_class<Node>(this)),
+			cereal::make_nvp("oscillator_type", oscType)
+		);
 	}
 
 	void render()
@@ -331,4 +341,17 @@ struct MultNode : public Node {
 	}
 };
 
+// Register every Node child classes
+CEREAL_REGISTER_TYPE(MasterNode)
+CEREAL_REGISTER_TYPE(NumberNode)
 CEREAL_REGISTER_TYPE(OscNode)
+CEREAL_REGISTER_TYPE(ADSR_Node)
+CEREAL_REGISTER_TYPE(KeyboardFrequencyNode)
+CEREAL_REGISTER_TYPE(MultNode)
+
+// Register child class if it does not have serialization method.
+// This indicate cereal to use Node serialization method.
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, MasterNode)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, ADSR_Node)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, KeyboardFrequencyNode)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, MultNode)

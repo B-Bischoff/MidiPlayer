@@ -383,6 +383,7 @@ void NodeEditorUI::serialize()
 
 	{
 		cereal::JSONOutputArchive outputArchive(file);
+
 		outputArchive(
 			cereal::make_nvp("nodes", _nodes)
 		);

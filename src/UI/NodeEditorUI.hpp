@@ -29,7 +29,7 @@
 //}
 
 template<class Archive>
-void serialize(Archive& archive, Pin& pin)
+void serialize(Archive& archive, Pin pin)
 {
 	archive(
 		cereal::make_nvp("pin_id", pin.id.Get()),
@@ -40,13 +40,22 @@ void serialize(Archive& archive, Pin& pin)
 }
 
 template<class Archive>
-void serialize(Archive& archive, LinkInfo& link)
+void serialize(Archive& archive, LinkInfo link)
 {
 	archive(
 		cereal::make_nvp("link_id", link.Id.Get()),
 		cereal::make_nvp("link_input_id", link.InputId.Get()),
 		cereal::make_nvp("link_output_id", link.OutputId.Get())
 		//CEREAL_NVP(link.Color)
+	);
+}
+
+template<class Archive>
+void serialize(Archive& archive, ImVec2 v)
+{
+	archive(
+		cereal::make_nvp("x", v.x),
+		cereal::make_nvp("y", v.y)
 	);
 }
 
