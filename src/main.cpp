@@ -1,6 +1,7 @@
 #include "imgui.h"
 #include "implot.h"
 #include <cstring>
+#include <filesystem>
 #include <unistd.h>
 
 #include "inc.hpp"
@@ -31,7 +32,7 @@ GLFWwindow* init(const int WIN_WIDTH, const int WIN_HEIGHT)
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-	GLFWwindow* window = glfwCreateWindow(WIN_WIDTH, WIN_HEIGHT, "2dPlatformer", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(WIN_WIDTH, WIN_HEIGHT, "MidiPlayer", NULL, NULL);
 	if (window == nullptr)
 	{
 		std::cerr << "Failed to initialize GLFW window." << std::endl;
@@ -55,8 +56,39 @@ GLFWwindow* init(const int WIN_WIDTH, const int WIN_HEIGHT)
 	return window;
 }
 
-int main(void)
+fs::path findRessourcesFolder(const fs::path& applicationPath, bool verbose = false)
 {
+	const std::string ressourceFolder = "ressources";
+	fs::path path = applicationPath;
+	path = path.parent_path(); // Remove application name at end of path
+
+	path.append(ressourceFolder);
+	if (verbose) std::cout << "trying: " << path.string() << std::endl;
+	while (!fs::exists(path))
+	{
+		path = path.parent_path(); // Remove ressources folder name
+		if (path == path.root_path())
+		{
+			std::cerr << "[FILESYSTEM] could not find ressources directory" << std::endl;
+			return fs::path();
+		}
+
+		path = path.parent_path(); // Go up one directory
+		path.append(ressourceFolder);
+		if (verbose) std::cout << "trying: " << path.string() << std::endl;
+	}
+	if (verbose) std::cout << "Ressource folder found at : " << path.string() << std::endl;
+	return path;
+}
+
+int main(int argc, char* argv[])
+{
+	const fs::path applicationPath = fs::canonical(fs::path(argv[0]));
+	std::cout << "application path : " << applicationPath.string() << std::endl;
+	const fs::path ressourceDirectoryPath = findRessourcesFolder(applicationPath);
+	if (ressourceDirectoryPath.string().empty())
+		exit(1);
+
 	int FRAME_COUNT = 0;
 	const int SCREEN_WIDTH = 1920;
 	const int SCREEN_HEIGHT = 1080;
