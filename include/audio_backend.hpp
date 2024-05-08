@@ -6,6 +6,35 @@
 double osc(double hertz, double phase, double time, OscType type = Sine, double LFOHertz = 0.0, double LFOAmplitude = 0.0);
 double pianoKeyFrequency(int keyId);
 
+template<typename... Args>
+std::forward_list<AudioComponent*> combineVectorsToForwardList(const Args&... vectors)
+{
+	Components result;
+
+	// Lambda function to push elements of a vector into the result forward list
+	auto pushVectorElements = [&result](const auto& vec)
+	{
+		for (const auto& element : vec)
+			result.push_front(element);
+	};
+
+	// Call the lambda function for each input vector
+	(pushVectorElements(vectors), ...);
+
+	return result;
+}
+
+template<typename... Args>
+void clearVectors(Args&... vectors)
+{
+	auto clearVector = [](auto& vector)
+	{
+		vector.clear();
+	};
+
+	(clearVector(vectors), ...);
+}
+
 struct AudioComponent {
 	AudioComponent() { }
 	virtual ~AudioComponent() {};
@@ -35,10 +64,7 @@ public:
 
 	Components getInputs() override
 	{
-		Components components;
-		for (AudioComponent* input : inputs)
-			components.push_front(input);
-		return components;
+		return combineVectorsToForwardList(inputs);
 	}
 
 	void addInput(const std::string& inputName, AudioComponent* input) override
@@ -49,7 +75,7 @@ public:
 
 	void clearInputs() override
 	{
-		inputs.clear();
+		clearVectors(inputs);
 	}
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
@@ -101,15 +127,12 @@ struct ADSR : public AudioComponent {
 
 	Components getInputs() override
 	{
-		Components components;
-		for (AudioComponent* input : inputs)
-			components.push_front(input);
-		return components;
+		return combineVectorsToForwardList(inputs);
 	}
 
 	void clearInputs() override
 	{
-		inputs.clear();
+		clearVectors(inputs);
 	}
 
 	void addInput(const std::string& inputName, AudioComponent* input) override
@@ -144,7 +167,6 @@ struct ADSR : public AudioComponent {
 		{
 			if (it->phase == Phase::Inactive)
 			{
-				std::cout << "erasing " << it->keyIndex << std::endl;
 				it = envelopes.erase(it);
 				if (it == envelopes.end())
 					break;
@@ -245,38 +267,22 @@ struct Oscillator : public AudioComponent {
 
 	Components getInputs() override
 	{
-		Components components;
-		for (AudioComponent* input : freq)
-			components.push_front(input);
-		for (AudioComponent* input : phase)
-			components.push_front(input);
-		for (AudioComponent* input : LFO_Hz)
-			components.push_front(input);
-		for (AudioComponent* input : LFO_Amplitude)
-			components.push_front(input);
-		return components;
+		return combineVectorsToForwardList(freq, phase, LFO_Hz, LFO_Amplitude);
 	}
 
 	void clearInputs() override
 	{
-		freq.clear();
-		phase.clear();
-		LFO_Hz.clear();
-		LFO_Amplitude.clear();
+		clearVectors(freq, phase, LFO_Hz, LFO_Amplitude);
 	}
 
 	void addInput(const std::string& inputName, AudioComponent* input) override
 	{
-		if (inputName == "> freq") // [TODO] remove those "> "
-			freq.push_back(input);
-		else if (inputName == "> phase")
-			phase.push_back(input);
-		else if (inputName == "> LFO Hz")
-			LFO_Hz.push_back(input);
-		else if (inputName == "> LFO Amplitude")
-			LFO_Amplitude.push_back(input);
-		else
-			assert(0 && "[Oscillator node] unknown input");
+		// [TODO] remove those "> "
+		if (inputName == "> freq") freq.push_back(input);
+		else if (inputName == "> phase") phase.push_back(input);
+		else if (inputName == "> LFO Hz") LFO_Hz.push_back(input);
+		else if (inputName == "> LFO Amplitude") LFO_Amplitude.push_back(input);
+		else assert(0 && "[Oscillator node] unknown input");
 	}
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
@@ -299,28 +305,20 @@ struct Multiplier : public AudioComponent {
 
 	Components getInputs() override
 	{
-		Components components;
-		for (AudioComponent* input : inputsA)
-			components.push_front(input);
-		for (AudioComponent* input : inputsB)
-			components.push_front(input);
-		return components;
+		return combineVectorsToForwardList(inputsA, inputsB);
 	}
 
 	void clearInputs() override
 	{
-		inputsA.clear();
-		inputsB.clear();
+		clearVectors(inputsA, inputsB);
 	}
 
 	void addInput(const std::string& inputName, AudioComponent* input) override
 	{
-		if (inputName == "> input A") // [TODO] remove those "> "
-			inputsA.push_back(input);
-		else if (inputName == "> input B")
-			inputsB.push_back(input);
-		else
-			assert(0 && "[Oscillator node] unknown input");
+		// [TODO] remove those "> "
+		if (inputName == "> input A") inputsA.push_back(input);
+		else if (inputName == "> input B") inputsB.push_back(input);
+		else assert(0 && "[Oscillator node] unknown input");
 	}
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
