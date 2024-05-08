@@ -182,10 +182,10 @@ NodeEditorUI::NodeEditorUI()
 
 void NodeEditorUI::update(Master& master)
 {
-	if (ImGui::Button("Save Instrument: "))
-		serialize();
-	if (ImGui::Button("Load Instrument: "))
-		loadFile(master, "serialization.json");
+	//if (ImGui::Button("Save Instrument: "))
+	//	serialize();
+	//if (ImGui::Button("Load Instrument: "))
+	//	loadFile(master, "serialization.json");
 	static char instrumentFilename[128] = "";
 	ImGui::SameLine();
 	ImGui::InputText("filename", instrumentFilename, IM_ARRAYSIZE(instrumentFilename));
@@ -374,11 +374,11 @@ void NodeEditorUI::removeNodeAndDependencies(ed::NodeId nodeId)
 	}
 }
 
-void NodeEditorUI::serialize()
+void NodeEditorUI::serialize(const fs::path& path)
 {
-	const std::string filename = "serialization1.json";
+	std::ofstream file(path);
+	assert(file.is_open() && "[SERIALIZE] could not open file");
 
-	std::ofstream file(filename);
 	{
 		cereal::JSONOutputArchive outputArchive(file);
 
@@ -394,9 +394,9 @@ void NodeEditorUI::serialize()
 	}
 }
 
-void NodeEditorUI::loadFile(Master& master, const std::string& name)
+void NodeEditorUI::loadFile(Master& master, const fs::path& path)
 {
-	std::ifstream file(name);
+	std::ifstream file(path);
 	assert(file.is_open());
 
 	std::vector<std::shared_ptr<Node>> nodes;
@@ -425,7 +425,7 @@ void NodeEditorUI::loadFile(Master& master, const std::string& name)
 	}
 
 	file.close();
-	file.open(name);
+	file.open(path);
 
 	cereal::JSONInputArchive archive(file);
 	archive.setNextName("link");

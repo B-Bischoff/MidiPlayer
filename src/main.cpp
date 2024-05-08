@@ -89,6 +89,11 @@ int main(int argc, char* argv[])
 	if (ressourceDirectoryPath.string().empty())
 		exit(1);
 
+	ApplicationPath path = {
+		.application = applicationPath,
+		.ressourceDirectory = ressourceDirectoryPath,
+	};
+
 	int FRAME_COUNT = 0;
 	const int SCREEN_WIDTH = 1920;
 	const int SCREEN_HEIGHT = 1080;
@@ -127,7 +132,7 @@ int main(int argc, char* argv[])
 	audio.writeCursor = (audio.leftPhase + audio.getLatencyInFramesPerUpdate()) % audio.getBufferSize();
 	//std::cout << "L/R/W : " << audio.leftPhase << " " << audio.rightPhase << " " << audio.writeCursor << std::endl;
 
-	UI ui(window, audio);
+	UI ui(window, audio, path);
 
 	double t = 0.0;
 

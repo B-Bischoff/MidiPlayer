@@ -13,6 +13,8 @@
 #include "nodes.hpp"
 #include "inc.hpp"
 
+#include "path.hpp"
+
 // SERIALIZE HELPERS
 
 template<class Archive>
@@ -59,6 +61,9 @@ public:
 
 	void update(Master& master);
 
+	void serialize(const fs::path& path);
+	void loadFile(Master& master, const fs::path& path);
+
 private:
 	void render();
 
@@ -74,6 +79,4 @@ private:
 	Node* addNode();
 	void removeNodeAndDependencies(ed::NodeId nodeId);
 
-	void serialize();
-	void loadFile(Master& master, const std::string& name);
 };
