@@ -61,7 +61,10 @@ void UI::update(AudioData& audio, Master& master)
 		newInstrumentPath.append(INSTRUMENTS_DIR);
 		newInstrumentPath.append(filename);
 		_nodeEditor.serialize(newInstrumentPath);
-		_instruments.push_back(newInstrumentPath);
+
+		// Don't add already existing instrument
+		if (std::find(std::begin(_instruments), std::end(_instruments), newInstrumentPath) == std::end(_instruments))
+			_instruments.push_back(newInstrumentPath);
 	}
 	ImGui::SameLine();
 	ImGui::InputText("filename", instrumentFilename, IM_ARRAYSIZE(instrumentFilename));
