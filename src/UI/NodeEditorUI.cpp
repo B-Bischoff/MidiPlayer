@@ -117,6 +117,7 @@ AudioComponent* allocateAudioComponent(Node& node)
 		case ADSRUI: return new ADSR();
 		case KbFreqUI: return new KeyboardFrequency();
 		case MultUI: return new Multiplier();
+		case LowPassUI: return new LowPassFilter();
 	}
 	assert(0 && "Invalid type");
 	return nullptr;
@@ -260,6 +261,8 @@ void NodeEditorUI::handleNodeCreation()
 			node = addNode<KeyboardFrequencyNode>();
 		if (ImGui::MenuItem("Multiply"))
 			node = addNode<MultNode>();
+		if (ImGui::MenuItem("LowPassFilter"))
+			node = addNode<LowPassFilterNode>();
 
 		if (node)
 		{

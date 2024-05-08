@@ -253,7 +253,6 @@ struct Number : public AudioComponent {
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
-		//std::cout << "returning " << number << std::endl;
 		return number;
 	}
 };
@@ -326,5 +325,39 @@ struct Multiplier : public AudioComponent {
 		double valueA = getInputsValue(inputsA, keyPressed, currentKey);
 		double valueB = getInputsValue(inputsB, keyPressed, currentKey);
 		return valueA * valueB;
+	}
+};
+
+struct LowPassFilter : public AudioComponent {
+	std::vector<AudioComponent*> signals;
+	std::vector<AudioComponent*> alpha;
+
+	double state = 0.0;
+
+	Components getInputs() override
+	{
+		return combineVectorsToForwardList(signals, alpha);
+	}
+
+	void clearInputs() override
+	{
+		clearVectors(signals, alpha);
+	}
+
+	void addInput(const std::string& inputName, AudioComponent* input) override
+	{
+		if (inputName == "> signal") signals.push_back(input);
+		else if (inputName == "> alpha") alpha.push_back(input);
+		else assert(0 && "[LowPassFilter] unknown input");
+	}
+
+	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	{
+		double alphaValue = getInputsValue(alpha, keyPressed, currentKey);
+		double signalValue = getInputsValue(signals, keyPressed, currentKey);
+
+		state = alphaValue * signalValue + (1.0 - alphaValue) * state;
+
+		return state;
 	}
 };

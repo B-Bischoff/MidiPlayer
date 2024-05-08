@@ -9,7 +9,7 @@
 
 namespace ed = ax::NodeEditor;
 
-enum UI_NodeType { NodeUI, MasterUI, NumberUI, OscUI, ADSRUI, KbFreqUI, MultUI };
+enum UI_NodeType { NodeUI, MasterUI, NumberUI, OscUI, ADSRUI, KbFreqUI, MultUI, LowPassUI};
 
 struct LinkInfo
 {
@@ -339,6 +339,18 @@ struct MultNode : public Node {
 	}
 };
 
+struct LowPassFilterNode : public Node {
+	LowPassFilterNode()
+	{
+		id = MasterNode::getNextId();
+		name = "Low Pass Filter";
+		type = LowPassUI;
+		inputs.push_back(createPin("> signal", PinKind::Input));
+		inputs.push_back(createPin("> alpha", PinKind::Input));
+		outputs.push_back(createPin("output >", PinKind::Output));
+	}
+};
+
 // Register every Node child classes
 CEREAL_REGISTER_TYPE(MasterNode)
 CEREAL_REGISTER_TYPE(NumberNode)
@@ -346,6 +358,7 @@ CEREAL_REGISTER_TYPE(OscNode)
 CEREAL_REGISTER_TYPE(ADSR_Node)
 CEREAL_REGISTER_TYPE(KeyboardFrequencyNode)
 CEREAL_REGISTER_TYPE(MultNode)
+CEREAL_REGISTER_TYPE(LowPassFilterNode)
 
 // Register child class if it does not have serialization method.
 // This indicate cereal to use Node serialization method.
@@ -353,3 +366,4 @@ CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, MasterNode)
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, ADSR_Node)
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, KeyboardFrequencyNode)
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, MultNode)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, LowPassFilterNode)

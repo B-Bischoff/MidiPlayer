@@ -21,7 +21,7 @@
         }
     },
     "node_position": {
-        "x": 543.0,
+        "x": 783.0,
         "y": -48.0
     },
     "node": {
@@ -74,8 +74,8 @@
         }
     },
     "node_position": {
-        "x": 127.0,
-        "y": -51.0
+        "x": 218.0,
+        "y": -49.0
     },
     "node": {
         "polymorphic_id": 2147483651,
@@ -112,7 +112,7 @@
         }
     },
     "node_position": {
-        "x": 360.0,
+        "x": 597.0,
         "y": -49.0
     },
     "node": {
@@ -135,50 +135,70 @@
                         }
                     ]
                 },
-                "number_value": 0.10000000149011612
+                "number_value": 0.30000001192092898
             }
         }
     },
     "node_position": {
-        "x": 284.0,
+        "x": 521.0,
         "y": 32.0
     },
     "node": {
-        "polymorphic_id": 4,
+        "polymorphic_id": 2147483653,
+        "polymorphic_name": "ADSR_Node",
         "ptr_wrapper": {
             "id": 2147483653,
             "data": {
-                "base_node": {
-                    "node_id": 57,
-                    "node_name": "Number",
-                    "node_type": 2,
-                    "node_inputs": [],
-                    "node_outputs": [
-                        {
-                            "pin_id": 58,
-                            "node_id": 57,
-                            "pin_name": "output >",
-                            "pin_kind": 0
-                        }
-                    ]
-                },
-                "number_value": 440.0
+                "node_id": 27,
+                "node_name": "ADSR",
+                "node_type": 4,
+                "node_inputs": [
+                    {
+                        "pin_id": 29,
+                        "node_id": 27,
+                        "pin_name": "> input",
+                        "pin_kind": 1
+                    }
+                ],
+                "node_outputs": [
+                    {
+                        "pin_id": 28,
+                        "node_id": 27,
+                        "pin_name": "output >",
+                        "pin_kind": 0
+                    }
+                ]
             }
         }
     },
     "node_position": {
-        "x": -36.0,
+        "x": 371.0,
         "y": -48.0
     },
-    "link": {
-        "link_id": 59,
-        "link_input_id": 58,
-        "link_output_id": 46
+    "node": {
+        "polymorphic_id": 2147483654,
+        "polymorphic_name": "KeyboardFrequencyNode",
+        "ptr_wrapper": {
+            "id": 2147483654,
+            "data": {
+                "node_id": 32,
+                "node_name": "Keyboard Frequency",
+                "node_type": 5,
+                "node_inputs": [],
+                "node_outputs": [
+                    {
+                        "pin_id": 33,
+                        "node_id": 32,
+                        "pin_name": "frequency >",
+                        "pin_kind": 0
+                    }
+                ]
+            }
+        }
     },
-    "link": {
-        "link_id": 60,
-        "link_input_id": 50,
-        "link_output_id": 52
+    "node_position": {
+        "x": 49.0,
+        "y": -48.0
     },
     "link": {
         "link_id": 61,
@@ -186,7 +206,22 @@
         "link_output_id": 53
     },
     "link": {
-        "link_id": 62,
+        "link_id": 34,
+        "link_input_id": 33,
+        "link_output_id": 46
+    },
+    "link": {
+        "link_id": 35,
+        "link_input_id": 50,
+        "link_output_id": 29
+    },
+    "link": {
+        "link_id": 36,
+        "link_input_id": 28,
+        "link_output_id": 52
+    },
+    "link": {
+        "link_id": 37,
         "link_input_id": 54,
         "link_output_id": 44
     }
