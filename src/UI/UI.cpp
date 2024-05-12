@@ -1,4 +1,4 @@
-#include "UI.hpp"
+#include "UI/UI.hpp"
 
 UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 	: _imPlot(audio), _path(path)

@@ -1,184 +1,16 @@
-#include "NodeEditorUI.hpp"
-#include "imgui_node_editor.h"
+#include "UI/NodeEditorUI.hpp"
 
 bool Node::propertyChanged = false;
-int Node::nextId = 0;
-
-Node& findNoteById(std::vector<std::shared_ptr<Node>>& nodes, ed::NodeId id)
-{
-	for (std::shared_ptr<Node>& node : nodes)
-	{
-		if (node->id == id.Get())
-			return *node;
-	}
-	assert(0 && "[NODE]: Could not find node by id");
-	return *nodes[0];
-}
-
-std::vector<std::shared_ptr<Node>>::iterator removeNode(std::vector<std::shared_ptr<Node>>& nodes, Node& nodeToDelete)
-{
-	for (auto it = nodes.begin(); it != nodes.end(); it++)
-	{
-		Node* node = it->get();
-		assert(node);
-
-		if (node->id == nodeToDelete.id)
-			return nodes.erase(it);
-	}
-	assert(0 && "[NODE]: Could not erase node");
-	return nodes.begin();
-}
-
-Node& findNodeByPinId(std::vector<std::shared_ptr<Node>>& nodes, ed::PinId id)
-{
-	for (std::shared_ptr<Node>& node : nodes)
-	{
-		for (Pin& pin : node->inputs)
-			if (pin.id == id.Get())
-				return *node;
-		for (Pin& pin : node->outputs)
-			if (pin.id == id.Get())
-				return *node;
-	}
-
-	assert(0 && "[NODE]: Node id does not exits");
-	return *nodes[0];
-}
-
-void removeLinkContainingId(ImVector<LinkInfo>& links, std::vector<std::shared_ptr<Node>>& nodes, ed::NodeId id)
-{
-	for (auto it = links.begin(); it != links.end(); it++)
-	{
-		LinkInfo& link = *it;
-		Node& inputNode = findNodeByPinId(nodes, link.InputId);
-		Node& outputNode = findNodeByPinId(nodes, link.InputId);
-
-		if (inputNode.id == id.Get() || outputNode.id == id.Get())
-			it = links.erase(it);
-
-		if (it == links.end())
-			break;
-	}
-}
-
-ed::PinKind getPinKind(ed::PinId pinId, std::vector<std::shared_ptr<Node>>& nodes)
-{
-	for (std::shared_ptr<Node>& node : nodes)
-	{
-		for (Pin& pin : node->inputs)
-		{
-			if (pin.id == pinId.Get())
-				return ed::PinKind::Input;
-		}
-		for (Pin& pin : node->outputs)
-		{
-			if (pin.id == pinId.Get())
-				return ed::PinKind::Output;
-		}
-	}
-	assert(0 && "[NODE]: Pin id does not exits");
-	return ed::PinKind::Output;
-}
-
-MasterNode& getMasterNode(std::vector<std::shared_ptr<Node>>& nodes)
-{
-	for (std::shared_ptr<Node>& node : nodes)
-	{
-		MasterNode* masterNode = dynamic_cast<MasterNode*>(node.get());
-		if (masterNode)
-			return *masterNode;
-	}
-	assert(0 && "[NODE]: Master node does not exists");
-	return *(MasterNode*)nodes[0].get();
-}
-
-AudioComponent* allocateAudioComponent(Node& node)
-{
-	UI_NodeType type = node.type;
-
-	switch (type)
-	{
-		case NodeUI: break;
-		case MasterUI: break;
-		case NumberUI: {
-			NumberNode* numberNode = dynamic_cast<NumberNode*>(&node);
-			assert(numberNode);
-			Number* number = new Number(); // [TODO] create adequate constructor
-			number->number = numberNode->value;
-			return number;
-		}
-		case OscUI: {
-			OscNode* oscUI = dynamic_cast<OscNode*>(&node);
-			assert(oscUI);
-			Oscillator* osc = new Oscillator();
-			osc->type = oscUI->oscType;
-			return osc;
-		}
-		case ADSRUI: return new ADSR();
-		case KbFreqUI: return new KeyboardFrequency();
-		case MultUI: return new Multiplier();
-		case LowPassUI: return new LowPassFilter();
-	}
-	assert(0 && "Invalid type");
-	return nullptr;
-}
-
-void deleteComponentAndInputs(AudioComponent* component)
-{
-	if (!component)
-		return;
-	Components inputs = component->getInputs();
-	if (inputs.empty())
-	{
-		delete component;
-		return;
-	}
-
-	for (AudioComponent* input : inputs)
-		deleteComponentAndInputs(input);
-
-	delete component;
-}
-
-void createAudioComponentsFromNodes(AudioComponent& component, Node& outputNode, std::vector<std::shared_ptr<Node>>& nodes, ImVector<LinkInfo>& links)
-{
-	for (Pin& pin : outputNode.inputs) // Loop through current node input pins
-	{
-		for (LinkInfo& link: links) // Check for every link that points to the current node input
-		{
-			if (link.OutputId.Get() == pin.id)
-			{
-				Node& inputNode = findNodeByPinId(nodes, link.InputId); // Get node plugged to the input pin
-
-				AudioComponent* newInput = allocateAudioComponent(inputNode); // Create an AudioComponent version of that node
-				component.addInput(pin.name, newInput); // Plug this node into the current node input
-
-				createAudioComponentsFromNodes(*newInput, inputNode, nodes, links); // Recursively follow input nodes
-			}
-		}
-	}
-}
-
-// [TODO] keep the function name for different models types (e.g file)
-void updateAudioComponents(AudioComponent& master, Node& node, std::vector<std::shared_ptr<Node>>& nodes, ImVector<LinkInfo>& links)
-{
-	Components inputs = master.getInputs();
-	for (AudioComponent* input : inputs)
-		deleteComponentAndInputs(input);
-
-	master.clearInputs();
-
-	createAudioComponentsFromNodes(master, node, nodes, links);
-}
 
 NodeEditorUI::NodeEditorUI()
 {
 	_context = ed::CreateEditor();
+	_UIModified = false;
 
 	// [TODO] create a node manager storing contiguously nodes in memory
-	_nodes.push_back(std::make_shared<MasterNode>());
-	_nodes.push_back(std::make_shared<OscNode>());
-	_nodes.push_back(std::make_shared<NumberNode>());
+	_nodeManager.addNode<MasterNode>(_idManager);
+	_nodeManager.addNode<OscNode>(_idManager);
+	_nodeManager.addNode<NumberNode>(_idManager);
 }
 
 void NodeEditorUI::update(Master& master)
@@ -201,20 +33,18 @@ void NodeEditorUI::update(Master& master)
 
 	ed::End();
 
-	if (Node::propertyChanged)
+	if (_UIModified || Node::propertyChanged)
 	{
+		_UIModified = false;
 		Node::propertyChanged = false;
-		updateAudioComponents(master, getMasterNode(_nodes), _nodes, _links);
+		UIToBackendAdapter::updateBackend(master, _nodeManager, _linkManager);
 	}
 }
 
 void NodeEditorUI::render()
 {
-	for (std::shared_ptr<Node>& node : _nodes)
-		node->render();
-
-	for (auto& linkInfo : _links) // Render links
-		ed::Link(linkInfo.Id, linkInfo.InputId, linkInfo.OutputId);
+	_nodeManager.render();
+	_linkManager.render();
 }
 
 void NodeEditorUI::handleCreation(Master& master)
@@ -243,31 +73,44 @@ void NodeEditorUI::handleNodeCreation()
 		ImGui::TextUnformatted("Node Context Menu");
 		ImGui::Separator();
 		if (ImGui::MenuItem("Delete"))
-			removeNodeAndDependencies(contextNodeId);
+		{
+			ed::DeleteNode(contextNodeId);
+			/*
+			std::cout << "DELETE FROM CONTEXT MENU ON NODE " << contextNodeId.Get() << std::endl;
+			std::shared_ptr<Node>& node = _nodeManager.findNodeById(contextNodeId);
+			if (node->type != UI_NodeType::MasterUI)
+			{
+				std::cout << contextNodeId.Get() << std::endl;
+				_linkManager.removeLinksFromNodeId(_idManager, _nodeManager, contextNodeId);
+				_nodeManager.removeNode(_idManager, contextNodeId);
+				_UIModified = true;
+			}*/
+		}
 		ImGui::EndPopup();
 	}
 
 	if (ImGui::BeginPopup("Create New Node"))
 	{
-		Node* node = nullptr;
+		std::shared_ptr<Node> node = nullptr;
 
 		if (ImGui::MenuItem("Number"))
-			node = addNode<NumberNode>();
+			node = _nodeManager.addNode<NumberNode>(_idManager);
 		if (ImGui::MenuItem("Oscillator"))
-			node = addNode<OscNode>();
+			node = _nodeManager.addNode<OscNode>(_idManager);
 		if (ImGui::MenuItem("ADSR Envelope"))
-			node = addNode<ADSR_Node>();
+			node = _nodeManager.addNode<ADSR_Node>(_idManager);
 		if (ImGui::MenuItem("Keyboard Frequency"))
-			node = addNode<KeyboardFrequencyNode>();
+			node = _nodeManager.addNode<KeyboardFrequencyNode>(_idManager);
 		if (ImGui::MenuItem("Multiply"))
-			node = addNode<MultNode>();
+			node = _nodeManager.addNode<MultNode>(_idManager);
 		if (ImGui::MenuItem("LowPassFilter"))
-			node = addNode<LowPassFilterNode>();
+			node = _nodeManager.addNode<LowPassFilterNode>(_idManager);
 
 		if (node)
 		{
 			ImVec2 newNodePosition = openPopupPosition;
-			ed::SetNodePosition(node->id, newNodePosition);
+			_nodeManager.setNodePosition(node, newNodePosition);
+			_UIModified = true;
 		}
 
 		ImGui::EndPopup();
@@ -282,25 +125,15 @@ void NodeEditorUI::handleLinkCreation(Master& master)
 		ed::PinId inputPinId, outputPinId;
 		if (ed::QueryNewLink(&inputPinId, &outputPinId))
 		{
-			if (inputPinId && outputPinId && \
-				findNodeByPinId(_nodes, inputPinId) != findNodeByPinId(_nodes, outputPinId)) // Do not accept pins from the same node
+			if (ed::AcceptNewItem())
 			{
-				if (ed::AcceptNewItem())
-				{
-					// input & output pins may be reversed depending on the selection order of the nodes link
-					if (getPinKind(inputPinId, _nodes) == ed::PinKind::Input && getPinKind(outputPinId, _nodes) == ed::PinKind::Output)
-						std::swap(inputPinId, outputPinId);
-
-					// Since we accepted new link, lets add one to our list of links.
-					_links.push_back({ ed::LinkId(MasterNode::getNextId()), inputPinId, outputPinId });
-
-					updateAudioComponents(master, getMasterNode(_nodes), _nodes, _links);
-				}
-
-				// You may choose to reject connection between these nodes
-				// by calling ed::RejectNewItem(). This will allow editor to give
-				// visual feedback by changing link thickness and color.
+				_linkManager.addLink(_idManager, _nodeManager, inputPinId, outputPinId);
+				_UIModified = true;
 			}
+
+			// You may choose to reject connection between these nodes
+			// by calling ed::RejectNewItem(). This will allow editor to give
+			// visual feedback by changing link thickness and color.
 		}
 	}
 	ed::EndCreate();
@@ -310,8 +143,8 @@ void NodeEditorUI::handleDeletion(Master& master)
 {
 	if (ed::BeginDelete())
 	{
-		handleNodeDeletion();
 		handleLinkDeletion(master);
+		handleNodeDeletion();
 	}
 	ed::EndDelete();
 }
@@ -322,7 +155,16 @@ void NodeEditorUI::handleNodeDeletion()
 	while (ed::QueryDeletedNode(&nodeId))
 	{
 		if (ed::AcceptDeletedItem())
-			removeNodeAndDependencies(nodeId);
+		{
+			std::cout << "DELETE FROM HANDLE NODE DEL ON NODE " << nodeId.Get() << std::endl;
+			std::shared_ptr<Node>& node = _nodeManager.findNodeById(nodeId);
+			if (node->type != UI_NodeType::MasterUI)
+			{
+				_linkManager.removeLinksFromNodeId(_idManager, _nodeManager, nodeId);
+				_nodeManager.removeNode(_idManager, node);
+			}
+			_UIModified = true;
+		}
 	}
 }
 
@@ -335,45 +177,11 @@ void NodeEditorUI::handleLinkDeletion(Master& master)
 		// If you agree that link can be deleted, accept deletion.
 		if (ed::AcceptDeletedItem())
 		{
-			for (auto& link : _links)
-			{
-				if (link.Id == deletedLinkId)
-				{
-					_links.erase(&link);
-
-					updateAudioComponents(master, getMasterNode(_nodes), _nodes, _links);
-					break;
-				}
-			}
+			_linkManager.removeLink(_idManager, deletedLinkId);
+			_UIModified = true;
 		}
 		// You may reject link deletion by calling:
 		// ed::RejectDeletedItem();
-	}
-}
-
-template<typename T>
-Node* NodeEditorUI::addNode()
-{
-	std::shared_ptr<Node> node = std::make_shared<T>();
-	_nodes.push_back(node);
-	return node.get();
-}
-
-void NodeEditorUI::removeNodeAndDependencies(ed::NodeId nodeId)
-{
-	for (std::shared_ptr<Node>& node : _nodes)
-	{
-		if (node->id != nodeId.Get())
-			continue;
-
-		if (node->type == UI_NodeType::MasterUI)
-			return; // [TODO] Display some "Cannot erase master node" message
-
-		removeLinkContainingId(_links, _nodes, nodeId);
-		removeNode(_nodes, findNoteById(_nodes, nodeId));
-		ed::DeleteNode(nodeId);
-		Node::propertyChanged = true;
-		return;
 	}
 }
 
@@ -385,13 +193,14 @@ void NodeEditorUI::serialize(const fs::path& path)
 	{
 		cereal::JSONOutputArchive outputArchive(file);
 
+		/*
 		for (auto& node : _nodes)
 		{
 			outputArchive(
 				cereal::make_nvp("node", node),
 				cereal::make_nvp("node_position", ed::GetNodePosition(node->id))
 			);
-		}
+		}*/
 		for (LinkInfo& link : _links)
 			outputArchive(cereal::make_nvp("link", link));
 	}
@@ -401,6 +210,14 @@ void NodeEditorUI::loadFile(Master& master, const fs::path& path)
 {
 	std::ifstream file(path);
 	assert(file.is_open());
+
+	// Clear nodes
+	_nodeManager.removeAllNodes(_idManager);
+
+	// Clear links
+	for (LinkInfo& link : _links)
+		_idManager.releaseID(link.Id.Get());
+	_links.clear();
 
 	std::vector<std::shared_ptr<Node>> nodes;
 	ImVector<LinkInfo> links;
@@ -414,10 +231,10 @@ void NodeEditorUI::loadFile(Master& master, const fs::path& path)
 			{
 				std::shared_ptr<Node> node;
 				archive(node);
-
 				ImVec2 pos;
 				archive(pos);
 
+				registerNodeIds(*node);
 				nodes.push_back(node);
 
 				ed::SetNodePosition(node->id, pos);
@@ -447,17 +264,34 @@ void NodeEditorUI::loadFile(Master& master, const fs::path& path)
 				.InputId = inputId,
 				.OutputId = outputId,
 			};
+			link.Id = _idManager.getID(link.Id.Get());
 			links.push_back(link);
 		}
 	}
 	catch (std::exception& e)
 	{ }
 
-	_nodes.clear();
-	_nodes = nodes;
-
-	_links.clear();
+	//_nodes = nodes;
 	_links = links;
 
-	updateAudioComponents(master, getMasterNode(_nodes), _nodes, _links);
+	UIToBackendAdapter::updateBackend(master, _nodeManager, _linkManager);
+}
+
+void NodeEditorUI::registerNodeIds(Node& node)
+{
+	// Register node itself
+	node.id = _idManager.getID(node.id);
+	assert(node.id != INVALID_ID && "Could not load node");
+
+	// Register node pins
+	for (Pin& pin : node.inputs)
+	{
+		pin.id = _idManager.getID(pin.id);
+		assert(pin.id != INVALID_ID && "Could not load node");
+	}
+	for (Pin& pin : node.outputs)
+	{
+		pin.id = _idManager.getID(pin.id);
+		assert(pin.id != INVALID_ID && "Could not load node");
+	}
 }

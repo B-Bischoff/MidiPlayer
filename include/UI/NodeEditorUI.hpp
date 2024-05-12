@@ -10,8 +10,13 @@
 #include <memory>
 #include <imgui_node_editor.h>
 #include "audio_backend.hpp"
-#include "nodes.hpp"
+#include "IDManager.hpp"
+#include "NodeManager.hpp"
+#include "LinkManager.hpp"
+#include "UIToBackendAdapter.hpp"
 #include "inc.hpp"
+#include "audio_backend.hpp"
+#include "AudioBackend/Components/Components.hpp"
 
 #include "path.hpp"
 
@@ -53,8 +58,11 @@ void serialize(Archive& archive, ImVec2& v)
 class NodeEditorUI {
 private:
 	ed::EditorContext* _context;
-	std::vector<std::shared_ptr<Node>> _nodes;
 	ImVector<LinkInfo> _links;
+	IDManager _idManager;
+	NodeManager _nodeManager;
+	LinkManager _linkManager;
+	bool _UIModified;
 
 public:
 	NodeEditorUI();
@@ -75,8 +83,9 @@ private:
 	void handleLinkDeletion(Master& master);
 	void handleNodeDeletion();
 
-	template<typename T>
-	Node* addNode();
 	void removeNodeAndDependencies(ed::NodeId nodeId);
+	std::vector<std::shared_ptr<Node>>::iterator removeNode(std::vector<std::shared_ptr<Node>>& nodes, Node& nodeToDelete);
+	void removeLinkContainingId(ImVector<LinkInfo>& links, std::vector<std::shared_ptr<Node>>& nodes, ed::NodeId id);
 
+	void registerNodeIds(Node& node);
 };

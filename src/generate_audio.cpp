@@ -1,5 +1,6 @@
 #include "inc.hpp"
 #include "audio_backend.hpp"
+#include "AudioBackend/Components/Components.hpp"
 
 void applyLowPassFilter(double& sample)
 {

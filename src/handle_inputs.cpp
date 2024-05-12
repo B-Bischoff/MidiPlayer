@@ -1,4 +1,5 @@
 #include "inc.hpp"
+#include "config.hpp"
 #include "envelope.hpp"
 
 void initInput(InputManager& inputManger) // [TODO] Should this be in a constructor ?

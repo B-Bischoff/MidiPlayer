@@ -1,8 +1,9 @@
 #pragma once
 
 #include <string>
-#include <imgui.h>
 #include <vector>
+#include <imgui.h>
+#include "UI/IDManager.hpp"
 #include "inc.hpp"
 
 #include "cereal/types/polymorphic.hpp"
@@ -49,10 +50,6 @@ struct Pin
 
 struct Node
 {
-private:
-	static int nextId; // [TODO] create an entity managing ids
-
-public:
 	unsigned int id;
 	std::string name;
 	std::vector<Pin> inputs;
@@ -88,7 +85,11 @@ public:
 	void renderNameAndPins()
 	{
 		ImGui::PushID(appendId(name).c_str());
+#if NODE_DEBUG
+		ImGui::Text("%s", (name + "_" + std::to_string(id)).c_str());
+#else
 		ImGui::Text("%s", name.c_str());
+#endif
 		ImGui::PopID();
 		for (int i = 0; i < std::max(inputs.size(), outputs.size()); i++)
 		{
@@ -97,7 +98,11 @@ public:
 			if (i < inputs.size())
 			{
 				ed::BeginPin(inputs[i].id, ed::PinKind::Input);
+#if NODE_DEBUG
+				ImGui::Text("%s", (inputs[i].name + "_" + std::to_string(inputs[i].id)).c_str());
+#else
 				ImGui::Text("%s", inputs[i].name.c_str());
+#endif
 				ed::EndPin();
 				sameLine = true;
 			}
@@ -116,7 +121,11 @@ public:
 				}
 
 				ed::BeginPin(outputs[i].id, ed::PinKind::Output);
+#if NODE_DEBUG
+				ImGui::Text("%s%s", spacing.c_str(), (outputs[i].name + "_" + std::to_string(outputs[i].id)).c_str());
+#else
 				ImGui::Text("%s%s", spacing.c_str(), outputs[i].name.c_str());
+#endif
 				ed::EndPin();
 			}
 		}
@@ -145,39 +154,43 @@ public:
 		return !(*this == node);
 	}
 
-	static int getNextId()
-	{
-		return ++nextId; // Id must start at 1 and not 0
-	}
-
 protected:
 	std::string appendId(const std::string& str)
 	{
 		return str + std::to_string(id);
 	}
 
-	Pin createPin(const std::string& name, PinKind kind)
+	Pin createPin(IDManager* idManager, const std::string& name, PinKind kind)
 	{
 		Pin pin;
-		pin.id = getNextId();
+		pin.id = INVALID_ID;
+		if (idManager != nullptr)
+			pin.id = idManager->getID();
 		pin.name = name;
 		pin.node = this; // Is this really necessary ?
 		pin.kind = kind;
 
 		return pin;
 	}
+
+	unsigned int getId(IDManager* idManager)
+	{
+		if (idManager != nullptr)
+			return idManager->getID();
+		else
+			return INVALID_ID;
+	}
 };
 
 struct MasterNode : public Node
 {
-public:
-	MasterNode()
+	MasterNode(IDManager* idManager = nullptr)
 	{
-		id = getNextId();
+		id = getId(idManager);
 		name = "Master";
 		type = MasterUI;
 
-		inputs.push_back(createPin("> input", PinKind::Input));
+		inputs.push_back(createPin(idManager, "> input", PinKind::Input));
 	}
 };
 
@@ -185,14 +198,14 @@ struct NumberNode : public Node
 {
 	float value;
 
-	NumberNode()
+	NumberNode(IDManager* idManager = nullptr)
 	{
-		id = MasterNode::getNextId();
+		id = getId(idManager);
 		name = "Number";
 		type = NumberUI;
 
 		value = 0.0f;
-		outputs.push_back(createPin("output >", PinKind::Output));
+		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 
 	void render()
@@ -225,19 +238,19 @@ struct OscNode : public Node
 	bool doPopup = false;
 	std::string popupText = "Sine";
 
-	OscNode()
+	OscNode(IDManager* idManager = nullptr)
 	{
-		id = MasterNode::getNextId();
+		id = getId(idManager);
 		name = "Osc";
 		type = OscUI;
 
 		oscType = OscType::Sine;
 
-		inputs.push_back(createPin("> freq", PinKind::Input));
-		inputs.push_back(createPin("> phase", PinKind::Input));
-		inputs.push_back(createPin("> LFO Hz", PinKind::Input));
-		inputs.push_back(createPin("> LFO Amplitude", PinKind::Input));
-		outputs.push_back(createPin("output >", PinKind::Output));
+		inputs.push_back(createPin(idManager, "> freq", PinKind::Input));
+		inputs.push_back(createPin(idManager, "> phase", PinKind::Input));
+		inputs.push_back(createPin(idManager, "> LFO Hz", PinKind::Input));
+		inputs.push_back(createPin(idManager, "> LFO Amplitude", PinKind::Input));
+		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 
 	template<class Archive>
@@ -254,7 +267,6 @@ struct OscNode : public Node
 		Node::startRender();
 		Node::renderNameAndPins();
 
-		std::string dragIntText = "Value " + std::to_string(id);
 		ImGui::SetNextItemWidth(50);
 
 		ImGui::PushID(appendId("popup").c_str());
@@ -293,61 +305,58 @@ private:
 	{
 		if (ImGui::Button(oscTypeText.c_str())) {
 			this->oscType = oscType;
-			std::cout << "--_> " << this << std::endl;
 			popupText = oscTypeText;
 			ImGui::CloseCurrentPopup();
-			std::cout << "new type : " << oscTypeText << std::endl;
-
 			Node::propertyChanged = true;
 		}
 	}
 };
 
 struct ADSR_Node : public Node {
-	ADSR_Node()
+	ADSR_Node(IDManager* idManager = nullptr)
 	{
-		id = MasterNode::getNextId();
+		id = getId(idManager);
 		name = "ADSR";
 		type = ADSRUI;
 
-		outputs.push_back(createPin("output >", PinKind::Output));
-		inputs.push_back(createPin("> input", PinKind::Input));
+		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
+		inputs.push_back(createPin(idManager, "> input", PinKind::Input));
 	}
 };
 
 struct KeyboardFrequencyNode : public Node {
-	KeyboardFrequencyNode()
+	KeyboardFrequencyNode(IDManager* idManager = nullptr)
 	{
-		id = MasterNode::getNextId();
+		id = getId(idManager);
 		name = "Keyboard Frequency";
 		type = KbFreqUI;
 
-		outputs.push_back(createPin("frequency >", PinKind::Output));
+		outputs.push_back(createPin(idManager, "frequency >", PinKind::Output));
 	}
 };
 
 struct MultNode : public Node {
-	MultNode()
+	MultNode(IDManager* idManager = nullptr)
 	{
-		id = MasterNode::getNextId();
+		id = getId(idManager);
 		name = "Multiplier";
 		type = MultUI;
 
-		inputs.push_back(createPin("> input A", PinKind::Input));
-		inputs.push_back(createPin("> input B", PinKind::Input));
-		outputs.push_back(createPin("output >", PinKind::Output));
+		inputs.push_back(createPin(idManager, "> input A", PinKind::Input));
+		inputs.push_back(createPin(idManager, "> input B", PinKind::Input));
+		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 };
 
 struct LowPassFilterNode : public Node {
-	LowPassFilterNode()
+	LowPassFilterNode(IDManager* idManager = nullptr)
 	{
-		id = MasterNode::getNextId();
+		id = getId(idManager);
 		name = "Low Pass Filter";
 		type = LowPassUI;
-		inputs.push_back(createPin("> signal", PinKind::Input));
-		inputs.push_back(createPin("> alpha", PinKind::Input));
-		outputs.push_back(createPin("output >", PinKind::Output));
+		inputs.push_back(createPin(idManager, "> signal", PinKind::Input));
+		inputs.push_back(createPin(idManager, "> alpha", PinKind::Input));
+		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 };
 
