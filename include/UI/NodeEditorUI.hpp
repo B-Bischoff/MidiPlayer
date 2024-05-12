@@ -21,7 +21,6 @@
 #include "path.hpp"
 
 // SERIALIZE HELPERS
-
 template<class Archive>
 void serialize(Archive& archive, Pin& pin)
 {
@@ -58,7 +57,6 @@ void serialize(Archive& archive, ImVec2& v)
 class NodeEditorUI {
 private:
 	ed::EditorContext* _context;
-	ImVector<LinkInfo> _links;
 	IDManager _idManager;
 	NodeManager _nodeManager;
 	LinkManager _linkManager;

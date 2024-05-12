@@ -33,20 +33,13 @@ void UIToBackendAdapter::deleteComponentAndInputs(AudioComponent* component)
 
 void UIToBackendAdapter::updateBackendNode(AudioComponent& component, Node& node, NodeManager& nodeManager, LinkManager& linkManager)
 {
-	std::cout << "updating backend" << std::endl;
-
-	// Get all links where node is the output
+	// Get all links where node is the input
 	std::list<LinkInfo> nodeLinks = linkManager.findNodeLinks(nodeManager, node.id, 1);
-	std::cout << "link size : " << nodeLinks.size() << std::endl;
 
 	for (LinkInfo& link : nodeLinks)
 	{
-		std::cout << "link info " << link.InputId.Get() << " " <<  link.OutputId.Get() << std::endl;
-
 		std::shared_ptr<Node>& inputNode = nodeManager.findNodeByPinId(link.OutputId);
-		std::cout << inputNode->name << std::endl;
 		assert(inputNode);
-		std::cout << inputNode->type << std::endl;
 		AudioComponent* newInput = allocateAudioComponent(*inputNode);
 
 		// Find input name
@@ -56,8 +49,6 @@ void UIToBackendAdapter::updateBackendNode(AudioComponent& component, Node& node
 			if (pin.id == link.InputId.Get())
 				inputName = pin.name;
 		}
-
-		std::cout << node.name << " <- " << inputNode->name << " " << inputName << std::endl;
 
 		component.addInput(inputName, newInput);
 

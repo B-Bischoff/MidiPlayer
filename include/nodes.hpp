@@ -15,8 +15,8 @@ enum UI_NodeType { NodeUI, MasterUI, NumberUI, OscUI, ADSRUI, KbFreqUI, MultUI, 
 struct LinkInfo
 {
 	ed::LinkId Id;
-	ed::PinId  InputId;
-	ed::PinId  OutputId;
+	ed::PinId InputId;
+	ed::PinId OutputId;
 	ImColor Color;
 };
 

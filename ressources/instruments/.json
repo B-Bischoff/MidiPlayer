@@ -1,0 +1,103 @@
+{
+    "node": {
+        "polymorphic_id": 2147483649,
+        "polymorphic_name": "MasterNode",
+        "ptr_wrapper": {
+            "id": 2147483649,
+            "data": {
+                "node_id": 1,
+                "node_name": "Master",
+                "node_type": 1,
+                "node_inputs": [
+                    {
+                        "pin_id": 2,
+                        "node_id": 1,
+                        "pin_name": "> input",
+                        "pin_kind": 1
+                    }
+                ],
+                "node_outputs": []
+            }
+        }
+    },
+    "node_position": {
+        "x": 1458.0,
+        "y": -80.0
+    },
+    "node": {
+        "polymorphic_id": 2147483650,
+        "polymorphic_name": "MultNode",
+        "ptr_wrapper": {
+            "id": 2147483650,
+            "data": {
+                "node_id": 12,
+                "node_name": "Multiplier",
+                "node_type": 6,
+                "node_inputs": [
+                    {
+                        "pin_id": 13,
+                        "node_id": 12,
+                        "pin_name": "> input A",
+                        "pin_kind": 1
+                    },
+                    {
+                        "pin_id": 14,
+                        "node_id": 12,
+                        "pin_name": "> input B",
+                        "pin_kind": 1
+                    }
+                ],
+                "node_outputs": [
+                    {
+                        "pin_id": 15,
+                        "node_id": 12,
+                        "pin_name": "output >",
+                        "pin_kind": 0
+                    }
+                ]
+            }
+        }
+    },
+    "node_position": {
+        "x": 1304.0,
+        "y": -80.0
+    },
+    "node": {
+        "polymorphic_id": 2147483651,
+        "polymorphic_name": "NumberNode",
+        "ptr_wrapper": {
+            "id": 2147483651,
+            "data": {
+                "base_node": {
+                    "node_id": 17,
+                    "node_name": "Number",
+                    "node_type": 2,
+                    "node_inputs": [],
+                    "node_outputs": [
+                        {
+                            "pin_id": 18,
+                            "node_id": 17,
+                            "pin_name": "output >",
+                            "pin_kind": 0
+                        }
+                    ]
+                },
+                "number_value": 0.06800000369548798
+            }
+        }
+    },
+    "node_position": {
+        "x": 1247.0,
+        "y": 32.0
+    },
+    "link": {
+        "link_id": 20,
+        "link_input_id": 14,
+        "link_output_id": 18
+    },
+    "link": {
+        "link_id": 70,
+        "link_input_id": 2,
+        "link_output_id": 15
+    }
+}

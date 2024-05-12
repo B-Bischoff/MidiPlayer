@@ -28,8 +28,6 @@ void LinkManager::addLink(IDManager& idManager, NodeManager& nodeManager, ed::Pi
 	link.OutputId = output;
 
 	_links.push_back(link);
-
-	std::cout << "new link | input : " << link.InputId.Get() << " output : " << link.OutputId.Get() << std::endl;
 }
 
 void LinkManager::eraseLink(ed::LinkId id)
@@ -59,8 +57,8 @@ void LinkManager::removeLink(IDManager& idManager, ed::LinkId id)
 
 void LinkManager::removeAllLinks(IDManager& idManager)
 {
-	for (LinkInfo& link : _links)
-		removeLink(idManager, link.Id);
+	while (_links.size())
+		removeLink(idManager, _links.back().Id);
 }
 
 void LinkManager::removeLinksFromNodeId(IDManager& idManager, NodeManager& nodeManager, ed::NodeId id)
@@ -104,7 +102,6 @@ std::list<LinkInfo> LinkManager::findNodeLinks(NodeManager& nodeManager, ed::Nod
 
 std::list<LinkInfo> LinkManager::findPinLinks(ed::PinId id, int filter)
 {
-	std::cout << "looking for pin : " << id.Get();
 	std::list<LinkInfo> links;
 	for (LinkInfo& link : _links)
 	{
@@ -114,7 +111,6 @@ std::list<LinkInfo> LinkManager::findPinLinks(ed::PinId id, int filter)
 		if (link.OutputId == id && filter != 1)
 			links.push_back(link);
 	}
-	std::cout << " found " << links.size() << std::endl;
 	return links;
 }
 

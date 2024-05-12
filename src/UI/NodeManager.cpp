@@ -33,7 +33,6 @@ void NodeManager::eraseNode(std::shared_ptr<Node>& node)
 */
 void NodeManager::removeNode(IDManager& idManager, std::shared_ptr<Node>& node)
 {
-	std::cout << "[NodeManager] REMOVE NODE" << std::endl;
 	releaseNodeIds(idManager, node);
 	eraseNode(node);
 }
@@ -45,8 +44,8 @@ void NodeManager::removeNode(IDManager& idManager, ed::NodeId id)
 
 void NodeManager::removeAllNodes(IDManager& idManager)
 {
-	for (std::shared_ptr<Node>& node : _nodes)
-		removeNode(idManager, node);
+	while (_nodes.size())
+		removeNode(idManager, _nodes.back());
 }
 
 std::shared_ptr<Node>& NodeManager::findNodeById(ed::NodeId id)
@@ -111,4 +110,26 @@ void NodeManager::render()
 {
 	for (std::shared_ptr<Node>& node : _nodes)
 		node->render();
+}
+
+
+void NodeManager::registerNodeIds(IDManager& idManager, std::shared_ptr<Node>& node)
+{
+	assert(node);
+
+	// Register node itself
+	node->id = idManager.getID(node->id);
+	assert(node->id != INVALID_ID && "Could not load node");
+
+	// Register node pins
+	for (Pin& pin : node->inputs)
+	{
+		pin.id = idManager.getID(pin.id);
+		assert(pin.id != INVALID_ID && "Could not load node");
+	}
+	for (Pin& pin : node->outputs)
+	{
+		pin.id = idManager.getID(pin.id);
+		assert(pin.id != INVALID_ID && "Could not load node");
+	}
 }

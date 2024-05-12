@@ -13,13 +13,11 @@ private:
 
 public:
 	template<typename T>
-		std::shared_ptr<Node> addNode(IDManager& idManager)
-{
-	std::shared_ptr<Node> node = std::make_shared<T>(&idManager);
-	_nodes.push_back(node);
-
-	return _nodes.back();
-}
+	std::shared_ptr<Node> addNode(IDManager& idManager) {
+		std::shared_ptr<Node> node = std::make_shared<T>(&idManager);
+		_nodes.push_back(node);
+		return _nodes.back();
+	}
 	void removeNode(IDManager& idManager, std::shared_ptr<Node>& node);
 	void removeNode(IDManager& idManager, ed::NodeId id);
 	void removeAllNodes(IDManager& idManager);
@@ -33,7 +31,39 @@ public:
 
 	void render();
 
+	template <class Archive>
+	void serialize(Archive& archive) {
+		for (std::shared_ptr<Node>& node : _nodes)
+		{
+			archive(
+				cereal::make_nvp("node", node),
+				cereal::make_nvp("node_position", ed::GetNodePosition(node->id))
+			);
+		}
+	}
+
+	template <class Archive>
+	void load(Archive& archive, IDManager& idManager) {
+		try{
+			while (true)
+			{
+				std::shared_ptr<Node> node;
+				archive(node);
+				ImVec2 pos;
+				archive(pos);
+
+				registerNodeIds(idManager, node);
+				ed::SetNodePosition(node->id, pos);
+
+				_nodes.push_back(node);
+			}
+		}
+		catch (std::exception& e)
+		{ }
+	}
+
 private:
 	void releaseNodeIds(IDManager& idManager, std::shared_ptr<Node>& node);
 	void eraseNode(std::shared_ptr<Node>& node);
+	void registerNodeIds(IDManager& idManager, std::shared_ptr<Node>& node);
 };
