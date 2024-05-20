@@ -3,6 +3,8 @@
 BUILD_DIRECTORY="build";
 BIN_NAME="MidiPlayer"
 
+clear
+
 # Generate Cmake file
 if [ ! -d $BUILD_DIRECTORY ]
 then
@@ -21,6 +23,7 @@ fi
 
 bear --version &> /dev/null
 
+
 if [ "$?" -eq 0 ] && [ ! -f "compile_commands.json" ]
 then
 	# Use bear to generate compile/linking informations used by clangd server
@@ -33,7 +36,14 @@ if [ "$?" == 0 ]
 then
 	clear
 	./$BUILD_DIRECTORY/$BIN_NAME
+	if [ "$?" != 0 ]
+	then
+		printf "\033[31m-------------------- RUNTIME ERROR --------------------\033[0m\n";
+		exit 1
+	fi
 else
 	printf "\033[31m-------------------- COMPILATION FAILED --------------------\033[0m\n";
 	exit 1;
 fi
+
+exit 0
