@@ -6,10 +6,7 @@ NodeEditorUI::NodeEditorUI()
 {
 	_context = ed::CreateEditor();
 	_UIModified = false;
-
-	_nodeManager.addNode<MasterNode>(_idManager);
-	_nodeManager.addNode<OscNode>(_idManager);
-	_nodeManager.addNode<NumberNode>(_idManager);
+	_navigateToContent = false;
 }
 
 void NodeEditorUI::update(Master& master)
@@ -33,6 +30,12 @@ void NodeEditorUI::update(Master& master)
 		_UIModified = false;
 		Node::propertyChanged = false;
 		UIToBackendAdapter::updateBackend(master, _nodeManager, _linkManager);
+	}
+
+	if (_navigateToContent)
+	{
+		_navigateToContent = false;
+		ed::NavigateToContent();
 	}
 }
 
@@ -209,6 +212,7 @@ void NodeEditorUI::loadFile(Master& master, const fs::path& path)
 	_linkManager.load(archive, _idManager);
 
 	_UIModified = true;
+	_navigateToContent = true;
 }
 
 void NodeEditorUI::loadFile(Master& master, std::stringstream& stream)
@@ -230,4 +234,5 @@ void NodeEditorUI::loadFile(Master& master, std::stringstream& stream)
 	_linkManager.load(archive, _idManager);
 
 	_UIModified = true;
+	_navigateToContent = true;
 }

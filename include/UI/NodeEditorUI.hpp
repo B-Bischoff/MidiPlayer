@@ -63,6 +63,7 @@ private:
 	NodeManager _nodeManager;
 	LinkManager _linkManager;
 	bool _UIModified;
+	bool _navigateToContent;
 
 public:
 	NodeEditorUI();

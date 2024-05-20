@@ -51,6 +51,16 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments)
 	ImGui::Begin("Loaded Instruments");
 	static int selectedInstrument = -1;
 
+	// [TODO] find a better way to do this
+	// Nodes need to be rendered a first time before you can set its position
+	// (which is done when loading nodes from file/stream)
+	static bool loadDefaultInstrument = false;
+	if (loadDefaultInstrument)
+	{
+		loadDefaultInstrument = false;
+		_nodeEditor.loadFile(_selectedInstrument->master, _instruments["default"]);
+	}
+
 	for (int i = 0; i < instruments.size(); i++)
 	{
 		char buf[64];
@@ -82,7 +92,10 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments)
 		{
 			switchSelectedInstrument(instruments.back());
 			selectedInstrument = 0;
+			loadDefaultInstrument = true;
 		}
+		// Update selected instrument ptr in case of ptr invalidation
+		_selectedInstrument = &instruments[selectedInstrument];
 	}
 
 	ImGui::End();
@@ -117,7 +130,7 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments)
 	{
 		char buf[64];
 		sprintf(buf, "%s", it->first.c_str());
-		if (ImGui::Selectable(buf, selectedStoredInstrument == it->second))
+		if (ImGui::Selectable(buf, selectedStoredInstrument == it->first))
 			selectedStoredInstrument = it->first;
 	}
 
@@ -149,8 +162,6 @@ void UI::switchSelectedInstrument(Instrument& newInstrument)
 			_loadedInstrumentCache[_selectedInstrument->name].str("");
 
 		_nodeEditor.serialize(_loadedInstrumentCache[_selectedInstrument->name]);
-		//std::cout << "saved " << _selectedInstrument->name << " content " << std::endl;
-		//std::cout << _loadedInstrumentCache[_selectedInstrument->name].str() << std::endl;
 	}
 
 	_selectedInstrument = &newInstrument;
