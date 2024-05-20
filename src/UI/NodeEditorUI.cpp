@@ -178,6 +178,14 @@ void NodeEditorUI::serialize(const fs::path& path)
 	_linkManager.serialize(outputArchive);
 }
 
+void NodeEditorUI::serialize(std::stringstream& stream)
+{
+	cereal::JSONOutputArchive outputArchive(stream);
+
+	_nodeManager.serialize(outputArchive);
+	_linkManager.serialize(outputArchive);
+}
+
 void NodeEditorUI::loadFile(Master& master, const fs::path& path)
 {
 	std::ifstream file(path);
@@ -198,7 +206,27 @@ void NodeEditorUI::loadFile(Master& master, const fs::path& path)
 
 	cereal::JSONInputArchive archive(file);
 	archive.setNextName("link");
-	std::cout << "LINK LOAD" << std::endl;
+	_linkManager.load(archive, _idManager);
+
+	_UIModified = true;
+}
+
+void NodeEditorUI::loadFile(Master& master, std::stringstream& stream)
+{
+	_nodeManager.removeAllNodes(_idManager);
+	_linkManager.removeAllLinks(_idManager);
+
+	ImVector<LinkInfo> links;
+
+	{
+		std::stringstream streamCopy1(stream.str());
+		cereal::JSONInputArchive archive(streamCopy1);
+		_nodeManager.load(archive, _idManager);
+	}
+
+	std::stringstream streamCopy2(stream.str());
+	cereal::JSONInputArchive archive(streamCopy2);
+	archive.setNextName("link");
 	_linkManager.load(archive, _idManager);
 
 	_UIModified = true;

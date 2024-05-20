@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cereal/archives/json.hpp>
+#include <cereal/archives/binary.hpp>
 #include <cereal/types/vector.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/types/base_class.hpp>
@@ -17,6 +18,7 @@
 #include "inc.hpp"
 #include "audio_backend.hpp"
 #include "AudioBackend/Components/Components.hpp"
+#include <sstream>
 
 #include "path.hpp"
 
@@ -68,7 +70,9 @@ public:
 	void update(Master& master);
 
 	void serialize(const fs::path& path);
+	void serialize(std::stringstream& stream);
 	void loadFile(Master& master, const fs::path& path);
+	void loadFile(Master& master, std::stringstream& stream);
 
 private:
 	void render();

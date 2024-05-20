@@ -3,7 +3,10 @@
 #include "AudioBackend/Components/Master.hpp"
 
 class Instrument {
-	Master _master;
-
 public:
+	Master master;
+	std::string name;
+	float volume = 1.0f;
+
+	double process(std::vector<MidiInfo>& keyPressed);
 };

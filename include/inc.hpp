@@ -27,6 +27,7 @@ typedef std::forward_list<AudioComponent*> Components;
 
 struct sEnvelopeADSR;
 struct Master;
+class Instrument;
 
 // [TODO] Rename enums to OscSine, OscSquare, ... (?)
 enum OscType { Sine, Square, Triangle, Saw_Ana, Saw_Dig, Noise };
@@ -108,7 +109,7 @@ void rtAudioInit(AudioData& audio);
 int uploadBuffer( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
 void handleInput(GLFWwindow* window, InputManager& inputManager, std::vector<sEnvelopeADSR>& envelopes, std::vector<MidiInfo>& keyPressed, double time);
 void initInput(InputManager& inputManger);
-void generateAudio(AudioData& audio, Master& master, std::vector<sEnvelopeADSR>& envelopes, std::vector<MidiInfo>& keyPressed, double& time);
+void generateAudio(AudioData& audio, std::vector<Instrument>& instruments, std::vector<sEnvelopeADSR>& envelopes, std::vector<MidiInfo>& keyPressed, double& time);
 int uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
 
 static void exitError(const char* str)

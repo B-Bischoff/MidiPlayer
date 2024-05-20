@@ -1,6 +1,7 @@
 #include "inc.hpp"
 #include "audio_backend.hpp"
 #include "AudioBackend/Components/Components.hpp"
+#include "AudioBackend/Instrument.hpp"
 
 void applyLowPassFilter(double& sample)
 {
@@ -11,7 +12,7 @@ void applyLowPassFilter(double& sample)
 }
 
 // [TODO] think to group everything (or not?) in a class/struct
-void generateAudio(AudioData& audio, Master& master, std::vector<sEnvelopeADSR>& envelopes, std::vector<MidiInfo>& keyPressed, double& time)
+void generateAudio(AudioData& audio, std::vector<Instrument>& instruments, std::vector<sEnvelopeADSR>& envelopes, std::vector<MidiInfo>& keyPressed, double& time)
 {
 	static int TEST = 0;
 	double fractionalPart = audio.getFramesPerUpdate() - (int)audio.getFramesPerUpdate();
@@ -33,7 +34,9 @@ void generateAudio(AudioData& audio, Master& master, std::vector<sEnvelopeADSR>&
 		//double t = programElapsedTime.count() + (1.0f / (double)audio.sampleRate * (double)(i));
 		double value = 0.0;
 
-		value = master.process(keyPressed) * 0.3;
+		value = 0.0;
+		for (Instrument& instrument : instruments)
+			value += instrument.process(keyPressed) * 0.3;
 
 		//if (writeOneMoreFrame && i == audio.sampleRate/audio.targetFPS)
 		//	value = 0;

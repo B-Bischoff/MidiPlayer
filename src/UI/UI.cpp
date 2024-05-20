@@ -1,7 +1,7 @@
 #include "UI/UI.hpp"
 
 UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
-	: _imPlot(audio), _path(path)
+	: _imPlot(audio), _path(path), _selectedInstrument(nullptr)
 {
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 	const char* glsl_version = "#version 100";
@@ -25,13 +25,17 @@ UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 	{
 		if (fs::is_regular_file(file) && file.path().extension() == ".json")
 		{
+#if VERBOSE
 			std::cout << "Found : " << file.path().string() << std::endl;
-			_instruments.push_back(file);
+#endif
+			assert(!file.path().stem().empty() && "[UI Load Presets] filename must not be empty");
+			const std::string presetName = file.path().stem().string();
+			_instruments[presetName] = file;
 		}
 	}
 }
 
-void UI::update(AudioData& audio, Master& master)
+void UI::update(AudioData& audio, std::vector<Instrument>& instruments)
 {
 	initUpdate();
 
@@ -40,18 +44,54 @@ void UI::update(AudioData& audio, Master& master)
 	ImGui::End();
 
 	ImGui::Begin("Node Editor");
-	_nodeEditor.update(master);
+	if (_selectedInstrument)
+		_nodeEditor.update(_selectedInstrument->master);
 	ImGui::End();
 
-	ImGui::Begin("Instruments");
+	ImGui::Begin("Loaded Instruments");
+	static int selectedInstrument = -1;
 
-	static int selected = -1;
-
-
-	if (ImGui::Button("Load") && selected != -1)
+	for (int i = 0; i < instruments.size(); i++)
 	{
-		_nodeEditor.loadFile(master, _instruments[selected]);
+		char buf[64];
+		sprintf(buf, "%s", instruments[i].name.c_str());
+		if (ImGui::Selectable(buf, selectedInstrument == i))
+		{
+			switchSelectedInstrument(instruments[i]);
+			selectedInstrument = i;
+
+			// Load new instrument cache (if any)
+			try
+			{
+				std::stringstream& stream = _loadedInstrumentCache.at(_selectedInstrument->name);
+				_nodeEditor.loadFile(_selectedInstrument->master, stream);
+			}
+			catch (std::out_of_range& e)
+			{
+				_nodeEditor.loadFile(_selectedInstrument->master, _instruments["default"]);
+			}
+		}
 	}
+
+	if (ImGui::Button("Create new instrument"))
+	{
+		static int count = 0;
+		instruments.push_back(Instrument());
+		instruments.back().name = "instrument" + std::to_string(count++);
+		if (instruments.size() == 1) // Auto-select new instrument if no other existing
+		{
+			switchSelectedInstrument(instruments.back());
+			selectedInstrument = 0;
+		}
+	}
+
+	ImGui::End();
+
+	ImGui::Begin("Stored Instruments");
+
+	static std::string selectedStoredInstrument = "";
+	if (ImGui::Button("Load") && !selectedStoredInstrument.empty() && _selectedInstrument != nullptr)
+		_nodeEditor.loadFile(_selectedInstrument->master, _instruments.at(selectedStoredInstrument));
 
 	static char instrumentFilename[128] = "";
 	if (ImGui::Button("Save Instrument: "))
@@ -63,18 +103,22 @@ void UI::update(AudioData& audio, Master& master)
 		_nodeEditor.serialize(newInstrumentPath);
 
 		// Don't add already existing instrument
-		if (std::find(std::begin(_instruments), std::end(_instruments), newInstrumentPath) == std::end(_instruments))
-			_instruments.push_back(newInstrumentPath);
+		if (std::find_if(_instruments.begin(), _instruments.end(), \
+					[&newInstrumentPath](const auto& pair) { return pair.second == newInstrumentPath; }) == _instruments.end())
+		{
+			const std::string presetName = newInstrumentPath.stem().string();
+			_instruments[presetName] = newInstrumentPath;
+		}
 	}
 	ImGui::SameLine();
 	ImGui::InputText("filename", instrumentFilename, IM_ARRAYSIZE(instrumentFilename));
 
-	for (int i = 0; i < _instruments.size(); i++)
+	for (auto it = _instruments.begin(); it != _instruments.end(); it++)
 	{
 		char buf[64];
-		sprintf(buf, "%s", _instruments[i].filename().string().c_str());
-		if (ImGui::Selectable(buf, selected == i))
-			selected = i;
+		sprintf(buf, "%s", it->first.c_str());
+		if (ImGui::Selectable(buf, selectedStoredInstrument == it->second))
+			selectedStoredInstrument = it->first;
 	}
 
 	ImGui::End();
@@ -93,4 +137,21 @@ void UI::render()
 {
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void UI::switchSelectedInstrument(Instrument& newInstrument)
+{
+	// Save current instrument nodes & links to cache
+	if (_selectedInstrument)
+	{
+		// Clear existing instrument cache
+		if (!_loadedInstrumentCache[_selectedInstrument->name].str().empty())
+			_loadedInstrumentCache[_selectedInstrument->name].str("");
+
+		_nodeEditor.serialize(_loadedInstrumentCache[_selectedInstrument->name]);
+		//std::cout << "saved " << _selectedInstrument->name << " content " << std::endl;
+		//std::cout << _loadedInstrumentCache[_selectedInstrument->name].str() << std::endl;
+	}
+
+	_selectedInstrument = &newInstrument;
 }

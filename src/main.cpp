@@ -7,6 +7,7 @@
 #include "inc.hpp"
 
 #include "UI/UI.hpp"
+#include "AudioBackend/Instrument.hpp"
 
 static void handleFrameProcessTime(const time_point& startTime, const std::chrono::duration<double>& targetFrameDuration, AudioData& audio);
 
@@ -143,7 +144,7 @@ int main(int argc, char* argv[])
 	float* bufferCopy = new float[audio.getBufferSize()];
 
 	ImVector<LinkInfo> links;
-	Master master;
+	std::vector<Instrument> instruments;
 
 	std::vector<MidiInfo> keyPressed;
 
@@ -158,7 +159,7 @@ int main(int argc, char* argv[])
 
 		handleInput(window, inputManager, envelopes, keyPressed, t);
 
-		generateAudio(audio, master, envelopes, keyPressed, t);
+		generateAudio(audio, instruments, envelopes, keyPressed, t);
 
 		/*
 		// Lag simulator
@@ -169,7 +170,7 @@ int main(int argc, char* argv[])
 		}
 		*/
 
-		ui.update(audio, master);
+		ui.update(audio, instruments);
 		ui.render();
 
 		glfwSwapBuffers(window);
