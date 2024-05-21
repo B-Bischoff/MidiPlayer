@@ -30,10 +30,15 @@ enum class PinKind
 
 struct Pin
 {
+	enum Mode { Link, Slider};
+
 	unsigned int id;
 	Node* node;
 	std::string name;
 	PinKind kind;
+
+	Mode mode;
+	float* sliderValue;
 
 	Pin()
 	{
@@ -41,10 +46,12 @@ struct Pin
 		node = nullptr;
 		name.clear();
 		kind = PinKind::Input;
+		mode = Mode::Link;
+		sliderValue = nullptr;
 	}
 
 	Pin(int id, const char* name):
-		id(id), node(nullptr), name(name), kind(PinKind::Input)
+		id(id), node(nullptr), name(name), kind(PinKind::Input), mode(Mode::Link), sliderValue(nullptr)
 	{ }
 };
 
@@ -56,11 +63,12 @@ struct Node
 	std::vector<Pin> outputs;
 	ImColor color;
 	UI_NodeType type;
+	bool hidden;
 
 	static bool propertyChanged;
 
 	Node()
-		: id(0), name(""), inputs(), outputs(), color(ImColor(0)), type(NodeUI)
+		: id(0), name(""), inputs(), outputs(), color(ImColor(0)), type(NodeUI), hidden(false)
 	{ }
 
 	virtual ~Node() {}
@@ -98,11 +106,20 @@ struct Node
 			if (i < inputs.size())
 			{
 				ed::BeginPin(inputs[i].id, ed::PinKind::Input);
+				if (inputs[i].mode == Pin::Mode::Link)
+				{
 #if NODE_DEBUG
-				ImGui::Text("%s", (inputs[i].name + "_" + std::to_string(inputs[i].id)).c_str());
+					ImGui::Text("%s", (inputs[i].name + "_" + std::to_string(inputs[i].id)).c_str());
 #else
-				ImGui::Text("%s", inputs[i].name.c_str());
+					ImGui::Text("%s", inputs[i].name.c_str());
 #endif
+				}
+				else
+				{
+					ImGui::SetNextItemWidth(50);
+					if (ImGui::DragFloat(inputs[i].name.c_str(), inputs[i].sliderValue, 0.001))
+						Node::propertyChanged = true;
+				}
 				ed::EndPin();
 				sameLine = true;
 			}
@@ -139,7 +156,8 @@ struct Node
 			cereal::make_nvp("node_name", name),
 			cereal::make_nvp("node_type", (int)type),
 			cereal::make_nvp("node_inputs", inputs),
-			cereal::make_nvp("node_outputs", outputs)
+			cereal::make_nvp("node_outputs", outputs),
+			cereal::make_nvp("node_hidden", hidden)
 			// cereal::make_nvp("color", color) // [TODO] work on node/link colors
 		);
 	}

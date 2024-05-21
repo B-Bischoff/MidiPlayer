@@ -100,6 +100,19 @@ std::shared_ptr<Node>& NodeManager::getMasterNode()
 	return _nodes[0];
 }
 
+std::list<std::shared_ptr<Node>> NodeManager::getHiddenNodes()
+{
+	std::list<std::shared_ptr<Node>> list;
+
+	for (auto& node : _nodes)
+	{
+		if (node->hidden)
+			list.push_back(node);
+	}
+
+	return list;
+}
+
 void NodeManager::setNodePosition(std::shared_ptr<Node>& node, const ImVec2& pos)
 {
 	assert(node && "[NodeManager] setNodePosition must not receive empty pointer");
@@ -109,9 +122,11 @@ void NodeManager::setNodePosition(std::shared_ptr<Node>& node, const ImVec2& pos
 void NodeManager::render()
 {
 	for (std::shared_ptr<Node>& node : _nodes)
-		node->render();
+	{
+		if (!node->hidden)
+			node->render();
+	}
 }
-
 
 void NodeManager::registerNodeIds(IDManager& idManager, std::shared_ptr<Node>& node)
 {

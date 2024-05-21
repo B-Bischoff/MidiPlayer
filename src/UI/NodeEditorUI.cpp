@@ -1,4 +1,5 @@
 #include "UI/NodeEditorUI.hpp"
+#include "imgui_node_editor.h"
 
 bool Node::propertyChanged = false;
 
@@ -7,6 +8,8 @@ NodeEditorUI::NodeEditorUI()
 	_context = ed::CreateEditor();
 	_UIModified = false;
 	_navigateToContent = false;
+
+	_nodeManager.addNode<MasterNode>(_idManager);
 }
 
 void NodeEditorUI::update(Master& master)
@@ -56,24 +59,18 @@ void NodeEditorUI::handleNodeCreation()
 	ImVec2 openPopupPosition = ImGui::GetMousePos();
 	static Pin* newNodeLinkPin = nullptr; // [TODO] remove those static variables
 	static ed::NodeId contextNodeId = 0;
+	static ed::PinId contextPinId = 0;
 
 	ed::Suspend();
 	if (ed::ShowBackgroundContextMenu())
 		ImGui::OpenPopup("Create New Node");
 	else if (ed::ShowNodeContextMenu(&contextNodeId))
 		ImGui::OpenPopup("Node Context Menu");
+	else if (ed::ShowPinContextMenu(&contextPinId))
+		ImGui::OpenPopup("Pin Context Menu");
 	ed::Resume();
 
 	ed::Suspend();
-
-	if (ImGui::BeginPopup("Node Context Menu"))
-	{
-		ImGui::TextUnformatted("Node Context Menu");
-		ImGui::Separator();
-		if (ImGui::MenuItem("Delete"))
-			ed::DeleteNode(contextNodeId);
-		ImGui::EndPopup();
-	}
 
 	if (ImGui::BeginPopup("Create New Node"))
 	{
@@ -101,6 +98,66 @@ void NodeEditorUI::handleNodeCreation()
 
 		ImGui::EndPopup();
 	}
+
+	if (ImGui::BeginPopup("Node Context Menu"))
+	{
+		ImGui::TextUnformatted("Node Context Menu");
+		ImGui::Separator();
+		if (ImGui::MenuItem("Delete"))
+			ed::DeleteNode(contextNodeId);
+		ImGui::EndPopup();
+	}
+
+	if (ImGui::BeginPopup("Pin Context Menu"))
+	{
+		Pin& pin = _nodeManager.findPinById(contextPinId);
+
+		ImGui::Text("Pin id : %d", pin.id);
+
+		if (pin.kind == PinKind::Input)
+		{
+			int type = pin.mode;
+			ImGui::Text("Input type : ");
+			ImGui::SameLine();
+			ImGui::RadioButton("node link", &type, 0); ImGui::SameLine();
+			ImGui::RadioButton("slider", &type, 1);
+
+			if (type != pin.mode)
+			{
+				pin.mode = static_cast<Pin::Mode>(type);
+
+				if (pin.mode == Pin::Mode::Link)
+				{
+					// Delete linked hidden number node
+					std::list<LinkInfo> links = _linkManager.findPinLinks(pin.id);
+					assert(links.size() == 1);
+					std::shared_ptr<Node> hiddenNode = _nodeManager.findNodeByPinId(links.begin()->OutputId.Get());
+
+					_linkManager.removeLinksFromNodeId(_idManager, _nodeManager, hiddenNode->id);
+					_nodeManager.removeNode(_idManager, hiddenNode);
+				}
+				else
+				{
+					// Remove existing pin links
+					_linkManager.removeLinksContainingPinId(_idManager, pin.id);
+
+					// Create a hidden number node
+					std::shared_ptr<Node> node = _nodeManager.addNode<NumberNode>(_idManager);
+					node->hidden = true; // Node and link won't be displayed
+					_linkManager.addLink(_idManager, _nodeManager, pin.id, node->outputs[0].id);
+
+					// Slider on the current node will control the new hidden number node
+					NumberNode* number = (NumberNode*)node.get();
+					pin.sliderValue = &number->value;
+				}
+
+				_UIModified = true;
+			}
+		}
+
+		ImGui::EndPopup();
+	}
+
 	ed::Resume();
 }
 
@@ -111,7 +168,13 @@ void NodeEditorUI::handleLinkCreation(Master& master)
 		ed::PinId inputPinId, outputPinId;
 		if (ed::QueryNewLink(&inputPinId, &outputPinId))
 		{
-			if (ed::AcceptNewItem())
+			Pin& inputPin = _nodeManager.findPinById(inputPinId);
+			Pin& outputPin = _nodeManager.findPinById(outputPinId);
+
+			// Do not accept link on pin using slider
+			if (inputPin.mode == Pin::Mode::Slider || outputPin.mode == Pin::Mode::Slider)
+				ed::RejectNewItem();
+			else if (ed::AcceptNewItem())
 			{
 				_linkManager.addLink(_idManager, _nodeManager, inputPinId, outputPinId);
 				_UIModified = true;
@@ -145,6 +208,17 @@ void NodeEditorUI::handleNodeDeletion()
 			std::shared_ptr<Node>& node = _nodeManager.findNodeById(nodeId);
 			if (node->type != UI_NodeType::MasterUI)
 			{
+				// Delete hidden nodes linked to pin in Slider mode
+				for (Pin& pin : node->inputs)
+				{
+					if (pin.mode == Pin::Mode::Link) continue;
+
+					std::list<LinkInfo> links = _linkManager.findPinLinks(pin.id);
+					assert(links.size() == 1);
+					std::shared_ptr<Node>& hiddenNode = _nodeManager.findNodeByPinId(links.begin()->OutputId);
+					_nodeManager.removeNode(_idManager, hiddenNode);
+				}
+
 				_linkManager.removeLinksFromNodeId(_idManager, _nodeManager, nodeId);
 				_nodeManager.removeNode(_idManager, node);
 			}
@@ -211,6 +285,18 @@ void NodeEditorUI::loadFile(Master& master, const fs::path& path)
 	archive.setNextName("link");
 	_linkManager.load(archive, _idManager);
 
+	// Link hidden node
+	std::list<std::shared_ptr<Node>> hiddenNodes = _nodeManager.getHiddenNodes();
+	for (auto& node : hiddenNodes)
+	{
+		std::list<LinkInfo> links = _linkManager.findNodeLinks(_nodeManager, node->id);
+		assert(links.size() == 1);
+		Pin& inputPin = _nodeManager.findPinById(links.begin()->InputId);
+		inputPin.mode = Pin::Mode::Slider;
+		NumberNode* number = (NumberNode*)node.get();
+		inputPin.sliderValue = &number->value;
+	}
+
 	_UIModified = true;
 	_navigateToContent = true;
 }
@@ -232,6 +318,18 @@ void NodeEditorUI::loadFile(Master& master, std::stringstream& stream)
 	cereal::JSONInputArchive archive(streamCopy2);
 	archive.setNextName("link");
 	_linkManager.load(archive, _idManager);
+
+	// Link hidden node
+	std::list<std::shared_ptr<Node>> hiddenNodes = _nodeManager.getHiddenNodes();
+	for (auto& node : hiddenNodes)
+	{
+		std::list<LinkInfo> links = _linkManager.findNodeLinks(_nodeManager, node->id);
+		assert(links.size() == 1);
+		Pin& inputPin = _nodeManager.findPinById(links.begin()->InputId);
+		inputPin.mode = Pin::Mode::Slider;
+		NumberNode* number = (NumberNode*)node.get();
+		inputPin.sliderValue = &number->value;
+	}
 
 	_UIModified = true;
 	_navigateToContent = true;

@@ -26,42 +26,50 @@ public:
 	 * 2 : link is added to list only if id is an output.
 	 */
 	std::list<LinkInfo> findNodeLinks(NodeManager& nodeManager, ed::NodeId id, int filter = 0);
+	std::list<LinkInfo> findPinLinks(ed::PinId id, int filter = 0);
 
 	void render();
 
 	template <class Archive>
-	void serialize(Archive& archive) {
-		for (LinkInfo& link : _links)
-			archive(cereal::make_nvp("link", link));
-	}
+	void serialize(Archive& archive);
 
 	template <class Archive>
-	void load(Archive& archive, IDManager& idManager) {
-		try{
-			int i = 0;
-			while (true)
-			{
-				archive.startNode();
-				int id, inputId, outputId;
-				archive(id, inputId, outputId);
-				archive.finishNode();
-
-				LinkInfo link = {
-					id,
-					inputId,
-					outputId,
-				};
-				link.Id = idManager.getID(link.Id.Get());
-				assert(link.Id.Get() != INVALID_ID);
-				_links.push_back(link);
-			}
-		}
-		catch (std::exception& e)
-		{ }
-	}
+	void load(Archive& archive, IDManager& idManager);
 
 private:
-	std::list<LinkInfo> findPinLinks(ed::PinId id, int filter = 0);
 	void releaseLinkId(IDManager& idManager, ed::LinkId id);
 	void eraseLink(ed::LinkId id);
 };
+
+// Template method definition
+
+template <class Archive>
+void LinkManager::serialize(Archive& archive) {
+	for (LinkInfo& link : _links)
+		archive(cereal::make_nvp("link", link));
+}
+
+template <class Archive>
+void LinkManager::load(Archive& archive, IDManager& idManager) {
+	try{
+		int i = 0;
+		while (true)
+		{
+			archive.startNode();
+			int id, inputId, outputId;
+			archive(id, inputId, outputId);
+			archive.finishNode();
+
+			LinkInfo link = {
+				id,
+				inputId,
+				outputId,
+			};
+			link.Id = idManager.getID(link.Id.Get());
+			assert(link.Id.Get() != INVALID_ID);
+			_links.push_back(link);
+		}
+	}
+	catch (std::exception& e)
+	{ }
+}

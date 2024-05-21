@@ -79,6 +79,7 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments)
 			catch (std::out_of_range& e)
 			{
 				_nodeEditor.loadFile(_selectedInstrument->master, _instruments["default"]);
+				std::cout << "No cache available, loading default" << std::endl;
 			}
 		}
 	}
