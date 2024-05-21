@@ -117,8 +117,10 @@ struct Node
 				else
 				{
 					ImGui::SetNextItemWidth(50);
+					ImGui::PushID(appendId(inputs[i].name).c_str());
 					if (ImGui::DragFloat(inputs[i].name.c_str(), inputs[i].sliderValue, 0.001))
 						Node::propertyChanged = true;
+					ImGui::PopID();
 				}
 				ed::EndPin();
 				sameLine = true;
