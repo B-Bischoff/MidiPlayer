@@ -256,7 +256,8 @@ struct OscNode : public Node
 {
 	OscType oscType;
 	bool doPopup = false;
-	std::string popupText = "Sine";
+	static const int oscTypeNumber = 6;
+	std::string popupText[oscTypeNumber] = {"Sine", "Square", "Triangle", "Saw_Ana", "Saw_Dig", "Noise"};
 
 	OscNode(IDManager* idManager = nullptr)
 	{
@@ -290,7 +291,7 @@ struct OscNode : public Node
 		ImGui::SetNextItemWidth(50);
 
 		ImGui::PushID(appendId("popup").c_str());
-		if (ImGui::Button(popupText.c_str()))
+		if (ImGui::Button(popupText[(int)oscType].c_str()))
 			doPopup = true;
 		ImGui::PopID();
 
@@ -307,28 +308,20 @@ struct OscNode : public Node
 		{
 			ImGui::BeginChild("popup_scroller", ImVec2(100, 100), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
-			updateButtonInPopUp(OscType::Sine, "Sine", popupText);
-			updateButtonInPopUp(OscType::Square, "Square", popupText);
-			updateButtonInPopUp(OscType::Triangle, "Triangle", popupText);
-			updateButtonInPopUp(OscType::Saw_Ana, "Saw_Ana", popupText);
-			updateButtonInPopUp(OscType::Saw_Dig, "Saw_Dig", popupText);
-			updateButtonInPopUp(OscType::Noise, "Noise", popupText);
+			for (int i = 0; i < oscTypeNumber; i++)
+			{
+				if (ImGui::Button(popupText[i].c_str()))
+				{
+					this->oscType = static_cast<OscType>(i);
+					ImGui::CloseCurrentPopup();
+					Node::propertyChanged = true;
+				}
+			}
 
 			ImGui::EndChild();
 			ImGui::EndPopup(); // Note this does not do anything to the popup open/close state. It just terminates the content declaration.
 		}
 		ed::Resume();
-	}
-
-private:
-	void updateButtonInPopUp(OscType oscType, std::string oscTypeText, std::string& popupText)
-	{
-		if (ImGui::Button(oscTypeText.c_str())) {
-			this->oscType = oscType;
-			popupText = oscTypeText;
-			ImGui::CloseCurrentPopup();
-			Node::propertyChanged = true;
-		}
 	}
 };
 
