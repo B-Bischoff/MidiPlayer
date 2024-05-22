@@ -86,8 +86,10 @@ void NodeEditorUI::handleNodeCreation()
 			node = _nodeManager.addNode<KeyboardFrequencyNode>(_idManager);
 		if (ImGui::MenuItem("Multiply"))
 			node = _nodeManager.addNode<MultNode>(_idManager);
-		if (ImGui::MenuItem("LowPassFilter"))
+		if (ImGui::MenuItem("Low Pass Filter"))
 			node = _nodeManager.addNode<LowPassFilterNode>(_idManager);
+		if (ImGui::MenuItem("Comb Filter"))
+			node = _nodeManager.addNode<CombFilterNode>(_idManager);
 
 		if (node)
 		{

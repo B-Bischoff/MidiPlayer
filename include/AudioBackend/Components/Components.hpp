@@ -7,3 +7,4 @@
 #include "Multiplier.hpp"
 #include "Number.hpp"
 #include "Oscillator.hpp"
+#include "CombFilter.hpp"

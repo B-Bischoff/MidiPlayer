@@ -103,6 +103,7 @@ AudioComponent* UIToBackendAdapter::allocateAudioComponent(Node& node)
 		case KbFreqUI: return new KeyboardFrequency();
 		case MultUI: return new Multiplier();
 		case LowPassUI: return new LowPassFilter();
+		case CombFilterUI: return new CombFilter();
 	}
 	assert(0 && "Invalid type");
 	return nullptr;
