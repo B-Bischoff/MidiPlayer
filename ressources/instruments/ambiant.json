@@ -1,0 +1,609 @@
+{
+    "node": {
+        "polymorphic_id": 2147483649,
+        "polymorphic_name": "MasterNode",
+        "ptr_wrapper": {
+            "id": 2147483649,
+            "data": {
+                "node_id": 1,
+                "node_name": "Master",
+                "node_type": 1,
+                "node_inputs": [
+                    {
+                        "pin_id": 2,
+                        "node_id": 1,
+                        "pin_name": "> input",
+                        "pin_kind": 1,
+                        "pin_mode": 0
+                    }
+                ],
+                "node_outputs": [],
+                "node_hidden": false
+            }
+        }
+    },
+    "node_position": {
+        "x": 959.0,
+        "y": -16.0
+    },
+    "node": {
+        "polymorphic_id": 2147483650,
+        "polymorphic_name": "OscNode",
+        "ptr_wrapper": {
+            "id": 2147483650,
+            "data": {
+                "base_node": {
+                    "node_id": 3,
+                    "node_name": "Osc",
+                    "node_type": 3,
+                    "node_inputs": [
+                        {
+                            "pin_id": 4,
+                            "node_id": 3,
+                            "pin_name": "> freq",
+                            "pin_kind": 1,
+                            "pin_mode": 0
+                        },
+                        {
+                            "pin_id": 5,
+                            "node_id": 3,
+                            "pin_name": "> phase",
+                            "pin_kind": 1,
+                            "pin_mode": 0
+                        },
+                        {
+                            "pin_id": 6,
+                            "node_id": 3,
+                            "pin_name": "> LFO Hz",
+                            "pin_kind": 1,
+                            "pin_mode": 0
+                        },
+                        {
+                            "pin_id": 7,
+                            "node_id": 3,
+                            "pin_name": "> LFO Amplitude",
+                            "pin_kind": 1,
+                            "pin_mode": 0
+                        }
+                    ],
+                    "node_outputs": [
+                        {
+                            "pin_id": 8,
+                            "node_id": 3,
+                            "pin_name": "output >",
+                            "pin_kind": 0,
+                            "pin_mode": 0
+                        }
+                    ],
+                    "node_hidden": false
+                },
+                "oscillator_type": 0
+            }
+        }
+    },
+    "node_position": {
+        "x": -324.0,
+        "y": -18.0
+    },
+    "node": {
+        "polymorphic_id": 2147483651,
+        "polymorphic_name": "MultNode",
+        "ptr_wrapper": {
+            "id": 2147483651,
+            "data": {
+                "node_id": 11,
+                "node_name": "Multiplier",
+                "node_type": 6,
+                "node_inputs": [
+                    {
+                        "pin_id": 12,
+                        "node_id": 11,
+                        "pin_name": "> input A",
+                        "pin_kind": 1,
+                        "pin_mode": 0
+                    },
+                    {
+                        "pin_id": 13,
+                        "node_id": 11,
+                        "pin_name": "> input B",
+                        "pin_kind": 1,
+                        "pin_mode": 1
+                    }
+                ],
+                "node_outputs": [
+                    {
+                        "pin_id": 14,
+                        "node_id": 11,
+                        "pin_name": "output >",
+                        "pin_kind": 0,
+                        "pin_mode": 0
+                    }
+                ],
+                "node_hidden": false
+            }
+        }
+    },
+    "node_position": {
+        "x": 477.0,
+        "y": -16.0
+    },
+    "node": {
+        "polymorphic_id": 2147483652,
+        "polymorphic_name": "NumberNode",
+        "ptr_wrapper": {
+            "id": 2147483652,
+            "data": {
+                "base_node": {
+                    "node_id": 16,
+                    "node_name": "Number",
+                    "node_type": 2,
+                    "node_inputs": [],
+                    "node_outputs": [
+                        {
+                            "pin_id": 17,
+                            "node_id": 16,
+                            "pin_name": "output >",
+                            "pin_kind": 0,
+                            "pin_mode": 0
+                        }
+                    ],
+                    "node_hidden": true
+                },
+                "number_value": 0.21199999749660493
+            }
+        }
+    },
+    "node_position": {
+        "x": -2147483648.0,
+        "y": -2147483648.0
+    },
+    "node": {
+        "polymorphic_id": 2147483653,
+        "polymorphic_name": "KeyboardFrequencyNode",
+        "ptr_wrapper": {
+            "id": 2147483653,
+            "data": {
+                "node_id": 27,
+                "node_name": "Keyboard Frequency",
+                "node_type": 5,
+                "node_inputs": [],
+                "node_outputs": [
+                    {
+                        "pin_id": 28,
+                        "node_id": 27,
+                        "pin_name": "frequency >",
+                        "pin_kind": 0,
+                        "pin_mode": 0
+                    }
+                ],
+                "node_hidden": false
+            }
+        }
+    },
+    "node_position": {
+        "x": -507.0,
+        "y": -17.0
+    },
+    "node": {
+        "polymorphic_id": 4,
+        "ptr_wrapper": {
+            "id": 2147483654,
+            "data": {
+                "base_node": {
+                    "node_id": 10,
+                    "node_name": "Number",
+                    "node_type": 2,
+                    "node_inputs": [],
+                    "node_outputs": [
+                        {
+                            "pin_id": 15,
+                            "node_id": 10,
+                            "pin_name": "output >",
+                            "pin_kind": 0,
+                            "pin_mode": 0
+                        }
+                    ],
+                    "node_hidden": false
+                },
+                "number_value": 0.699999988079071
+            }
+        }
+    },
+    "node_position": {
+        "x": -404.0,
+        "y": 192.0
+    },
+    "node": {
+        "polymorphic_id": 2147483654,
+        "polymorphic_name": "CombFilterNode",
+        "ptr_wrapper": {
+            "id": 2147483655,
+            "data": {
+                "node_id": 33,
+                "node_name": "Comb Filter",
+                "node_type": 8,
+                "node_inputs": [
+                    {
+                        "pin_id": 34,
+                        "node_id": 33,
+                        "pin_name": "> input",
+                        "pin_kind": 1,
+                        "pin_mode": 0
+                    },
+                    {
+                        "pin_id": 35,
+                        "node_id": 33,
+                        "pin_name": "> delay samples",
+                        "pin_kind": 1,
+                        "pin_mode": 1
+                    },
+                    {
+                        "pin_id": 36,
+                        "node_id": 33,
+                        "pin_name": "> feedback",
+                        "pin_kind": 1,
+                        "pin_mode": 0
+                    }
+                ],
+                "node_outputs": [
+                    {
+                        "pin_id": 37,
+                        "node_id": 33,
+                        "pin_name": "output >",
+                        "pin_kind": 0,
+                        "pin_mode": 0
+                    }
+                ],
+                "node_hidden": false
+            }
+        }
+    },
+    "node_position": {
+        "x": -173.0,
+        "y": 56.0
+    },
+    "node": {
+        "polymorphic_id": 4,
+        "ptr_wrapper": {
+            "id": 2147483656,
+            "data": {
+                "base_node": {
+                    "node_id": 45,
+                    "node_name": "Number",
+                    "node_type": 2,
+                    "node_inputs": [],
+                    "node_outputs": [
+                        {
+                            "pin_id": 46,
+                            "node_id": 45,
+                            "pin_name": "output >",
+                            "pin_kind": 0,
+                            "pin_mode": 0
+                        }
+                    ],
+                    "node_hidden": true
+                },
+                "number_value": 10000.0
+            }
+        }
+    },
+    "node_position": {
+        "x": 3.4028234663852887e38,
+        "y": 3.4028234663852887e38
+    },
+    "node": {
+        "polymorphic_id": 6,
+        "ptr_wrapper": {
+            "id": 2147483657,
+            "data": {
+                "node_id": 19,
+                "node_name": "Comb Filter",
+                "node_type": 8,
+                "node_inputs": [
+                    {
+                        "pin_id": 21,
+                        "node_id": 19,
+                        "pin_name": "> input",
+                        "pin_kind": 1,
+                        "pin_mode": 0
+                    },
+                    {
+                        "pin_id": 22,
+                        "node_id": 19,
+                        "pin_name": "> delay samples",
+                        "pin_kind": 1,
+                        "pin_mode": 1
+                    },
+                    {
+                        "pin_id": 23,
+                        "node_id": 19,
+                        "pin_name": "> feedback",
+                        "pin_kind": 1,
+                        "pin_mode": 0
+                    }
+                ],
+                "node_outputs": [
+                    {
+                        "pin_id": 24,
+                        "node_id": 19,
+                        "pin_name": "output >",
+                        "pin_kind": 0,
+                        "pin_mode": 0
+                    }
+                ],
+                "node_hidden": false
+            }
+        }
+    },
+    "node_position": {
+        "x": -1.0,
+        "y": 152.0
+    },
+    "node": {
+        "polymorphic_id": 4,
+        "ptr_wrapper": {
+            "id": 2147483658,
+            "data": {
+                "base_node": {
+                    "node_id": 26,
+                    "node_name": "Number",
+                    "node_type": 2,
+                    "node_inputs": [],
+                    "node_outputs": [
+                        {
+                            "pin_id": 29,
+                            "node_id": 26,
+                            "pin_name": "output >",
+                            "pin_kind": 0,
+                            "pin_mode": 0
+                        }
+                    ],
+                    "node_hidden": true
+                },
+                "number_value": 15000.0
+            }
+        }
+    },
+    "node_position": {
+        "x": 3.4028234663852887e38,
+        "y": 3.4028234663852887e38
+    },
+    "node": {
+        "polymorphic_id": 6,
+        "ptr_wrapper": {
+            "id": 2147483659,
+            "data": {
+                "node_id": 39,
+                "node_name": "Comb Filter",
+                "node_type": 8,
+                "node_inputs": [
+                    {
+                        "pin_id": 40,
+                        "node_id": 39,
+                        "pin_name": "> input",
+                        "pin_kind": 1,
+                        "pin_mode": 0
+                    },
+                    {
+                        "pin_id": 41,
+                        "node_id": 39,
+                        "pin_name": "> delay samples",
+                        "pin_kind": 1,
+                        "pin_mode": 1
+                    },
+                    {
+                        "pin_id": 42,
+                        "node_id": 39,
+                        "pin_name": "> feedback",
+                        "pin_kind": 1,
+                        "pin_mode": 0
+                    }
+                ],
+                "node_outputs": [
+                    {
+                        "pin_id": 43,
+                        "node_id": 39,
+                        "pin_name": "output >",
+                        "pin_kind": 0,
+                        "pin_mode": 0
+                    }
+                ],
+                "node_hidden": false
+            }
+        }
+    },
+    "node_position": {
+        "x": 232.0,
+        "y": 232.0
+    },
+    "node": {
+        "polymorphic_id": 4,
+        "ptr_wrapper": {
+            "id": 2147483660,
+            "data": {
+                "base_node": {
+                    "node_id": 52,
+                    "node_name": "Number",
+                    "node_type": 2,
+                    "node_inputs": [],
+                    "node_outputs": [
+                        {
+                            "pin_id": 53,
+                            "node_id": 52,
+                            "pin_name": "output >",
+                            "pin_kind": 0,
+                            "pin_mode": 0
+                        }
+                    ],
+                    "node_hidden": true
+                },
+                "number_value": 20000.0
+            }
+        }
+    },
+    "node_position": {
+        "x": 3.4028234663852887e38,
+        "y": 3.4028234663852887e38
+    },
+    "node": {
+        "polymorphic_id": 2147483655,
+        "polymorphic_name": "LowPassFilterNode",
+        "ptr_wrapper": {
+            "id": 2147483661,
+            "data": {
+                "node_id": 56,
+                "node_name": "Low Pass Filter",
+                "node_type": 7,
+                "node_inputs": [
+                    {
+                        "pin_id": 57,
+                        "node_id": 56,
+                        "pin_name": "> signal",
+                        "pin_kind": 1,
+                        "pin_mode": 0
+                    },
+                    {
+                        "pin_id": 58,
+                        "node_id": 56,
+                        "pin_name": "> alpha",
+                        "pin_kind": 1,
+                        "pin_mode": 1
+                    }
+                ],
+                "node_outputs": [
+                    {
+                        "pin_id": 59,
+                        "node_id": 56,
+                        "pin_name": "output >",
+                        "pin_kind": 0,
+                        "pin_mode": 0
+                    }
+                ],
+                "node_hidden": false
+            }
+        }
+    },
+    "node_position": {
+        "x": 700.0,
+        "y": -16.0
+    },
+    "node": {
+        "polymorphic_id": 4,
+        "ptr_wrapper": {
+            "id": 2147483662,
+            "data": {
+                "base_node": {
+                    "node_id": 60,
+                    "node_name": "Number",
+                    "node_type": 2,
+                    "node_inputs": [],
+                    "node_outputs": [
+                        {
+                            "pin_id": 61,
+                            "node_id": 60,
+                            "pin_name": "output >",
+                            "pin_kind": 0,
+                            "pin_mode": 0
+                        }
+                    ],
+                    "node_hidden": true
+                },
+                "number_value": 0.019999999552965165
+            }
+        }
+    },
+    "node_position": {
+        "x": 3.4028234663852887e38,
+        "y": 3.4028234663852887e38
+    },
+    "link": {
+        "link_id": 18,
+        "link_input_id": 13,
+        "link_output_id": 17
+    },
+    "link": {
+        "link_id": 9,
+        "link_input_id": 4,
+        "link_output_id": 28
+    },
+    "link": {
+        "link_id": 38,
+        "link_input_id": 12,
+        "link_output_id": 8
+    },
+    "link": {
+        "link_id": 47,
+        "link_input_id": 35,
+        "link_output_id": 46
+    },
+    "link": {
+        "link_id": 44,
+        "link_input_id": 36,
+        "link_output_id": 15
+    },
+    "link": {
+        "link_id": 49,
+        "link_input_id": 34,
+        "link_output_id": 8
+    },
+    "link": {
+        "link_id": 55,
+        "link_input_id": 12,
+        "link_output_id": 37
+    },
+    "link": {
+        "link_id": 25,
+        "link_input_id": 23,
+        "link_output_id": 15
+    },
+    "link": {
+        "link_id": 30,
+        "link_input_id": 22,
+        "link_output_id": 29
+    },
+    "link": {
+        "link_id": 31,
+        "link_input_id": 21,
+        "link_output_id": 37
+    },
+    "link": {
+        "link_id": 32,
+        "link_input_id": 12,
+        "link_output_id": 24
+    },
+    "link": {
+        "link_id": 48,
+        "link_input_id": 40,
+        "link_output_id": 24
+    },
+    "link": {
+        "link_id": 50,
+        "link_input_id": 12,
+        "link_output_id": 43
+    },
+    "link": {
+        "link_id": 51,
+        "link_input_id": 42,
+        "link_output_id": 15
+    },
+    "link": {
+        "link_id": 54,
+        "link_input_id": 41,
+        "link_output_id": 53
+    },
+    "link": {
+        "link_id": 20,
+        "link_input_id": 57,
+        "link_output_id": 14
+    },
+    "link": {
+        "link_id": 62,
+        "link_input_id": 58,
+        "link_output_id": 61
+    },
+    "link": {
+        "link_id": 63,
+        "link_input_id": 2,
+        "link_output_id": 59
+    }
+}
