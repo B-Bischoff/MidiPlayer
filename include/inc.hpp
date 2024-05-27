@@ -101,15 +101,17 @@ struct InputManager
 	PmStream* midiStream;
 	PmEvent buffer[32];
 
-#define GLFW_MAX_KEY 348
-	KeyData keys[GLFW_MAX_KEY];
+	// Keyboard data
+	KeyData keys[GLFW_KEY_LAST];
+	unsigned int octave = 4;
+	static const unsigned int maxOctave = 8;
 };
 
 void rtAudioInit(AudioData& audio);
 int uploadBuffer( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
-void handleInput(GLFWwindow* window, InputManager& inputManager, std::vector<sEnvelopeADSR>& envelopes, std::vector<MidiInfo>& keyPressed, double time);
+void handleInput(GLFWwindow* window, InputManager& inputManager, std::vector<MidiInfo>& keyPressed, double time);
 void initInput(InputManager& inputManger);
-void generateAudio(AudioData& audio, std::vector<Instrument>& instruments, std::vector<sEnvelopeADSR>& envelopes, std::vector<MidiInfo>& keyPressed, double& time);
+void generateAudio(AudioData& audio, std::vector<Instrument>& instruments, std::vector<MidiInfo>& keyPressed, double& time);
 int uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
 
 static void exitError(const char* str)

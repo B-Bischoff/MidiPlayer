@@ -100,8 +100,6 @@ int main(int argc, char* argv[])
 	const int SCREEN_HEIGHT = 1080;
 	GLFWwindow* window = init(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-	std::vector<sEnvelopeADSR> envelopes(16);
-
 	AudioData audio = {
 		.sampleRate = 44100,
 		.channels = 2,
@@ -157,9 +155,9 @@ int main(int argc, char* argv[])
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glfwPollEvents();
 
-		handleInput(window, inputManager, envelopes, keyPressed, t);
+		handleInput(window, inputManager, keyPressed, t);
 
-		generateAudio(audio, instruments, envelopes, keyPressed, t);
+		generateAudio(audio, instruments, keyPressed, t);
 
 		/*
 		// Lag simulator

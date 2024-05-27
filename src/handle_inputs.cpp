@@ -2,6 +2,9 @@
 #include "config.hpp"
 #include "envelope.hpp"
 
+static void addKeyPressed(std::vector<MidiInfo>& keyPressed, int keyIndex, int velocity);
+static void removeKeyPressed(std::vector<MidiInfo>& keyPressed, int keyIndex);
+
 void initInput(InputManager& inputManger) // [TODO] Should this be in a constructor ?
 {
 	Pm_Initialize();
@@ -28,124 +31,87 @@ void initInput(InputManager& inputManger) // [TODO] Should this be in a construc
 	Pm_OpenInput(&inputManger.midiStream, 3, NULL, 512, NULL, NULL);
 }
 
-void handleInput(GLFWwindow* window, InputManager& inputManager, std::vector<sEnvelopeADSR>& envelopes, std::vector<MidiInfo>& keyPressed, double time)
+void handleInput(GLFWwindow* window, InputManager& inputManager, std::vector<MidiInfo>& keyPressed, double time)
 {
-	if (USE_KB_AS_MIDI_INPUT)
+	unsigned int KbToPianoIndex[12] = { GLFW_KEY_Z, GLFW_KEY_S, GLFW_KEY_X, GLFW_KEY_D, GLFW_KEY_C, GLFW_KEY_V, GLFW_KEY_G, GLFW_KEY_B, GLFW_KEY_H, GLFW_KEY_N, GLFW_KEY_J, GLFW_KEY_M };
+
+	// Get keyboard inputs
+	for (int i = 0; i < GLFW_KEY_LAST; i++)
 	{
-		for (int i = 0; i < GLFW_MAX_KEY; i++)
-		{
-			KeyData& key = inputManager.keys[i];
+		KeyData& key = inputManager.keys[i];
 
-			key.pressed = (bool)glfwGetKey(window, i);
-			key.down = key.pressed & !key.lastFramePressed;
-			key.up = !key.pressed & key.lastFramePressed;
-			key.lastFramePressed = key.pressed;
-		}
-		for (int i = 0; i < GLFW_MAX_KEY; i++)
-		{
-			KeyData& key = inputManager.keys[i];
-
-			if (key.down || key.up)
-			{
-				// Extract MIDI status and data bytes
-				int status = 0;
-				int keyIndex = i - 40;
-				int velocity = 127;
-
-				if (key.down)
-					status = 145;
-
-				//std::cout << " state " << status << " key " << (int)keyIndex << " vel " << (int)velocity << std::endl;
-				if ((status == 145 || status == 155) && velocity != 0.0)
-				{
-					for (sEnvelopeADSR& e : envelopes)
-					{
-						if (e.phase == Phase::Inactive)
-						{
-							//std::cout << keyIndex << " on " << std::endl;
-							e.NoteOn(time);
-							e.keyIndex = keyIndex;
-							break;
-						}
-					}
-				}
-				else
-				{
-					for (sEnvelopeADSR& e : envelopes)
-					{
-						if (e.keyIndex == keyIndex)
-						{
-							//std::cout << keyIndex << " off " << std::endl;
-							e.NoteOff(time);
-							break;
-						}
-					}
-				}
-			}
-		}
-		return;
+		key.pressed = (bool)glfwGetKey(window, i);
+		key.down = key.pressed & !key.lastFramePressed;
+		key.up = !key.pressed & key.lastFramePressed;
+		key.lastFramePressed = key.pressed;
 	}
 
+	// Reset rising edges
 	for (MidiInfo& info : keyPressed)
 		info.risingEdge = false;
 
-	int numEvents = Pm_Read(inputManager.midiStream, inputManager.buffer, 32);
-
-	for (int i = 0; i < numEvents; i++)
+	if (USE_KB_AS_MIDI_INPUT)
 	{
-		PmEvent& event = inputManager.buffer[i];
+		// Octaves
+		if (inputManager.keys[GLFW_KEY_O].down && inputManager.octave > 0)
+			inputManager.octave -= 1;
+		if (inputManager.keys[GLFW_KEY_P].down && inputManager.octave < inputManager.maxOctave)
+			inputManager.octave += 1;
 
-		// Extract MIDI status and data bytes
-		PmMessage message = event.message;
-		int status = Pm_MessageStatus(message);
-		int keyIndex = Pm_MessageData1(message);
-		int velocity = Pm_MessageData2(message);
-
-
-		//std::cout << " state " << status << " key " << (int)keyIndex << " vel " << (int)velocity << std::endl;
-		if ((status == 145 || status == 155) && velocity != 0.0)
+		// Notes
+		const unsigned int ARRAY_SIZE = sizeof(KbToPianoIndex) / sizeof(KbToPianoIndex[0]);
+		for (int i = 0; i < ARRAY_SIZE; i++)
 		{
-			MidiInfo info = {
-				.keyIndex = keyIndex,
-				.velocity = velocity,
-				.risingEdge = true,
-			};
+			KeyData& key = inputManager.keys[KbToPianoIndex[i]];
+			int keyIndex = ARRAY_SIZE * inputManager.octave + i;
 
-			keyPressed.push_back(info);
-
-			int index = 0;
-			for (sEnvelopeADSR& e : envelopes)
-			{
-				if (e.phase == Phase::Inactive)
-				{
-					std::cout << keyIndex << " on | envelope id : " << index << std::endl;
-					e.NoteOn(time);
-					e.keyIndex = keyIndex;
-					break;
-				}
-				index++;
-			}
+			if (key.down)
+				addKeyPressed(keyPressed, keyIndex, 127);
+			else if (key.up)
+				removeKeyPressed(keyPressed, keyIndex);
 		}
-		else
+	}
+	else
+	{
+		int numEvents = Pm_Read(inputManager.midiStream, inputManager.buffer, 32);
+		for (int i = 0; i < numEvents; i++)
 		{
-			for (auto it = keyPressed.begin(); it != keyPressed.end(); it++)
-			{
-				if (it->keyIndex == keyIndex)
-				{
-					keyPressed.erase(it);
-					break;
-				}
-			}
+			PmEvent& event = inputManager.buffer[i];
 
-			for (sEnvelopeADSR& e : envelopes)
-			{
-				if (e.keyIndex == keyIndex)
-				{
-					std::cout << keyIndex << " off " << std::endl;
-					e.NoteOff(time);
-					break;
-				}
-			}
+			// Extract MIDI status and data bytes
+			PmMessage message = event.message;
+			int status = Pm_MessageStatus(message);
+			int keyIndex = Pm_MessageData1(message);
+			int velocity = Pm_MessageData2(message);
+
+			std::cout << " state " << status << " key " << (int)keyIndex << " vel " << (int)velocity << std::endl;
+			if ((status == 145 || status == 155) && velocity != 0.0)
+				addKeyPressed(keyPressed, keyIndex, velocity);
+			else
+				removeKeyPressed(keyPressed, keyIndex);
+		}
+	}
+}
+
+static void addKeyPressed(std::vector<MidiInfo>& keyPressed, int keyIndex, int velocity)
+{
+	MidiInfo info = {
+		keyIndex,
+		velocity,
+		true, // rising edge
+	};
+
+	keyPressed.push_back(info);
+}
+
+static void removeKeyPressed(std::vector<MidiInfo>& keyPressed, int keyIndex)
+{
+	for (auto it = keyPressed.begin(); it != keyPressed.end(); it++)
+	{
+		if (it->keyIndex == keyIndex)
+		{
+			keyPressed.erase(it);
+			break;
 		}
 	}
 }
