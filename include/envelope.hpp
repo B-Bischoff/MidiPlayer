@@ -26,11 +26,11 @@ struct sEnvelopeADSR
 
 	sEnvelopeADSR()
 	{
-		attackTime = .05;
-		decayTime = .05,
+		attackTime = .5;
+		decayTime = .5,
 		attackAmplitude = 1.0;
 		sustainAmplitude = 0.8;
-		releaseTime = 0.05;
+		releaseTime = 0.5;
 		noteOn = false;
 		triggerOffTime = 0.0;
 		triggerOnTime = 0.0;
@@ -39,45 +39,21 @@ struct sEnvelopeADSR
 		amplitude = 0.0;
 	}
 
-	void NoteOn(double dTimeOn)
+	double GetAmplitude(double time, bool notePressed)
 	{
-		//std::cout << "note on " << dTimeOn << std::endl;
-		triggerOnTime = dTimeOn;
-		noteOn = true;
-	}
-
-	void NoteOff(double dTimeOff)
-	{
-		//std::cout << "note off " << dTimeOff << std::endl;
-		triggerOffTime = dTimeOff;
-		noteOn = false;
-	}
-
-	Phase getPhase(double time)
-	{
-		if (!noteOn)
+		if (notePressed && !noteOn)
 		{
-			if (time - triggerOffTime <= releaseTime)
-				return Phase::Release;
-			else
-				return Phase::Inactive;
+			triggerOnTime = time;
+			noteOn = true;
+			//std::cout << "NOTE ON" << std::endl;
+		}
+		else if (!notePressed && noteOn)
+		{
+			triggerOffTime = time;
+			noteOn = false;
+			//std::cout << "NOTE OFF" << std::endl;
 		}
 
-		const double lifeTime = time - triggerOnTime;
-
-		if (triggerOffTime != 0.0 && triggerOnTime != 0.0f && triggerOnTime - triggerOffTime < releaseTime && lifeTime <= attackTime)
-			return Phase::Retrigger;
-
-		if (lifeTime <= attackTime)
-			return Phase::Attack;
-		else if (lifeTime <= attackTime + decayTime)
-			return Phase::Decay;
-		else
-			return Phase::Sustain;
-	}
-
-	double GetAmplitude(double time)
-	{
 		if (triggerOnTime == 0.0f)
 			return 0;
 
@@ -132,5 +108,29 @@ struct sEnvelopeADSR
 		//std::cout << time << " " << amplitude << " " << (retrigger ? 6 : phase) << std::endl;
 
 		return amplitude;
+	}
+
+private:
+	Phase getPhase(double time)
+	{
+		if (!noteOn)
+		{
+			if (time - triggerOffTime <= releaseTime)
+				return Phase::Release;
+			else
+				return Phase::Inactive;
+		}
+
+		const double lifeTime = time - triggerOnTime;
+
+		if (triggerOffTime != 0.0 && triggerOnTime != 0.0f && triggerOnTime - triggerOffTime < releaseTime && lifeTime <= attackTime)
+			return Phase::Retrigger;
+
+		if (lifeTime <= attackTime)
+			return Phase::Attack;
+		else if (lifeTime <= attackTime + decayTime)
+			return Phase::Decay;
+		else
+			return Phase::Sustain;
 	}
 };

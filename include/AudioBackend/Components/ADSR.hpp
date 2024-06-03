@@ -5,23 +5,35 @@
 #include "envelope.hpp"
 
 struct ADSR : public AudioComponent {
+private:
+	struct EnvelopeInfo {
+		sEnvelopeADSR envelope;
+		MidiInfo info;
+		unsigned int id;
+		bool playedThisFrame = false;
+	};
+public:
+
 	sEnvelopeADSR reference; // Used to store envelope settings value
-	std::vector<sEnvelopeADSR> envelopes;
+	std::vector<EnvelopeInfo> envelopes;
 	std::vector<AudioComponent*> inputs;
+	std::vector<AudioComponent*> trigger;
 
 	Components getInputs() override
 	{
-		return combineVectorsToForwardList(inputs);
+		return combineVectorsToForwardList(inputs, trigger);
 	}
 
 	void clearInputs() override
 	{
-		clearVectors(inputs);
+		clearVectors(inputs, trigger);
 	}
 
 	void addInput(const std::string& inputName, AudioComponent* input) override
 	{
-		inputs.push_back(input);
+		if (inputName == "> input") inputs.push_back(input);
+		else if (inputName == "> trigger") trigger.push_back(input);
+		else assert(0 && "[ADSR node] unknown input");
 	}
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
@@ -29,102 +41,82 @@ struct ADSR : public AudioComponent {
 		if (!inputs.size())
 			return 0.0;
 
-		// When key is no longer on, set envelope notOff
-		for (sEnvelopeADSR& envelope : envelopes)
+		double triggerValue = getInputsValue(trigger, keyPressed, currentKey);
+		double inputValue = getInputsValue(inputs, keyPressed, currentKey);
+
+		if (currentKey == 0)
 		{
-			if (!envelope.noteOn) // Note is already off
-				continue;
-
-			bool notePressed = false;
-			for (auto it = keyPressed.begin(); it != keyPressed.end(); it++)
-			{
-				if (it->keyIndex == envelope.keyIndex)
-					notePressed = true;
-			}
-
-			if (!notePressed)
-				envelope.NoteOff(time);
+			for (auto& e : envelopes)
+				e.playedThisFrame = false;
 		}
 
-		// Erase finished envelopes
-		for (auto it = envelopes.begin(); it != envelopes.end(); it++)
-		{
-			if (it->phase == Phase::Inactive)
-			{
-				it = envelopes.erase(it);
-				if (it == envelopes.end())
-					break;
-			}
-		}
+		unsigned int envelopeIndex = keyPressed.size() ? keyPressed[currentKey].keyIndex : triggerValue;
 
-		// Create new envelopes on key pressed
-		for (MidiInfo& info : keyPressed)
+		// add new envelopes
+		if (envelopeIndex != 0.0  && triggerValue != 0.0)
 		{
-			bool keyIdInEnvelopes = false;
-			for (sEnvelopeADSR& envelope : envelopes)
+			bool envelopeAlreadyExists = false;
+			for (EnvelopeInfo& envelopeInfo : envelopes)
 			{
-				if (info.keyIndex == envelope.keyIndex)
+				if (envelopeInfo.id == envelopeIndex)
 				{
-					keyIdInEnvelopes = true;
-
-					if (info.risingEdge)
-					{
-						envelope.NoteOn(time);
-					}
+					envelopeAlreadyExists = true;
+					break;
 				}
 			}
-			if (!keyIdInEnvelopes) // Add new envelope
+			if (!envelopeAlreadyExists)
 			{
-				sEnvelopeADSR envelope;
-				envelope.keyIndex = info.keyIndex;
-				envelopes.push_back(envelope); // [TODO] move getOn code in constructor
-				envelopes.back().NoteOn(time);
+				EnvelopeInfo envelopeInfo;
+				envelopeInfo.id = envelopeIndex;
+				envelopeInfo.info = {};
+				if (keyPressed.size())
+					envelopeInfo.info = keyPressed[currentKey];
+
+				envelopes.push_back(envelopeInfo);
 			}
 		}
 
 		double value = 0.0;
 
-		// Play note in release because they do not appear in keyPressed
-		if (currentKey == 0)
+		// update envelopes
+		for (EnvelopeInfo& envelopeInfo : envelopes)
 		{
-			for (sEnvelopeADSR& envelope : envelopes)
+			if (envelopeInfo.id == envelopeIndex && triggerValue != 0.0)
 			{
-				// Make sure note is not played if its in keyPressed
-				// This may happen if the note is pressed right after it is relesed
-				bool isInKeyPressed = false;
-				for (MidiInfo& info : keyPressed)
-					if (info.keyIndex == envelope.keyIndex)
-						isInKeyPressed = true;
+				value += inputValue * envelopeInfo.envelope.GetAmplitude(time, true);
+				envelopeInfo.playedThisFrame = true;
+				break;
+			}
+		}
 
-				if (!envelope.noteOn && !isInKeyPressed)
+		// Play envelope in release
+		if (currentKey == keyPressed.size() - 1 || keyPressed.empty())
+		{
+			for (EnvelopeInfo& envelopeInfo : envelopes)
+			{
+				if (!envelopeInfo.playedThisFrame)
 				{
-					//std::cout << "playing release note" << std::endl;
-					std::vector<MidiInfo> tempKeyPressed;
-					MidiInfo info = {
-						.keyIndex = (int)envelope.keyIndex,
-						.velocity = 0, // TO DEFINE (OR TO STORE BEFORE NOTE GETS OFF)
-						.risingEdge = false,
-					};
-					tempKeyPressed.push_back(info);
-					for (AudioComponent* input : inputs)
-						value += input->process(tempKeyPressed, 0) * envelope.GetAmplitude(time);
+					// As the note must be extended, it is no longer in the keyPressed vector.
+					// This runs the pipeline from this ADSR node using a new keyPressed vector containing
+					// only the release note as if it were played by the user's midi keyboard.
+					std::vector<MidiInfo> newKeyPressed;
+					if (envelopeInfo.info.keyIndex != 0)
+						newKeyPressed.push_back(envelopeInfo.info);
+					inputValue = getInputsValue(inputs, newKeyPressed, 0);
+					value += envelopeInfo.envelope.GetAmplitude(time, false) * inputValue;
 				}
 			}
 		}
 
-		if (keyPressed.size())
+		// remove finished envelopes
+		for (auto it = envelopes.begin(); it != envelopes.end(); it++)
 		{
-			for (AudioComponent* input : inputs)
+			//if (it->phase == Phase::Inactive)
+			if (it->envelope.phase == Phase::Inactive)
 			{
-				// Find envelope corresponding to keyPressed[currentKey]
-				for (sEnvelopeADSR& envelope : envelopes)
-				{
-					if (keyPressed[currentKey].keyIndex == envelope.keyIndex)
-					{
-						value += input->process(keyPressed, currentKey) * envelope.GetAmplitude(time);
-						break;
-					}
-				}
+				it = envelopes.erase(it);
+				if (it == envelopes.end())
+					break;
 			}
 		}
 

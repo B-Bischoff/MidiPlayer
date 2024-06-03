@@ -334,6 +334,7 @@ struct ADSR_Node : public Node {
 
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 		inputs.push_back(createPin(idManager, "> input", PinKind::Input));
+		inputs.push_back(createPin(idManager, "> trigger", PinKind::Input));
 	}
 };
 
