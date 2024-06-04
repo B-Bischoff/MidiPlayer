@@ -7,6 +7,11 @@ ImPlotUI::ImPlotUI(AudioData& audio)
 	_timeArray = new float[audio.getBufferSize()];
 	for (int i = 0; i < audio.getBufferSize(); i++)
 		_timeArray[i] = 1.0 / (double)audio.sampleRate * i;
+
+	// Invert the mouse buttons for plot navigation
+	ImPlotInputMap& map = ImPlot::GetInputMap();
+	map.Pan = ImGuiMouseButton_Right;
+	map.Select = ImGuiMouseButton_Middle;
 }
 
 void ImPlotUI::update(AudioData& audio)
