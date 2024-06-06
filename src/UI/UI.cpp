@@ -34,17 +34,8 @@ UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 		}
 	}
 }
-// Define control points for ADSR
-ImVec2 controlPoints[8] = {
-	{0.0f, 0.0f}, // static 0
-	{0.1f, 0.4f}, // ctrl 0
-	{0.2f, 1.0f}, // static 1
-	{0.3f, 0.9f}, // ctrl 1
-	{0.5f, 0.8f}, // static 2
-	{0.8f, 0.8f}, // static 3
-	{0.9f, 0.6f}, // ctrl 2
-	{1.0f, 0.0f}, // static 4
-};
+
+Vec2* controlPoints = nullptr;
 
 void HandleControlPoints()
 {
@@ -88,9 +79,9 @@ void HandleControlPoints()
 	}
 }
 
-ImVec2 lerp(const ImVec2& p0, const ImVec2& p1, double t)
+Vec2 lerp(const Vec2& p0, const Vec2& p1, double t)
 {
-	ImVec2 v;
+	Vec2 v;
 	v.x = (1.0 - t) * p0.x + t * p1.x;
 	v.y = (1.0 - t) * p0.y + t * p1.y;
 	return v;
@@ -101,10 +92,10 @@ double inverseLerp(double start, double end, double value)
 	return (value - start) / (end - start);
 }
 
-ImVec2 bezierQuadratic(const ImVec2& p0, const ImVec2& p1, const ImVec2& p2, double t)
+Vec2 bezierQuadratic(const Vec2& p0, const Vec2& p1, const Vec2& p2, double t)
 {
-	ImVec2 p0p1 = lerp(p0, p1, t);
-	ImVec2 p1p2 = lerp(p1, p2, t);
+	Vec2 p0p1 = lerp(p0, p1, t);
+	Vec2 p1p2 = lerp(p1, p2, t);
 	return lerp(p0p1, p1p2, t);
 }
 
@@ -119,7 +110,7 @@ void PlotBezierCurve()
 	for (int i = 0; i < numPoints; ++i)
 	{
 		double t = (double)(i) / (double)(numPoints - 1) * xMax; // numPoints - 1 makes t = 1.0 on last iteration.
-		ImVec2 p;
+		Vec2 p;
 
 		if (t <= controlPoints[2].x) // Attack
 			p = bezierQuadratic(controlPoints[0], controlPoints[1], controlPoints[2], \
@@ -145,7 +136,13 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments)
 {
 	initUpdate();
 
-	static bool showADSREditor = true;
+	static bool showADSREditor = false;
+	if (_messages.front().id == UI_SHOW_ADSR_EDITOR)
+	{
+		controlPoints = (Vec2*)_messages.front().data;
+		_messages.pop();
+		showADSREditor = true;
+	}
 	if (showADSREditor)
 	{
 		if (ImGui::Begin("ADSR Envelope Editor", &showADSREditor))
@@ -171,7 +168,7 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments)
 
 	ImGui::Begin("Node Editor");
 	if (_selectedInstrument)
-		_nodeEditor.update(_selectedInstrument->master);
+		_nodeEditor.update(_selectedInstrument->master, _messages);
 	ImGui::End();
 
 	ImGui::Begin("Loaded Instruments");

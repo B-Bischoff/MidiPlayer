@@ -5,6 +5,8 @@
 #include <imgui.h>
 #include "UI/IDManager.hpp"
 #include "inc.hpp"
+#include "UI/Message.hpp"
+#include "MidiMath.hpp"
 
 #include "cereal/types/polymorphic.hpp"
 
@@ -73,7 +75,7 @@ struct Node
 
 	virtual ~Node() {}
 
-	virtual void render()
+	virtual void render(std::queue<Message>& messages)
 	{
 		startRender();
 		renderNameAndPins();
@@ -228,7 +230,7 @@ struct NumberNode : public Node
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 
-	void render()
+	void render(std::queue<Message>& messages) override
 	{
 		Node::startRender();
 		Node::renderNameAndPins();
@@ -283,7 +285,7 @@ struct OscNode : public Node
 		);
 	}
 
-	void render()
+	void render(std::queue<Message>& messages) override
 	{
 		Node::startRender();
 		Node::renderNameAndPins();
@@ -326,15 +328,37 @@ struct OscNode : public Node
 };
 
 struct ADSR_Node : public Node {
+	Vec2 controlPoints[8];
+
 	ADSR_Node(IDManager* idManager = nullptr)
 	{
 		id = getId(idManager);
 		name = "ADSR";
 		type = ADSRUI;
 
+		controlPoints[0] = {0.0f, 0.0f}; // static 0
+		controlPoints[1] = {0.1f, 0.4f}; // ctrl 0
+		controlPoints[2] = {0.2f, 1.0f}; // static 1
+		controlPoints[3] = {0.3f, 0.9f}; // ctrl 1
+		controlPoints[4] = {0.5f, 0.8f}; // static 2
+		controlPoints[5] = {0.8f, 0.8f}; // static 3
+		controlPoints[6] = {0.9f, 0.6f}; // ctrl 2
+		controlPoints[7] = {1.0f, 0.0f}; // static 4
+
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 		inputs.push_back(createPin(idManager, "> input", PinKind::Input));
 		inputs.push_back(createPin(idManager, "> trigger", PinKind::Input));
+	}
+	void render(std::queue<Message>& messages) override
+	{
+		Node::startRender();
+		Node::renderNameAndPins();
+
+		ImGui::PushID(appendId("Edit ADSR").c_str());
+		if (ImGui::Button("Edit ADSR"))
+			messages.push(Message(UI_SHOW_ADSR_EDITOR, controlPoints));
+		ImGui::PopID();
+		Node::endRender();
 	}
 };
 

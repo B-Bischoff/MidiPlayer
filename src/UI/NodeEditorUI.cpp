@@ -12,7 +12,7 @@ NodeEditorUI::NodeEditorUI()
 	_nodeManager.addNode<MasterNode>(_idManager);
 }
 
-void NodeEditorUI::update(Master& master)
+void NodeEditorUI::update(Master& master, std::queue<Message>& messages)
 {
 	static char instrumentFilename[128] = "";
 	ImGui::SameLine();
@@ -21,7 +21,7 @@ void NodeEditorUI::update(Master& master)
 	ed::SetCurrentEditor(_context);
 	ed::Begin("Node editor", ImVec2(0.0, 0.0f));
 
-	render();
+	render(messages);
 
 	handleCreation(master);
 	handleDeletion(master);
@@ -42,9 +42,9 @@ void NodeEditorUI::update(Master& master)
 	}
 }
 
-void NodeEditorUI::render()
+void NodeEditorUI::render(std::queue<Message>& messages)
 {
-	_nodeManager.render();
+	_nodeManager.render(messages);
 	_linkManager.render();
 }
 

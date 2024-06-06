@@ -119,12 +119,12 @@ void NodeManager::setNodePosition(std::shared_ptr<Node>& node, const ImVec2& pos
 	ed::SetNodePosition(node->id, pos);
 }
 
-void NodeManager::render()
+void NodeManager::render(std::queue<Message>& messages)
 {
 	for (std::shared_ptr<Node>& node : _nodes)
 	{
 		if (!node->hidden)
-			node->render();
+			node->render(messages);
 	}
 }
 

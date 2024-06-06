@@ -16,6 +16,7 @@
 #include "LinkManager.hpp"
 #include "UIToBackendAdapter.hpp"
 #include "inc.hpp"
+#include "Message.hpp"
 #include "audio_backend.hpp"
 #include "AudioBackend/Components/Components.hpp"
 #include <sstream>
@@ -69,7 +70,7 @@ private:
 public:
 	NodeEditorUI();
 
-	void update(Master& master);
+	void update(Master& master, std::queue<Message>& messages);
 
 	void serialize(const fs::path& path);
 	void serialize(std::stringstream& stream);
@@ -77,7 +78,7 @@ public:
 	void loadFile(Master& master, std::stringstream& stream);
 
 private:
-	void render();
+	void render(std::queue<Message>& messages);
 
 	void handleCreation(Master& master);
 	void handleLinkCreation(Master& master);

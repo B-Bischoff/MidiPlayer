@@ -12,6 +12,7 @@
 #include <map>
 
 #include "path.hpp"
+#include "Message.hpp"
 
 class UI {
 private:
@@ -21,6 +22,8 @@ private:
 	const ApplicationPath& _path;
 
 	std::map<std::string, fs::path> _instruments;
+
+	std::queue<Message> _messages;
 
 	// [TODO] key should not use instruments name as a single instrument can be loaded multiple times
 	std::map<std::string, std::stringstream> _loadedInstrumentCache;

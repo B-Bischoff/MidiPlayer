@@ -27,7 +27,7 @@ public:
 
 	void setNodePosition(std::shared_ptr<Node>& node, const ImVec2& pos);
 
-	void render();
+	void render(std::queue<Message>& messages);
 
 	template <class Archive>
 	void serialize(Archive& archive);
