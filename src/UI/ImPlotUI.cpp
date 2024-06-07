@@ -41,12 +41,14 @@ void ImPlotUI::update(AudioData& audio)
 
 void ImPlotUI::handleControlPoints()
 {
-	// 0 : static | 1 : ctrl
-	bool lookup[8] = { 0, 1, 0, 1, 0, 0, 1, 0};
-	ImVec4 pointsColor[2] = {
+	// 0 : static | 1 : ctrl | 2 : hovered
+	unsigned short lookup[8] = { 0, 1, 0, 1, 0, 0, 1, 0};
+	const ImVec4 pointsColor[3] = {
 		{1, 0, 0, 1},
 		{0, 1, 0, 1},
+		{1, 1, 1, 1},
 	};
+
 	for (int i = 1; i < 8; ++i)
 	{
 		ImVec2 pos = ImPlot::PlotToPixels(_controlPoints[i].x, _controlPoints[i].y);
@@ -69,15 +71,15 @@ void ImPlotUI::handleControlPoints()
 			else if (i == 5) _controlPoints[4].y = _controlPoints[5].y;
 		}
 
-		if (ImGui::IsItemHovered())
-			ImGui::SetTooltip("(%0.2f, %0.2f)", _controlPoints[i].x, _controlPoints[i].y);
+		if (ImGui::IsItemActive() || ImGui::IsItemHovered())
+		{
+			lookup[i] = 2;
+			ImGui::SetTooltip("(%0.2fs, %0.2f)", _controlPoints[i].x, _controlPoints[i].y);
+		}
 
-		ImPlot::PushPlotClipRect();
-		ImPlotContext* _context = ImPlot::GetCurrentContext();
 		ImPlot::PushStyleColor(ImPlotCol_Line, pointsColor[lookup[i]]);
 		ImPlot::PlotScatter("##ControlPoints", &_controlPoints[i].x, &_controlPoints[i].y, 1);
 		ImPlot::PopStyleColor();
-		ImPlot::PopPlotClipRect();
 	}
 }
 
