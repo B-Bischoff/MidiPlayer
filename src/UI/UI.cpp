@@ -35,103 +35,6 @@ UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 	}
 }
 
-Vec2* controlPoints = nullptr;
-
-void HandleControlPoints()
-{
-	// 0 : static | 1 : ctrl
-	bool lookup[8] = { 0, 1, 0, 1, 0,0 , 1, 0};
-	ImVec4 pointsColor[2] = {
-		{1, 0, 0, 1},
-		{0, 1, 0, 1},
-	};
-	for (int i = 1; i < 8; ++i)
-	{
-		ImVec2 pos = ImPlot::PlotToPixels(controlPoints[i].x, controlPoints[i].y);
-
-		ImGui::SetCursorScreenPos({pos.x - 5, pos.y - 5});
-		ImGui::InvisibleButton(("point" + std::to_string(i)).c_str(), ImVec2(10, 10));
-
-		if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
-		{
-			ImPlotPoint mousePos = ImPlot::PixelsToPlot(ImGui::GetIO().MousePos);
-			double xMax = (i == 7) ? 10 : controlPoints[i + 1].x;
-			double xMin = (i == 0) ? 0 : controlPoints[i - 1].x;
-			controlPoints[i].x = std::clamp(mousePos.x, xMin, xMax);
-			controlPoints[i].y = std::clamp(mousePos.y, 0.0, 2.0);
-
-			// Sustain control points must have the same Y value
-			if (i == 4)
-				controlPoints[5].y = controlPoints[4].y;
-			else if (i == 5)
-				controlPoints[4].y = controlPoints[5].y;
-		}
-
-		if (ImGui::IsItemHovered())
-			ImGui::SetTooltip("(%0.2f, %0.2f)", controlPoints[i].x, controlPoints[i].y);
-
-		ImPlot::PushPlotClipRect();
-		ImPlotContext* context = ImPlot::GetCurrentContext();
-		ImPlot::PushStyleColor(ImPlotCol_Line, pointsColor[lookup[i]]);
-		ImPlot::PlotScatter("##ControlPoints", &controlPoints[i].x, &controlPoints[i].y, 1);
-		ImPlot::PopStyleColor();
-		ImPlot::PopPlotClipRect();
-	}
-}
-
-Vec2 lerp(const Vec2& p0, const Vec2& p1, double t)
-{
-	Vec2 v;
-	v.x = (1.0 - t) * p0.x + t * p1.x;
-	v.y = (1.0 - t) * p0.y + t * p1.y;
-	return v;
-}
-
-double inverseLerp(double start, double end, double value)
-{
-	return (value - start) / (end - start);
-}
-
-Vec2 bezierQuadratic(const Vec2& p0, const Vec2& p1, const Vec2& p2, double t)
-{
-	Vec2 p0p1 = lerp(p0, p1, t);
-	Vec2 p1p2 = lerp(p1, p2, t);
-	return lerp(p0p1, p1p2, t);
-}
-
-void PlotBezierCurve()
-{
-	const int numPoints = 200;
-	float X[numPoints];
-	float Y[numPoints];
-
-	double xMax = controlPoints[7].x;
-
-	for (int i = 0; i < numPoints; ++i)
-	{
-		double t = (double)(i) / (double)(numPoints - 1) * xMax; // numPoints - 1 makes t = 1.0 on last iteration.
-		Vec2 p;
-
-		if (t <= controlPoints[2].x) // Attack
-			p = bezierQuadratic(controlPoints[0], controlPoints[1], controlPoints[2], \
-					inverseLerp(controlPoints[0].x, controlPoints[2].x, t));
-		else if (t <= controlPoints[4].x) // Decay
-			p = bezierQuadratic(controlPoints[2], controlPoints[3], controlPoints[4], \
-					inverseLerp(controlPoints[2].x, controlPoints[4].x, t));
-		else if (t <= controlPoints[5].x) // Sustain
-			p = lerp(controlPoints[4], controlPoints[5], \
-					inverseLerp(controlPoints[4].x, controlPoints[5].x, t));
-		else // Release
-			p = bezierQuadratic(controlPoints[5], controlPoints[6], controlPoints[7], \
-					inverseLerp(controlPoints[5].x, controlPoints[7].x, t));
-
-		X[i] = p.x;
-		Y[i] = p.y;
-	}
-
-	ImPlot::PlotLine("ADSR", X, Y, numPoints);
-}
-
 void UI::update(AudioData& audio, std::vector<Instrument>& instruments)
 {
 	initUpdate();
@@ -139,32 +42,11 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments)
 	static bool showADSREditor = false;
 	if (_messages.front().id == UI_SHOW_ADSR_EDITOR)
 	{
-		controlPoints = (Vec2*)_messages.front().data;
+		_imPlot.setPrintEnvelopeEditor(true, (Vec2*)_messages.front().data);
 		_messages.pop();
-		showADSREditor = true;
-	}
-	if (showADSREditor)
-	{
-		if (ImGui::Begin("ADSR Envelope Editor", &showADSREditor))
-		{
-			if (ImPlot::BeginPlot("##ADSRPlot", ImVec2(-1, 0)))
-			{
-				ImPlot::SetupAxes("Time", "Amplitude");
-				ImPlot::SetupAxisLimits(ImAxis_X1, 0.0, 1.0);
-				ImPlot::SetupAxisLimits(ImAxis_Y1, 0.0, 1.0);
-
-				PlotBezierCurve();
-				HandleControlPoints();
-
-				ImPlot::EndPlot();
-			}
-		}
-		ImGui::End();
 	}
 
-	ImGui::Begin("Audio Buffer");
 	_imPlot.update(audio);
-	ImGui::End();
 
 	ImGui::Begin("Node Editor");
 	if (_selectedInstrument)
@@ -259,8 +141,6 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments)
 	}
 
 	ImGui::End();
-
-	render();
 }
 
 void UI::initUpdate()

@@ -6,7 +6,7 @@ typedef unsigned int MessageId;
 
 #define UI_NULL 0x00
 #define UI_SHOW_ADSR_EDITOR 0x01
-#define UI_UPDATE_ADSR 0x01
+#define UI_UPDATE_ADSR 0x02
 
 struct Message {
 	MessageId id;
