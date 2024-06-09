@@ -349,6 +349,7 @@ struct ADSR_Node : public Node {
 		inputs.push_back(createPin(idManager, "> input", PinKind::Input));
 		inputs.push_back(createPin(idManager, "> trigger", PinKind::Input));
 	}
+
 	void render(std::queue<Message>& messages) override
 	{
 		Node::startRender();
@@ -356,7 +357,7 @@ struct ADSR_Node : public Node {
 
 		ImGui::PushID(appendId("Edit ADSR").c_str());
 		if (ImGui::Button("Edit ADSR"))
-			messages.push(Message(UI_SHOW_ADSR_EDITOR, controlPoints));
+			messages.push(Message(UI_SHOW_ADSR_EDITOR, new MessageNodeIdAndControlPoints{controlPoints, id}));
 		ImGui::PopID();
 		Node::endRender();
 	}

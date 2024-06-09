@@ -133,14 +133,25 @@ void ImPlotUI::printEnvelopeEditorPoints()
 	ImPlot::PlotLine("ADSR", X, Y, numPoints);
 }
 
-void ImPlotUI::setPrintEnvelopeEditor(bool value, Vec2* controlPoints)
+void ImPlotUI::setPrintEnvelopeEditor(bool value, Vec2* controlPoints, unsigned int nodeId)
 {
 	if (value)
 	{
 		assert(controlPoints && "[ImPlotUI] pass controlPoints when printing envelope editor");
+		assert(nodeId != 0 && "[ImPlotUI] invalid nodeId");
 		_controlPoints = controlPoints;
+		_nodeId = nodeId;
 	}
 	else
-		_controlPoints = nullptr; // Reset control points ptr
+	{
+		// Reset control points ptr & nodeId
+		_controlPoints = nullptr;
+		_nodeId = 0;
+	}
 	_printEnvelopeEditor = value;
+}
+
+unsigned int ImPlotUI::getNodeId() const
+{
+	return _nodeId;
 }

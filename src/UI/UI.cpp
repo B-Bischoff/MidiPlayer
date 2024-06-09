@@ -39,10 +39,30 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments)
 {
 	initUpdate();
 
-	static bool showADSREditor = false;
-	if (_messages.front().id == UI_SHOW_ADSR_EDITOR)
+	// Process message/events queue
+	while (!_messages.empty())
 	{
-		_imPlot.setPrintEnvelopeEditor(true, (Vec2*)_messages.front().data);
+		Message& message = _messages.front();
+		switch(message.id)
+		{
+			case UI_SHOW_ADSR_EDITOR : {
+				MessageNodeIdAndControlPoints* payload = (MessageNodeIdAndControlPoints*)message.data;
+				_imPlot.setPrintEnvelopeEditor(true, payload->controlPoints, payload->nodeId);
+				delete payload;
+				break;
+			}
+			case UI_NODE_DELETED : {
+				unsigned int* nodeId = (unsigned int*)message.data;
+				if (_imPlot.getNodeId() == *nodeId)
+					_imPlot.setPrintEnvelopeEditor(false);
+				delete nodeId;
+				break;
+			}
+			default: {
+				assert(0 && "[UI] invalid message.");
+			}
+
+		}
 		_messages.pop();
 	}
 

@@ -24,7 +24,7 @@ void NodeEditorUI::update(Master& master, std::queue<Message>& messages)
 	render(messages);
 
 	handleCreation(master);
-	handleDeletion(master);
+	handleDeletion(master, messages);
 
 	ed::End();
 
@@ -190,17 +190,17 @@ void NodeEditorUI::handleLinkCreation(Master& master)
 	ed::EndCreate();
 }
 
-void NodeEditorUI::handleDeletion(Master& master)
+void NodeEditorUI::handleDeletion(Master& master, std::queue<Message>& messages)
 {
 	if (ed::BeginDelete())
 	{
 		handleLinkDeletion(master);
-		handleNodeDeletion();
+		handleNodeDeletion(messages);
 	}
 	ed::EndDelete();
 }
 
-void NodeEditorUI::handleNodeDeletion()
+void NodeEditorUI::handleNodeDeletion(std::queue<Message>& messages)
 {
 	ed::NodeId nodeId = 0;
 	while (ed::QueryDeletedNode(&nodeId))
@@ -223,6 +223,8 @@ void NodeEditorUI::handleNodeDeletion()
 
 				_linkManager.removeLinksFromNodeId(_idManager, _nodeManager, nodeId);
 				_nodeManager.removeNode(_idManager, node);
+
+				messages.push(Message{UI_NODE_DELETED, new unsigned int(nodeId.Get())});
 			}
 			_UIModified = true;
 		}

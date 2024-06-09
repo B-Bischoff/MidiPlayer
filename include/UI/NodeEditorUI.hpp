@@ -84,9 +84,9 @@ private:
 	void handleLinkCreation(Master& master);
 	void handleNodeCreation();
 
-	void handleDeletion(Master& master);
+	void handleDeletion(Master& master, std::queue<Message>& messages);
 	void handleLinkDeletion(Master& master);
-	void handleNodeDeletion();
+	void handleNodeDeletion(std::queue<Message>& master);
 
 	void removeNodeAndDependencies(ed::NodeId nodeId);
 	std::vector<std::shared_ptr<Node>>::iterator removeNode(std::vector<std::shared_ptr<Node>>& nodes, Node& nodeToDelete);
