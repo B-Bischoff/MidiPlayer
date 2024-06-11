@@ -337,13 +337,13 @@ struct ADSR_Node : public Node {
 		type = ADSRUI;
 
 		controlPoints[0] = {0.0f, 0.0f}; // static 0
-		controlPoints[1] = {0.1f, 0.4f}; // ctrl 0
-		controlPoints[2] = {0.2f, 1.0f}; // static 1
-		controlPoints[3] = {0.3f, 0.9f}; // ctrl 1
-		controlPoints[4] = {0.5f, 0.8f}; // static 2
-		controlPoints[5] = {0.8f, 0.8f}; // static 3
-		controlPoints[6] = {0.9f, 0.6f}; // ctrl 2
-		controlPoints[7] = {1.0f, 0.0f}; // static 4
+		controlPoints[1] = {1.0f, 0.0f}; // ctrl 0
+		controlPoints[2] = {1.0f, 1.0f}; // static 1
+		controlPoints[3] = {2.0f, 1.0f}; // ctrl 1
+		controlPoints[4] = {2.0f, 0.8f}; // static 2
+		controlPoints[5] = {3.0f, 0.8f}; // static 3
+		controlPoints[6] = {3.0f, 0.0f}; // ctrl 2
+		controlPoints[7] = {4.0f, 0.0f}; // static 4
 
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 		inputs.push_back(createPin(idManager, "> input", PinKind::Input));

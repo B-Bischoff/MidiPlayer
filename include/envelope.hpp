@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <MidiMath.hpp>
 
 enum Phase { Attack, Decay, Sustain, Release, Inactive, Retrigger };
 
@@ -23,6 +24,17 @@ struct sEnvelopeADSR
 
 	Phase phase;
 	double amplitude;
+
+	Vec2 controlPoints[8] = {
+		{0.0f, 0.0f}, // static 0
+		{1.0f, 0.0f}, // ctrl 0
+		{1.0f, 1.0f}, // static 1 | attack
+		{2.0f, 1.0f}, // ctrl 1
+		{2.0f, 0.8f}, // static 2  | decay
+		{3.0f, 0.8f}, // static 3 | sustain
+		{3.0f, 0.0f}, // ctrl 2
+		{4.0f, 0.0f}  // static 4 | release
+	};
 
 	sEnvelopeADSR()
 	{
@@ -70,24 +82,32 @@ struct sEnvelopeADSR
 
 		switch (phase)
 		{
-			case Phase::Attack :
-				amplitude = (lifeTime / attackTime) * attackAmplitude;
+			case Phase::Attack : {
+				Vec2 p = bezierQuadratic(controlPoints[0], controlPoints[1], controlPoints[2], \
+					inverseLerp(controlPoints[0].x, controlPoints[2].x, lifeTime));
+				amplitude = p.y;
 				break;
-
-			case Phase::Decay :
+			 }
+			case Phase::Decay : {
 				retrigger = false;
-				lifeTime -= attackTime;
-				amplitude = (lifeTime / decayTime) * (sustainAmplitude - attackAmplitude) + attackAmplitude;
+				Vec2 p = bezierQuadratic(controlPoints[2], controlPoints[3], controlPoints[4], \
+					inverseLerp(controlPoints[2].x, controlPoints[4].x, lifeTime));
+				amplitude = p.y;
 				break;
+			}
 
-			case Phase::Sustain :
-				amplitude = sustainAmplitude;
+			case Phase::Sustain : {
+				amplitude = controlPoints[4].y;
 				break;
+			}
 
-			case Phase::Release :
-				lifeTime = time - triggerOffTime;
-				amplitude = (1.0 - (lifeTime / releaseTime)) * amplitudeAtOffTrigger;
+			case Phase::Release : {
+				Vec2 start = {controlPoints[5].x, (float)amplitudeAtOffTrigger};
+				Vec2 p = bezierQuadratic(start, controlPoints[6], controlPoints[7], \
+					inverseLerp(0, controlPoints[7].x - controlPoints[5].x, time - triggerOffTime));
+				amplitude = p.y;
 				break;
+			}
 
 			case Phase::Inactive :
 				amplitude = 0.0;
@@ -97,7 +117,7 @@ struct sEnvelopeADSR
 				break;
 
 			case Phase::Retrigger :
-				amplitude = (lifeTime / attackTime) * (attackAmplitude - amplitudeBeforeRetrigger) + amplitudeBeforeRetrigger;
+				amplitude = (lifeTime / controlPoints[2].x) * (controlPoints[2].y - amplitudeBeforeRetrigger) + amplitudeBeforeRetrigger;
 				break;
 		}
 
@@ -115,7 +135,7 @@ private:
 	{
 		if (!noteOn)
 		{
-			if (time - triggerOffTime <= releaseTime)
+			if (time - triggerOffTime <= controlPoints[7].x - controlPoints[5].x)
 				return Phase::Release;
 			else
 				return Phase::Inactive;
@@ -123,12 +143,14 @@ private:
 
 		const double lifeTime = time - triggerOnTime;
 
-		if (triggerOffTime != 0.0 && triggerOnTime != 0.0f && triggerOnTime - triggerOffTime < releaseTime && lifeTime <= attackTime)
+		if (triggerOffTime != 0.0 && triggerOnTime != 0.0f \
+				&& triggerOnTime - triggerOffTime < (controlPoints[7].x - controlPoints[5].x) \
+				&& lifeTime <= controlPoints[2].x)
 			return Phase::Retrigger;
 
-		if (lifeTime <= attackTime)
+		if (lifeTime <= controlPoints[2].x)
 			return Phase::Attack;
-		else if (lifeTime <= attackTime + decayTime)
+		else if (lifeTime <= controlPoints[4].x)
 			return Phase::Decay;
 		else
 			return Phase::Sustain;
