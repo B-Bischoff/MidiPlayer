@@ -69,6 +69,7 @@ public:
 				EnvelopeInfo envelopeInfo;
 				envelopeInfo.id = envelopeIndex;
 				envelopeInfo.info = {};
+				envelopeInfo.envelope = reference;
 				if (keyPressed.size())
 					envelopeInfo.info = keyPressed[currentKey];
 

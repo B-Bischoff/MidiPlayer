@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstring>
 #include "AudioBackend/Components/Components.hpp"
 #include "UI/LinkManager.hpp"
 #include "UI/NodeManager.hpp"

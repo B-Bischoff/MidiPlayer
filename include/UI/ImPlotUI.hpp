@@ -3,6 +3,7 @@
 #include <implot.h>
 #include "inc.hpp"
 
+#include "Message.hpp"
 #include "MidiMath.hpp"
 
 class ImPlotUI {
@@ -16,12 +17,12 @@ private:
 
 public:
 	ImPlotUI(AudioData& audio);
-	void update(AudioData& audio);
+	void update(AudioData& audio, std::queue<Message>& messages);
 	void setPrintEnvelopeEditor(bool value, Vec2* controlPoints = nullptr, unsigned int nodeId = 0);
 	unsigned int getNodeId() const;
 
 private:
-	void printEnvelopeEditor();
+	void printEnvelopeEditor(std::queue<Message>& messages);
 	void printEnvelopeEditorPoints();
-	void handleControlPoints();
+	void handleControlPoints(std::queue<Message>& messages);
 };

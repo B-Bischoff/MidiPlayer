@@ -58,6 +58,10 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments)
 				delete nodeId;
 				break;
 			}
+			case UI_ADSR_MODIFIED : {
+				_nodeEditor.updateBackend(_selectedInstrument->master);
+				break;
+			}
 			default: {
 				assert(0 && "[UI] invalid message.");
 			}
@@ -66,7 +70,7 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments)
 		_messages.pop();
 	}
 
-	_imPlot.update(audio);
+	_imPlot.update(audio, _messages);
 
 	ImGui::Begin("Node Editor");
 	if (_selectedInstrument)

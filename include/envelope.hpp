@@ -9,11 +9,6 @@ struct sEnvelopeADSR
 {
 	unsigned int keyIndex;
 
-	double attackTime;
-	double decayTime;
-	double sustainAmplitude;
-	double releaseTime;
-	double attackAmplitude;
 	double triggerOffTime;
 	double triggerOnTime;
 	bool noteOn;
@@ -38,11 +33,6 @@ struct sEnvelopeADSR
 
 	sEnvelopeADSR()
 	{
-		attackTime = .5;
-		decayTime = .5,
-		attackAmplitude = 1.0;
-		sustainAmplitude = 0.8;
-		releaseTime = 0.5;
 		noteOn = false;
 		triggerOffTime = 0.0;
 		triggerOnTime = 0.0;
@@ -87,7 +77,7 @@ struct sEnvelopeADSR
 					inverseLerp(controlPoints[0].x, controlPoints[2].x, lifeTime));
 				amplitude = p.y;
 				break;
-			 }
+			}
 			case Phase::Decay : {
 				retrigger = false;
 				Vec2 p = bezierQuadratic(controlPoints[2], controlPoints[3], controlPoints[4], \

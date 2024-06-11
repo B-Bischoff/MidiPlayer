@@ -14,7 +14,7 @@ ImPlotUI::ImPlotUI(AudioData& audio)
 	map.Select = ImGuiMouseButton_Middle;
 }
 
-void ImPlotUI::update(AudioData& audio)
+void ImPlotUI::update(AudioData& audio, std::queue<Message>& messages)
 {
 	ImPlotFlags f;
 	if (ImGui::Begin("Audio Buffer"))
@@ -36,10 +36,10 @@ void ImPlotUI::update(AudioData& audio)
 	ImGui::End();
 
 	if (_printEnvelopeEditor)
-		printEnvelopeEditor();
+		printEnvelopeEditor(messages);
 }
 
-void ImPlotUI::handleControlPoints()
+void ImPlotUI::handleControlPoints(std::queue<Message>& messages)
 {
 	// 0 : static | 1 : ctrl | 2 : hovered
 	unsigned short lookup[8] = { 0, 1, 0, 1, 0, 0, 1, 0};
@@ -48,6 +48,8 @@ void ImPlotUI::handleControlPoints()
 		{0, 1, 0, 1},
 		{1, 1, 1, 1},
 	};
+
+	bool adsrChanged = false;
 
 	for (int i = 1; i < 8; ++i)
 	{
@@ -69,6 +71,8 @@ void ImPlotUI::handleControlPoints()
 			// Sustain _control points must have the same Y value
 			if (i == 4) _controlPoints[5].y = _controlPoints[4].y;
 			else if (i == 5) _controlPoints[4].y = _controlPoints[5].y;
+
+			adsrChanged = true;
 		}
 
 		if (ImGui::IsItemActive() || ImGui::IsItemHovered())
@@ -81,16 +85,19 @@ void ImPlotUI::handleControlPoints()
 		ImPlot::PlotScatter("##ControlPoints", &_controlPoints[i].x, &_controlPoints[i].y, 1);
 		ImPlot::PopStyleColor();
 	}
+
+	if (adsrChanged)
+		messages.push(Message(UI_ADSR_MODIFIED));
 }
 
-void ImPlotUI::printEnvelopeEditor()
+void ImPlotUI::printEnvelopeEditor(std::queue<Message>& messages)
 {
 	bool windowOpen = true;
 	if (ImGui::Begin("ADSR Envelope Editor", &windowOpen))
 	{
 		if (ImPlot::BeginPlot("##ADSRPlot", ImVec2(-1, 0)))
 		{
-			handleControlPoints();
+			handleControlPoints(messages);
 			printEnvelopeEditorPoints();
 			ImPlot::EndPlot();
 		}

@@ -77,6 +77,8 @@ public:
 	void loadFile(Master& master, const fs::path& path);
 	void loadFile(Master& master, std::stringstream& stream);
 
+	void updateBackend(Master& master);
+
 private:
 	void render(std::queue<Message>& messages);
 

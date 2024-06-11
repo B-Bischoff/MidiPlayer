@@ -1,5 +1,4 @@
 #include "UI/UIToBackendAdapter.hpp"
-#include <csetjmp>
 
 void UIToBackendAdapter::updateBackend(Master& master, NodeManager& nodeManager, LinkManager& linkManager)
 {
@@ -99,7 +98,14 @@ AudioComponent* UIToBackendAdapter::allocateAudioComponent(Node& node)
 			osc->type = oscUI->oscType;
 			return osc;
 		}
-		case ADSRUI: return new ADSR();
+		case ADSRUI: {
+			ADSR_Node* adsrNode = dynamic_cast<ADSR_Node*>(&node);
+			assert(adsrNode);
+			ADSR* adsr = new ADSR();
+			for (int i = 0; i < 8; i++)
+				adsr->reference.controlPoints[i] = adsrNode->controlPoints[i];
+			return adsr;
+		}
 		case KbFreqUI: return new KeyboardFrequency();
 		case MultUI: return new Multiplier();
 		case LowPassUI: return new LowPassFilter();

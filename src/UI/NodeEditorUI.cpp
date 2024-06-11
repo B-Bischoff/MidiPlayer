@@ -29,11 +29,7 @@ void NodeEditorUI::update(Master& master, std::queue<Message>& messages)
 	ed::End();
 
 	if (_UIModified || Node::propertyChanged)
-	{
-		_UIModified = false;
-		Node::propertyChanged = false;
-		UIToBackendAdapter::updateBackend(master, _nodeManager, _linkManager);
-	}
+		updateBackend(master);
 
 	if (_navigateToContent)
 	{
@@ -337,4 +333,11 @@ void NodeEditorUI::loadFile(Master& master, std::stringstream& stream)
 
 	_UIModified = true;
 	_navigateToContent = true;
+}
+
+void NodeEditorUI::updateBackend(Master& master)
+{
+	_UIModified = false;
+	Node::propertyChanged = false;
+	UIToBackendAdapter::updateBackend(master, _nodeManager, _linkManager);
 }
