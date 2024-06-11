@@ -20,6 +20,7 @@
 #include "audio_backend.hpp"
 #include "AudioBackend/Components/Components.hpp"
 #include <sstream>
+#include "MidiMath.hpp"
 
 #include "path.hpp"
 
@@ -49,6 +50,15 @@ void serialize(Archive& archive, LinkInfo& link)
 
 template<class Archive>
 void serialize(Archive& archive, ImVec2& v)
+{
+	archive(
+		cereal::make_nvp("x", v.x),
+		cereal::make_nvp("y", v.y)
+	);
+}
+
+template<class Archive>
+void serialize(Archive& archive, Vec2& v)
 {
 	archive(
 		cereal::make_nvp("x", v.x),

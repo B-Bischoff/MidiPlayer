@@ -190,35 +190,71 @@
         "ptr_wrapper": {
             "id": 2147483654,
             "data": {
-                "node_id": 3,
-                "node_name": "ADSR",
-                "node_type": 4,
-                "node_inputs": [
-                    {
-                        "pin_id": 5,
-                        "node_id": 3,
-                        "pin_name": "> input",
-                        "pin_kind": 1,
-                        "pin_mode": 0
+                "base_node": {
+                    "node_id": 3,
+                    "node_name": "ADSR",
+                    "node_type": 4,
+                    "node_inputs": [
+                        {
+                            "pin_id": 5,
+                            "node_id": 3,
+                            "pin_name": "> input",
+                            "pin_kind": 1,
+                            "pin_mode": 0
+                        },
+                        {
+                            "pin_id": 23,
+                            "node_id": 3,
+                            "pin_name": "> trigger",
+                            "pin_kind": 1,
+                            "pin_mode": 0
+                        }
+                    ],
+                    "node_outputs": [
+                        {
+                            "pin_id": 4,
+                            "node_id": 3,
+                            "pin_name": "output >",
+                            "pin_kind": 0,
+                            "pin_mode": 0
+                        }
+                    ],
+                    "node_hidden": false
+                },
+                "control_points": {
+                    "value0": {
+                        "x": 0.0,
+                        "y": 0.0
                     },
-                    {
-                        "pin_id": 23,
-                        "node_id": 3,
-                        "pin_name": "> trigger",
-                        "pin_kind": 1,
-                        "pin_mode": 0
+                    "value1": {
+                        "x": 1.0,
+                        "y": 0.0
+                    },
+                    "value2": {
+                        "x": 1.0,
+                        "y": 1.0
+                    },
+                    "value3": {
+                        "x": 2.0,
+                        "y": 1.0
+                    },
+                    "value4": {
+                        "x": 2.0,
+                        "y": 0.800000011920929
+                    },
+                    "value5": {
+                        "x": 3.0,
+                        "y": 0.800000011920929
+                    },
+                    "value6": {
+                        "x": 3.0,
+                        "y": 0.0
+                    },
+                    "value7": {
+                        "x": 4.0,
+                        "y": 0.0
                     }
-                ],
-                "node_outputs": [
-                    {
-                        "pin_id": 4,
-                        "node_id": 3,
-                        "pin_name": "output >",
-                        "pin_kind": 0,
-                        "pin_mode": 0
-                    }
-                ],
-                "node_hidden": false
+                }
             }
         }
     },

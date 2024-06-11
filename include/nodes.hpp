@@ -361,6 +361,15 @@ struct ADSR_Node : public Node {
 		ImGui::PopID();
 		Node::endRender();
 	}
+
+	template<class Archive>
+	void serialize(Archive& archive)
+	{
+		archive(
+			cereal::make_nvp("base_node", cereal::base_class<Node>(this)),
+			cereal::make_nvp("control_points", controlPoints)
+		);
+	}
 };
 
 struct KeyboardFrequencyNode : public Node {
@@ -426,7 +435,6 @@ CEREAL_REGISTER_TYPE(CombFilterNode)
 // Register child class if it does not have serialization method.
 // This indicate cereal to use Node serialization method.
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, MasterNode)
-CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, ADSR_Node)
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, KeyboardFrequencyNode)
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, MultNode)
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, LowPassFilterNode)
