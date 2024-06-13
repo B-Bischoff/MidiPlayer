@@ -17,23 +17,19 @@ ImPlotUI::ImPlotUI(AudioData& audio)
 void ImPlotUI::update(AudioData& audio, std::queue<Message>& messages)
 {
 	ImPlotFlags f;
-	if (ImGui::Begin("Audio Buffer"))
+	if (ImPlot::BeginPlot("Plot", ImVec2(ImGui::GetContentRegionAvail())))
 	{
-		if (ImPlot::BeginPlot("Plot", ImVec2(1600, 800)))
-		{
-			ImPlot::PlotLine("line", _timeArray, audio.buffer, audio.getBufferSize());
-			double writeCursorX = audio.writeCursor / (double)audio.sampleRate;
-			double readCursorX = audio.leftPhase / (double)audio.sampleRate;
-			double writeCursorXArray[2] = { writeCursorX, writeCursorX };
-			double readCursorXArray[2] = { readCursorX, readCursorX };
-			double cursorY[2] = { 0.0, 1.0 };
-			ImPlot::PlotLine("write cursor", writeCursorXArray, cursorY, 2);
-			ImPlot::PlotLine("read cursor", readCursorXArray, cursorY, 2);
+		ImPlot::PlotLine("line", _timeArray, audio.buffer, audio.getBufferSize());
+		double writeCursorX = audio.writeCursor / (double)audio.sampleRate;
+		double readCursorX = audio.leftPhase / (double)audio.sampleRate;
+		double writeCursorXArray[2] = { writeCursorX, writeCursorX };
+		double readCursorXArray[2] = { readCursorX, readCursorX };
+		double cursorY[2] = { 0.0, 1.0 };
+		ImPlot::PlotLine("write cursor", writeCursorXArray, cursorY, 2);
+		ImPlot::PlotLine("read cursor", readCursorXArray, cursorY, 2);
 
-			ImPlot::EndPlot();
-		}
+		ImPlot::EndPlot();
 	}
-	ImGui::End();
 
 	if (_printEnvelopeEditor)
 		printEnvelopeEditor(messages);

@@ -1,4 +1,5 @@
 #include "UI/UI.hpp"
+#include "imgui.h"
 
 UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 	: _imPlot(audio), _path(path), _selectedInstrument(nullptr)
@@ -70,11 +71,11 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments)
 		_messages.pop();
 	}
 
-	_imPlot.update(audio, _messages);
+	//_imPlot.update(audio, _messages);
 
 	ImGui::Begin("Node Editor");
-	if (_selectedInstrument)
-		_nodeEditor.update(_selectedInstrument->master, _messages);
+	//if (_selectedInstrument)
+	//	_nodeEditor.update(_selectedInstrument->master, _messages);
 	ImGui::End();
 
 	ImGui::Begin("Loaded Instruments");
@@ -164,6 +165,106 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments)
 			selectedStoredInstrument = it->first;
 	}
 
+	ImGui::End();
+
+	// ----------------------------------------------------------------
+
+	const unsigned int WIDTH = 1920;
+	const unsigned int HEIGHT = 1080;
+
+	const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(WIDTH, HEIGHT), ImGuiCond_FirstUseEver);
+
+	static bool p_open = true;
+	static ImGuiWindowFlags windowFlags = 0;
+	windowFlags |= ImGuiWindowFlags_NoMove;
+	windowFlags |= ImGuiWindowFlags_NoResize;
+	windowFlags |= ImGuiWindowFlags_NoCollapse;
+	windowFlags |= ImGuiWindowFlags_NoTitleBar;
+
+	ImGui::Begin("Dear ImGui Demo", nullptr, windowFlags);
+	{
+		const int width = 200;
+		const int height = HEIGHT - 20;
+		ImGui::BeginChild("Stored and Loaded instruments", ImVec2(width, height), ImGuiChildFlags_ResizeX);
+
+			ImGui::BeginChild("Stored instruments", ImVec2(ImGui::GetContentRegionAvail().x, height / 2.0 - 5), ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_Border);
+			ImGui::Text("Stored instruments");
+			ImGui::Separator();
+			for (auto it = _instruments.begin(); it != _instruments.end(); it++)
+			{
+				char buf[64] = {};
+				sprintf(buf, "%s", it->first.c_str());
+				ImGui::SetNextItemAllowOverlap();
+				if (ImGui::Selectable(buf, selectedStoredInstrument == it->first))
+					selectedStoredInstrument = it->first;
+				if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenOverlapped))
+				{
+					ImGui::SameLine();
+					if (ImGui::SmallButton("load"))
+					{
+						std::cout << "AAAAAAAAAAAAAAAAAAA" << std::endl;
+					}
+				}
+			}
+			ImGui::EndChild();
+
+			ImGui::BeginChild("Loaded instruments", ImVec2(ImGui::GetContentRegionAvail().x, height / 2.0 - 5), ImGuiChildFlags_Border | ImGuiChildFlags_AutoResizeX);
+			ImGui::Text("Loaded instruments");
+			ImGui::Separator();
+			if (ImGui::Button("Create new instrument"))
+			{
+				static int count = 0;
+				instruments.push_back(Instrument());
+				instruments.back().name = "instrument" + std::to_string(count++);
+				if (instruments.size() == 1) // Auto-select new instrument if no other existing
+				{
+					switchSelectedInstrument(instruments.back());
+					selectedInstrument = 0;
+					loadDefaultInstrument = true;
+				}
+				// Update selected instrument ptr in case of ptr invalidation
+				_selectedInstrument = &instruments[selectedInstrument];
+			}
+			for (int i = 0; i < instruments.size(); i++)
+			{
+				char buf[64];
+				sprintf(buf, "%s", instruments[i].name.c_str());
+				if (ImGui::Selectable(buf, selectedInstrument == i))
+				{
+					switchSelectedInstrument(instruments[i]);
+					selectedInstrument = i;
+
+					// Load new instrument cache (if any)
+					try
+					{
+						std::stringstream& stream = _loadedInstrumentCache.at(_selectedInstrument->name);
+						_nodeEditor.loadFile(_selectedInstrument->master, stream);
+					}
+					catch (std::out_of_range& e)
+					{
+						_nodeEditor.loadFile(_selectedInstrument->master, _instruments["default"]);
+						std::cout << "No cache available, loading default" << std::endl;
+					}
+				}
+			}
+			ImGui::EndChild();
+		ImGui::EndChild();
+
+		ImGui::SameLine();
+
+		ImGui::BeginChild("Node editor and audio buffer", ImVec2(ImGui::GetContentRegionAvail()), ImGuiChildFlags_ResizeY);
+			ImGui::BeginChild("Node editor", ImVec2(ImGui::GetContentRegionAvail().x , ImGui::GetContentRegionAvail().y / 2.0), ImGuiChildFlags_ResizeY | ImGuiChildFlags_Border);
+			if (_selectedInstrument)
+				_nodeEditor.update(_selectedInstrument->master, _messages);
+			ImGui::EndChild();
+
+			ImGui::BeginChild("Audio buffer", ImVec2(ImGui::GetContentRegionAvail()), ImGuiChildFlags_Border);
+			_imPlot.update(audio, _messages);
+			ImGui::EndChild();
+		ImGui::EndChild();
+	}
 	ImGui::End();
 }
 
