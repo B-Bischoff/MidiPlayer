@@ -182,6 +182,7 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments)
 	windowFlags |= ImGuiWindowFlags_NoResize;
 	windowFlags |= ImGuiWindowFlags_NoCollapse;
 	windowFlags |= ImGuiWindowFlags_NoTitleBar;
+	windowFlags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
 
 	ImGui::Begin("Dear ImGui Demo", nullptr, windowFlags);
 	{
@@ -192,21 +193,15 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments)
 			ImGui::BeginChild("Stored instruments", ImVec2(ImGui::GetContentRegionAvail().x, height / 2.0 - 5), ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_Border);
 			ImGui::Text("Stored instruments");
 			ImGui::Separator();
+			if (ImGui::Button("Load instrument") && !selectedStoredInstrument.empty() && _selectedInstrument != nullptr)
+				_nodeEditor.loadFile(_selectedInstrument->master, _instruments.at(selectedStoredInstrument));
 			for (auto it = _instruments.begin(); it != _instruments.end(); it++)
 			{
 				char buf[64] = {};
 				sprintf(buf, "%s", it->first.c_str());
-				ImGui::SetNextItemAllowOverlap();
-				if (ImGui::Selectable(buf, selectedStoredInstrument == it->first))
+
+				if (ImGui::Selectable(buf,selectedStoredInstrument == it->first))
 					selectedStoredInstrument = it->first;
-				if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenOverlapped))
-				{
-					ImGui::SameLine();
-					if (ImGui::SmallButton("load"))
-					{
-						std::cout << "AAAAAAAAAAAAAAAAAAA" << std::endl;
-					}
-				}
 			}
 			ImGui::EndChild();
 
