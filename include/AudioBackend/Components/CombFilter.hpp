@@ -36,6 +36,7 @@ struct CombFilter : public AudioComponent {
 		if (feedbackValue > 1.0) feedbackValue = 1.0;
 		double inputValue = getInputsValue(input, keyPressed, currentKey);
 
+		// Resize buffer on delaySamplesValue change
 		if (delaySamplesValue > 0 && delaySamplesValue != delayBuffer.size())
 		{
 			delayBuffer.resize(delaySamplesValue);
@@ -43,15 +44,20 @@ struct CombFilter : public AudioComponent {
 				bufferIndex = 0;
 		}
 
-		if (delayBuffer.size() == 0)
+		if (delayBuffer.empty())
 			return 0.0;
 
-		if (currentKey == 0)
+		if (currentKey == 0) // only increment bufferIndex on the first note (playing multiple notes must not increase index)
 			bufferIndex = (bufferIndex + 1) % delayBuffer.size();
-		double output = delayBuffer[bufferIndex];
+
+		double output = inputValue;
 		if (currentKey == 0)
-			delayBuffer[bufferIndex] = 0;
-		delayBuffer[bufferIndex] += inputValue + feedbackValue * output;
+		{
+			output += feedbackValue * delayBuffer[bufferIndex]; // Add stored sound to the first note
+			delayBuffer[bufferIndex] = output; // Replace stored sound with current sound
+		}
+		else
+			delayBuffer[bufferIndex] += inputValue; // Add other notes sound to the buffer
 
 		return output;
 	}
