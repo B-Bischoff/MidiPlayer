@@ -14,10 +14,6 @@ NodeEditorUI::NodeEditorUI()
 
 void NodeEditorUI::update(Master& master, std::queue<Message>& messages)
 {
-	static char instrumentFilename[128] = "";
-	ImGui::SameLine();
-	ImGui::InputText("filename", instrumentFilename, IM_ARRAYSIZE(instrumentFilename));
-
 	ed::SetCurrentEditor(_context);
 	ed::Begin("Node editor", ImVec2(0.0, 0.0f));
 

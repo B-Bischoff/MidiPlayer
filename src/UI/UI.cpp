@@ -73,99 +73,18 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments)
 
 	//_imPlot.update(audio, _messages);
 
-	ImGui::Begin("Node Editor");
-	//if (_selectedInstrument)
-	//	_nodeEditor.update(_selectedInstrument->master, _messages);
-	ImGui::End();
-
-	ImGui::Begin("Loaded Instruments");
+	static bool loadDefaultInstrument = false;
 	static int selectedInstrument = -1;
+	static std::string selectedStoredInstrument = "";
 
 	// [TODO] find a better way to do this
 	// Nodes need to be rendered a first time before you can set its position
 	// (which is done when loading nodes from file/stream)
-	static bool loadDefaultInstrument = false;
 	if (loadDefaultInstrument)
 	{
 		loadDefaultInstrument = false;
 		_nodeEditor.loadFile(_selectedInstrument->master, _instruments["default"]);
 	}
-
-	for (int i = 0; i < instruments.size(); i++)
-	{
-		char buf[64];
-		sprintf(buf, "%s", instruments[i].name.c_str());
-		if (ImGui::Selectable(buf, selectedInstrument == i))
-		{
-			switchSelectedInstrument(instruments[i]);
-			selectedInstrument = i;
-
-			// Load new instrument cache (if any)
-			try
-			{
-				std::stringstream& stream = _loadedInstrumentCache.at(_selectedInstrument->name);
-				_nodeEditor.loadFile(_selectedInstrument->master, stream);
-			}
-			catch (std::out_of_range& e)
-			{
-				_nodeEditor.loadFile(_selectedInstrument->master, _instruments["default"]);
-				std::cout << "No cache available, loading default" << std::endl;
-			}
-		}
-	}
-
-	if (ImGui::Button("Create new instrument"))
-	{
-		static int count = 0;
-		instruments.push_back(Instrument());
-		instruments.back().name = "instrument" + std::to_string(count++);
-		if (instruments.size() == 1) // Auto-select new instrument if no other existing
-		{
-			switchSelectedInstrument(instruments.back());
-			selectedInstrument = 0;
-			loadDefaultInstrument = true;
-		}
-		// Update selected instrument ptr in case of ptr invalidation
-		_selectedInstrument = &instruments[selectedInstrument];
-	}
-
-	ImGui::End();
-
-	ImGui::Begin("Stored Instruments");
-
-	static std::string selectedStoredInstrument = "";
-	if (ImGui::Button("Load") && !selectedStoredInstrument.empty() && _selectedInstrument != nullptr)
-		_nodeEditor.loadFile(_selectedInstrument->master, _instruments.at(selectedStoredInstrument));
-
-	static char instrumentFilename[128] = "";
-	if (ImGui::Button("Save Instrument: "))
-	{
-		fs::path newInstrumentPath = _path.ressourceDirectory;
-		std::string filename = instrumentFilename + std::string(INSTRUMENTS_EXTENSION);
-		newInstrumentPath.append(INSTRUMENTS_DIR);
-		newInstrumentPath.append(filename);
-		_nodeEditor.serialize(newInstrumentPath);
-
-		// Don't add already existing instrument
-		if (std::find_if(_instruments.begin(), _instruments.end(), \
-					[&newInstrumentPath](const auto& pair) { return pair.second == newInstrumentPath; }) == _instruments.end())
-		{
-			const std::string presetName = newInstrumentPath.stem().string();
-			_instruments[presetName] = newInstrumentPath;
-		}
-	}
-	ImGui::SameLine();
-	ImGui::InputText("filename", instrumentFilename, IM_ARRAYSIZE(instrumentFilename));
-
-	for (auto it = _instruments.begin(); it != _instruments.end(); it++)
-	{
-		char buf[64];
-		sprintf(buf, "%s", it->first.c_str());
-		if (ImGui::Selectable(buf, selectedStoredInstrument == it->first))
-			selectedStoredInstrument = it->first;
-	}
-
-	ImGui::End();
 
 	// ----------------------------------------------------------------
 
@@ -186,11 +105,33 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments)
 
 	ImGui::Begin("Dear ImGui Demo", nullptr, windowFlags);
 	{
-		const int width = 200;
-		const int height = HEIGHT - 20;
-		ImGui::BeginChild("Stored and Loaded instruments", ImVec2(width, height), ImGuiChildFlags_ResizeX);
+		const int width = 250;
+		ImGui::BeginChild("Stored and Loaded instruments", ImVec2(width, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_ResizeX);
 
-			ImGui::BeginChild("Stored instruments", ImVec2(ImGui::GetContentRegionAvail().x, height / 2.0 - 5), ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_Border);
+			ImGui::BeginChild("Stored instruments", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y / 2.0), ImGuiChildFlags_ResizeY | ImGuiChildFlags_Border);
+
+			ImGui::Text("Save new instrument");
+			ImGui::Separator();
+			static char instrumentFilename[128] = "";
+			if (ImGui::Button("Save Instrument: ") && instruments.size())
+			{
+				fs::path newInstrumentPath = _path.ressourceDirectory;
+				std::string filename = instrumentFilename + std::string(INSTRUMENTS_EXTENSION);
+				newInstrumentPath.append(INSTRUMENTS_DIR);
+				newInstrumentPath.append(filename);
+				_nodeEditor.serialize(newInstrumentPath);
+
+				// Don't add already existing instrument
+				if (std::find_if(_instruments.begin(), _instruments.end(), \
+							[&newInstrumentPath](const auto& pair) { return pair.second == newInstrumentPath; }) == _instruments.end())
+				{
+					const std::string presetName = newInstrumentPath.stem().string();
+					_instruments[presetName] = newInstrumentPath;
+				}
+			}
+			ImGui::InputText("filename", instrumentFilename, IM_ARRAYSIZE(instrumentFilename));
+			ImGui::Dummy(ImVec2(0, 20.0f));
+
 			ImGui::Text("Stored instruments");
 			ImGui::Separator();
 			if (ImGui::Button("Load instrument") && !selectedStoredInstrument.empty() && _selectedInstrument != nullptr)
@@ -205,7 +146,7 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments)
 			}
 			ImGui::EndChild();
 
-			ImGui::BeginChild("Loaded instruments", ImVec2(ImGui::GetContentRegionAvail().x, height / 2.0 - 5), ImGuiChildFlags_Border | ImGuiChildFlags_AutoResizeX);
+			ImGui::BeginChild("Loaded instruments", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y - 5.0), ImGuiChildFlags_Border);
 			ImGui::Text("Loaded instruments");
 			ImGui::Separator();
 			if (ImGui::Button("Create new instrument"))
@@ -249,13 +190,13 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments)
 
 		ImGui::SameLine();
 
-		ImGui::BeginChild("Node editor and audio buffer", ImVec2(ImGui::GetContentRegionAvail()), ImGuiChildFlags_ResizeY);
+		ImGui::BeginChild("Node editor and audio buffer", ImVec2(ImGui::GetContentRegionAvail()));
 			ImGui::BeginChild("Node editor", ImVec2(ImGui::GetContentRegionAvail().x , ImGui::GetContentRegionAvail().y / 2.0), ImGuiChildFlags_ResizeY | ImGuiChildFlags_Border);
 			if (_selectedInstrument)
 				_nodeEditor.update(_selectedInstrument->master, _messages);
 			ImGui::EndChild();
 
-			ImGui::BeginChild("Audio buffer", ImVec2(ImGui::GetContentRegionAvail()), ImGuiChildFlags_Border);
+			ImGui::BeginChild("Audio buffer", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y - 5.0), ImGuiChildFlags_Border);
 			_imPlot.update(audio, _messages);
 			ImGui::EndChild();
 		ImGui::EndChild();
