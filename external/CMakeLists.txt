@@ -1,6 +1,6 @@
-add_subdirectory(portmidi)
-add_subdirectory(rtaudio)
-add_subdirectory(glfw)
+# GLFW
+set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "Build GLFW with Wayland support" FORCE)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/glfw)
 
 # GLEW
 add_definitions(
@@ -19,6 +19,9 @@ add_library(GLEW STATIC
 	glew-2.2.0/src/glew.c
 )
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/glew-2.2.0/include)
+target_include_directories(GLEW INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/glew-2.2.0/include)
+
 # IMGUI
 set(IMGUI_SOURCES
 	"imgui/imgui.cpp"
@@ -27,31 +30,51 @@ set(IMGUI_SOURCES
 	"imgui/imgui_tables.cpp"
 	"imgui/backends/imgui_impl_glfw.cpp"
 	"imgui/backends/imgui_impl_opengl3.cpp"
-	"imgui/backends/imgui_impl_opengl3_loader.h"
-
-	# IMPLOT
-	"implot/implot.h"
-	"implot/implot_internal.h"
-	"implot/implot.cpp"
-	"implot/implot_items.cpp"
-
-	# IMGUI NODE EDITOR
-	"imgui-node-editor/imgui_canvas.cpp"
-	"imgui-node-editor/imgui_node_editor.cpp"
-	"imgui-node-editor/imgui_node_editor_api.cpp"
-	"imgui-node-editor/crude_json.cpp"
+	"imgui/backends/imgui_impl_glfw.h"
 )
 
 add_library(imgui STATIC ${IMGUI_SOURCES})
 target_include_directories(imgui PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/imgui
 	${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends
+	${CMAKE_CURRENT_SOURCE_DIR}/glfw
+)
+target_link_libraries(imgui PUBLIC glfw)
+
+# IMPLOT
+set(IMPLOT_SOURCES
+	"implot/implot.cpp"
+	"implot/implot_items.cpp"
+)
+add_library(implot STATIC ${IMPLOT_SOURCES})
+target_include_directories(implot PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}/imgui
 	${CMAKE_CURRENT_SOURCE_DIR}/implot
+)
+target_link_libraries(implot PUBLIC imgui)
+
+# IMGUI NODE EDITOR
+set(IMNODE_EDITOR_SOURCES
+	"imgui-node-editor/imgui_canvas.cpp"
+	"imgui-node-editor/imgui_node_editor.cpp"
+	"imgui-node-editor/imgui_node_editor_api.cpp"
+	"imgui-node-editor/crude_json.cpp"
+)
+add_library(imnodeeditor STATIC ${IMNODE_EDITOR_SOURCES})
+target_include_directories(imnodeeditor PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}/imgui
 	${CMAKE_CURRENT_SOURCE_DIR}/imgui-node-editor
 )
-target_include_directories(imgui PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/glfw)
-target_link_libraries(imgui PRIVATE glfw)
+target_link_libraries(imnodeeditor PUBLIC imgui)
 
 #CEREAL
 add_library(cereal INTERFACE)
 target_include_directories(cereal INTERFACE ./cereal/include)
+
+# RTAUDIO
+# Conflicts with glfw uninstall target
+set(RTAUDIO_TARGETNAME_UNINSTALL "rtaudio_uninstall" CACHE STRING "Name of 'uninstall' build target" FORCE)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/rtaudio)
+
+#PORTMIDI
+add_subdirectory(portmidi)
