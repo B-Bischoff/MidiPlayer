@@ -1,72 +1,143 @@
-# This starter workflow is for a CMake project running on multiple platforms. There is a different starter workflow if you just want a single platform.
-# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-single-platform.yml
-name: CMake on multiple platforms
+name: Test-Workflow
 
 on:
   push:
     branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
 
 jobs:
-  build:
-    # runs-on: ${{ matrix.os }}
+  fetch:
     runs-on: self-hosted
-
-    strategy:
-      # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
-      fail-fast: false
-
-      # Set up a matrix to run the following 3 configurations:
-      # 1. <Windows, Release, latest MSVC compiler toolchain on the default runner image, default generator>
-      # 2. <Linux, Release, latest GCC compiler toolchain on the default runner image, default generator>
-      # 3. <Linux, Release, latest Clang compiler toolchain on the default runner image, default generator>
-      #
-      # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
-      matrix:
-        os: [ubuntu-latest]
-        build_type: [Release]
-        c_compiler: [gcc, clang]
-        include:
-          - os: ubuntu-latest
-            c_compiler: gcc
-            cpp_compiler: g++
-          - os: ubuntu-latest
-            c_compiler: clang
-            cpp_compiler: clang++
-
     steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: 'recursive'
-
-    - name: Set reusable strings
-      # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
-      id: strings
-      shell: bash
+    - name: Setup environment
       run: |
-        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+        rm -f ci-env
+        echo "SSH_PRV_KEY='/home/pi/.ssh/id_ed25519'" >> ci-env
+        echo "SSH_PUB_KEY='/home/pi/.ssh/id_ed25519.pub'" >> ci-env
+        echo "REPO_NAME=$(echo ${{ github.repository }})" >> ci-env
+        echo "DOCKER_IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> ci-env
+        echo "DOCKER_NAME"="docker-runner" >> ci-env
+        echo "ARTIFACTS"=$(basename ${{ github.repository }}'-artifacts') >> ci-env
+        echo "WINDOW_NAME"="MidiPlayer" >> ci-env
+        echo "BIN"="MidiPlayer" >> ci-env
 
-    - name: Install Alsa on Linux machines
-      if: matrix.os == 'ubuntu-latest'
-      run: sudo apt update && sudo apt install -y libasound2-dev
+    - name: Remove existing docker
+      run: |
+        . ./ci-env
+        # Force stop and remove existing docker
+        docker stop $DOCKER_NAME > /dev/null || true
+        docker rm $DOCKER_NAME > /dev/null || true
 
-    - name: Configure CMake
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: >
-        cmake -B ${{ steps.strings.outputs.build-output-dir }}
-        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
-        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
-        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -S ${{ github.workspace }}
+    - name: Docker build
+      run: |
+        . ./ci-env
+        cd /home/pi/DockerTest && \
+        docker build -t $DOCKER_IMAGE_NAME \
+        --secret id=ssh_prv_key,src=$SSH_PRV_KEY \
+        --secret id=ssh_pub_key,src=$SSH_PUB_KEY \
+        --build-arg repo_name=$REPO_NAME \
+        --build-arg DATE=$(date +%s) .
 
-    - name: Build
-      # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
-      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
+  build:
+    runs-on: self-hosted
+    needs:
+      - fetch
+    steps:
+    - name: Start docker
+      run: |
+        . ./ci-env
+        cat ./ci-env >> $GITHUB_ENV # Usefull for deploy builds step
+        docker run -d --name $DOCKER_NAME $DOCKER_IMAGE_NAME
 
-    - name: Test
-      working-directory: ${{ steps.strings.outputs.build-output-dir }}
-      # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: ctest --build-config ${{ matrix.build_type }}
+    - name: "Compile project ${{ github.repository }} for aarch64 Linux"
+      run: |
+        . ./ci-env
+        docker exec docker-runner mkdir build_aarch64_linux
+        docker exec docker-runner cmake -S . -B build_aarch64_linux -DCMAKE_TOOLCHAIN_FILE=./cmake/aarch64_Linux_toolchain.cmake
+        docker exec docker-runner make -C build_aarch64_linux -j $(nproc)
+        mkdir -p $ARTIFACTS/builds && docker cp "$DOCKER_NAME:$REPO_NAME/build_aarch64_linux" $ARTIFACTS/builds
+
+    - name: "Compile project ${{ github.repository }} for x86_64 Linux"
+      run: |
+        . ./ci-env
+        docker exec docker-runner sh -c 'echo "deb [arch=amd64] http://deb.debian.org/debian buster main" >> /etc/apt/sources.list'
+        docker exec docker-runner sh -c 'echo "deb [arch=amd64] http://deb.debian.org/debian-security buster/updates main" >> /etc/apt/sources.list'
+        docker exec docker-runner sh -c 'echo "deb [arch=amd64] http://deb.debian.org/debian buster-updates main" >> /etc/apt/sources.list'
+        docker exec docker-runner apt-get update
+        docker exec docker-runner dpkg --add-architecture amd64
+        docker exec docker-runner apt-get install libglu1-mesa-dev:amd64 libasound2-dev:amd64 -y
+        docker exec docker-runner mkdir build_x86_64_linux
+        docker exec docker-runner cmake -S . -B build_x86_64_linux -DCMAKE_TOOLCHAIN_FILE=./cmake/x86_64_Linux_toolchain.cmake
+        docker exec docker-runner make -C build_x86_64_linux -j $(nproc)
+        mkdir -p $ARTIFACTS/builds && docker cp "$DOCKER_NAME:$REPO_NAME/build_x86_64_linux" $ARTIFACTS/builds
+
+    - name: "Compile project ${{ github.repository }} for x86_64 Windows"
+      run: |
+        . ./ci-env
+        docker exec docker-runner mkdir build_x86_64_windows
+        docker exec docker-runner cmake -S . -B build_x86_64_windows -DCMAKE_TOOLCHAIN_FILE=./cmake/x86_64_Windows_toolchain.cmake
+        docker exec docker-runner make -C build_x86_64_windows -j $(nproc)
+        mkdir -p $ARTIFACTS/builds && docker cp "$DOCKER_NAME:$REPO_NAME/build_x86_64_windows" $ARTIFACTS/builds
+
+    - name: "Deploy builds"
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.ARTIFACTS }}
+        path: |
+          ${{ env.ARTIFACTS }}/
+
+    - name: "Docker clean up"
+      if: always()
+      run: |
+        . ./ci-env
+        # Force stop and remove existing docker
+        docker stop $DOCKER_NAME > /dev/null || true
+        docker rm $DOCKER_NAME > /dev/null || true
+        rm -rf builds
+
+  test:
+    runs-on: self-hosted
+    needs:
+      - build
+    steps:
+    - name: Start docker
+      run: |
+        . ./ci-env
+        cat ./ci-env >> $GITHUB_ENV # Usefull for deploy builds step
+        docker run -d --name $DOCKER_NAME $DOCKER_IMAGE_NAME
+    - name: Remove previous artifacts
+      run: |
+        . ./ci-env
+        rm -rf builds
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ env.ARTIFACTS }}
+        path: ./
+    - name: Copy build to docker
+      run: |
+        . ./ci-env
+        docker exec docker-runner sh -c "rm -rf *"
+        docker cp builds/build_aarch64_linux docker-runner:/$REPO_NAME
+        docker exec docker-runner chown -R 0:0 ./build_aarch64_linux
+        docker exec docker-runner chmod +x ./build_aarch64_linux/$BIN
+    - name: Setup xorg server
+      run: docker exec docker-runner sh -c "Xorg :0 -config /etc/X11/xorg.conf &"
+    - name: Setup pulseaudio server
+      run: docker exec docker-runner sh -c "pulseaudio&"
+    - name: Start application
+      run: docker exec -d docker-runner sh -c "DISPLAY=:0 ./build_aarch64_linux/$BIN"
+    - name: Wait 10 seconds
+      run: sleep 10
+    - name: Close application
+      run: |
+        . ./ci-env
+        docker exec docker-runner sh -c "DISPLAY=:0 xdotool search --name $WINDOW_NAME windowclose"
+    - name: "Docker clean up"
+      if: always()
+      run: |
+        . ./ci-env
+        # Force stop and remove existing docker
+        docker stop $DOCKER_NAME > /dev/null || true
+        docker rm $DOCKER_NAME > /dev/null || true
+        rm -rf builds

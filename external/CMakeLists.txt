@@ -49,6 +49,8 @@ target_include_directories(imgui PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/implot
 	${CMAKE_CURRENT_SOURCE_DIR}/imgui-node-editor
 )
+target_include_directories(imgui PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/glfw)
+target_link_libraries(imgui PRIVATE glfw)
 
 #CEREAL
 add_library(cereal INTERFACE)
