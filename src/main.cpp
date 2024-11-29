@@ -122,7 +122,7 @@ int main(int argc, char* argv[])
 	memset(audio.buffer, 0, sizeof(float) * audio.getBufferSize());
 
 	audio.startTime = std::chrono::high_resolution_clock::now();
-	rtAudioInit(audio);
+	rtAudioInit(audio, argc > 1 ? std::atoi(argv[1]) : -1);
 
 	InputManager inputManager;
 	initInput(inputManager);

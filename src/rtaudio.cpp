@@ -1,13 +1,26 @@
 #include "inc.hpp"
+#include "config.hpp"
 
-void rtAudioInit(AudioData& audio)
+void rtAudioInit(AudioData& audio, int id = -1)
 {
 	std::vector<unsigned int> deviceIds = audio.stream.getDeviceIds();
 	if (deviceIds.size() < 1)
 		exitError("[RTAUDIO ERROR]: No audio devices found.");
 
+	if (RT_AUDIO_DEBUG)
+	{
+		RtAudio& stream = audio.stream;
+		std::cout << "Default audio device id: " << stream.getDefaultOutputDevice() << std::endl;
+
+		for (const unsigned int& id : deviceIds)
+		{
+			const RtAudio::DeviceInfo info = stream.getDeviceInfo(id);
+			std::cout << "id " << id << " Name: " << info.name << std::endl;
+		}
+	}
+
 	RtAudio::StreamParameters parameters;
-	parameters.deviceId = audio.stream.getDefaultOutputDevice();
+	parameters.deviceId = id == -1 ? audio.stream.getDefaultOutputDevice() : id;
 	parameters.nChannels = audio.channels;
 	parameters.firstChannel = 0;
 	unsigned int sampleRate = audio.sampleRate;

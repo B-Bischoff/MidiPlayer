@@ -109,7 +109,7 @@ struct InputManager
 	static const unsigned int maxOctave = 8;
 };
 
-void rtAudioInit(AudioData& audio);
+void rtAudioInit(AudioData& audio, int id);
 int uploadBuffer( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
 void handleInput(GLFWwindow* window, InputManager& inputManager, std::vector<MidiInfo>& keyPressed, double time);
 void initInput(InputManager& inputManger);
