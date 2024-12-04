@@ -30,3 +30,13 @@ if (UNIX)
 else()
 	target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
 endif()
+
+# Deploy ressources
+set(RESSOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ressources)
+set(DEST_DIR $<TARGET_FILE_DIR:${PROJECT_NAME}>/ressources)
+
+add_custom_target(deploy ALL
+	COMMAND ${CMAKE_COMMAND} -E make_directory ${DEST_DIR}
+	COMMAND ${CMAKE_COMMAND} -E copy_directory ${RESSOURCE_DIR} ${DEST_DIR}
+	COMMENT "Deploying ressources directory to ${DEST_DIR}"
+)
