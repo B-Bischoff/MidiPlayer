@@ -51,7 +51,6 @@ jobs:
     - name: "Compile project ${{ github.repository }} for aarch64 Linux"
       run: |
         . ./ci-env
-        docker exec docker-runner mkdir build_aarch64_linux
         docker exec docker-runner cmake -S . -B build_aarch64_linux -DCMAKE_TOOLCHAIN_FILE=./cmake/aarch64_Linux_toolchain.cmake
         docker exec docker-runner make -C build_aarch64_linux -j $(nproc)
         mkdir -p $ARTIFACTS/builds && docker cp "$DOCKER_NAME:$REPO_NAME/build_aarch64_linux" $ARTIFACTS/builds
@@ -65,7 +64,6 @@ jobs:
         docker exec docker-runner apt-get update
         docker exec docker-runner dpkg --add-architecture amd64
         docker exec docker-runner apt-get install libglu1-mesa-dev:amd64 libasound2-dev:amd64 -y
-        docker exec docker-runner mkdir build_x86_64_linux
         docker exec docker-runner cmake -S . -B build_x86_64_linux -DCMAKE_TOOLCHAIN_FILE=./cmake/x86_64_Linux_toolchain.cmake
         docker exec docker-runner make -C build_x86_64_linux -j $(nproc)
         mkdir -p $ARTIFACTS/builds && docker cp "$DOCKER_NAME:$REPO_NAME/build_x86_64_linux" $ARTIFACTS/builds
@@ -73,7 +71,6 @@ jobs:
     - name: "Compile project ${{ github.repository }} for x86_64 Windows"
       run: |
         . ./ci-env
-        docker exec docker-runner mkdir build_x86_64_windows
         docker exec docker-runner cmake -S . -B build_x86_64_windows -DCMAKE_TOOLCHAIN_FILE=./cmake/x86_64_Windows_toolchain.cmake
         docker exec docker-runner make -C build_x86_64_windows -j $(nproc)
         mkdir -p $ARTIFACTS/builds && docker cp "$DOCKER_NAME:$REPO_NAME/build_x86_64_windows" $ARTIFACTS/builds
@@ -104,7 +101,7 @@ jobs:
       run: |
         . ./ci-env
         cat ./ci-env >> $GITHUB_ENV # Usefull for deploy builds step
-        docker run -d --name $DOCKER_NAME $DOCKER_IMAGE_NAME
+        docker run -d --device /dev/snd:/dev/snd --group-add audio --name $DOCKER_NAME $DOCKER_IMAGE_NAME
     - name: Remove previous artifacts
       run: |
         . ./ci-env
@@ -121,17 +118,15 @@ jobs:
         docker cp builds/build_aarch64_linux docker-runner:/$REPO_NAME
         docker exec docker-runner chown -R 0:0 ./build_aarch64_linux
         docker exec docker-runner chmod +x ./build_aarch64_linux/$BIN
-    - name: Setup xorg server
-      run: docker exec docker-runner sh -c "Xorg :0 -config /etc/X11/xorg.conf &"
-    - name: Setup pulseaudio server
-      run: docker exec docker-runner sh -c "pulseaudio&"
-    - name: Start application
-      run: docker exec -d docker-runner sh -c "DISPLAY=:0 ./build_aarch64_linux/$BIN"
-    - name: Wait 10 seconds
-      run: sleep 10
-    - name: Close application
+    - name: Setup audio and video server
+      run: |
+        docker exec docker-runner sh -c "Xorg :0 -config /etc/X11/xorg.conf &"
+        docker exec docker-runner sh -c "pulseaudio&"
+    - name: Run the app for 10 seconds
       run: |
         . ./ci-env
+        docker exec -d docker-runner sh -c "DISPLAY=:0 ./build_aarch64_linux/$BIN"
+        sleep 10
         docker exec docker-runner sh -c "DISPLAY=:0 xdotool search --name $WINDOW_NAME windowclose"
     - name: "Docker clean up"
       if: always()
