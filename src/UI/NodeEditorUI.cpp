@@ -15,7 +15,7 @@ NodeEditorUI::NodeEditorUI()
 void NodeEditorUI::update(Master& master, std::queue<Message>& messages)
 {
 	ed::SetCurrentEditor(_context);
-	ed::Begin("Node editor", ImVec2(0.0, 0.0f));
+	ed::Begin("Node editor", ImVec2(0, 0));
 
 	render(messages);
 
