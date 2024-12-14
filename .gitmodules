@@ -7,12 +7,14 @@
 [submodule "external/imgui"]
 	path = external/imgui
 	url = git@github.com:ocornut/imgui.git
+	branch = v1.91.5-docking
 [submodule "external/implot"]
 	path = external/implot
 	url = git@github.com:epezent/implot.git
 [submodule "external/imgui-node-editor"]
 	path = external/imgui-node-editor
 	url = git@github.com:thedmd/imgui-node-editor.git
+	branch = develop
 [submodule "external/glfw"]
 	path = external/glfw
 	url = git@github.com:glfw/glfw.git
