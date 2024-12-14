@@ -36,6 +36,14 @@ public:
 	void render();
 
 private:
-	void initUpdate();
+	void initUpdate(const int& WIN_WIDTH, const int& WIN_HEIGHT);
+	void endUpdate();
+
 	void switchSelectedInstrument(Instrument& newInstrument);
+
+	void updateMenuBar();
+	void updateSavedInstruments(std::vector<Instrument>& instruments, std::string& selectedStoredInstrument);
+	void updateLoadedInstruments(std::vector<Instrument>& instruments, int& selectedInstrument, bool& loadDefaultInstrument);
+
+	void processEventQueue();
 };
