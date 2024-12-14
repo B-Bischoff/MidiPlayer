@@ -3,6 +3,8 @@ name: Test-Workflow
 on:
   push:
     branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
 
 jobs:
   fetch:
@@ -18,6 +20,11 @@ jobs:
         echo "DOCKER_NAME"="docker-runner" >> ci-env
         echo "ARTIFACTS"=$(basename ${{ github.repository }}'-artifacts') >> ci-env
         echo "WINDOW_NAME"="MidiPlayer" >> ci-env
+        if [ "${{ github.event_name }}" == "pull_request" ]; then
+          echo "BRANCH_NAME=$(echo ${{ github.head_ref }})" >> ci-env
+        else
+          echo "BRANCH_NAME=$(echo ${{ github.ref }})" >> ci-env
+        fi
         echo "BIN"="MidiPlayer" >> ci-env
 
     - name: Remove existing docker
@@ -35,6 +42,7 @@ jobs:
         --secret id=ssh_prv_key,src=$SSH_PRV_KEY \
         --secret id=ssh_pub_key,src=$SSH_PUB_KEY \
         --build-arg repo_name=$REPO_NAME \
+        --build-arg branch_name=$BRANCH_NAME \
         --build-arg DATE=$(date +%s) .
 
   build:
