@@ -12,7 +12,7 @@ void initInput(InputManager& inputManger) // [TODO] Should this be in a construc
 	int numDevices = Pm_CountDevices();
 	if (numDevices <= 0)
 	{
-		std::cerr << "No MIDI devices found." << std::endl;
+		Logger::log("PortMidi", Error) << "No MIDI devices found." << std::endl;
 		exit(1);
 	}
 
@@ -84,7 +84,7 @@ void handleInput(GLFWwindow* window, const MidiPlayerSettings& settings, InputMa
 			int keyIndex = Pm_MessageData1(message);
 			int velocity = Pm_MessageData2(message);
 
-			std::cout << " state " << status << " key " << (int)keyIndex << " vel " << (int)velocity << std::endl;
+			Logger::log("KeyInfo", Debug) << "state " << status << " key " << (int)keyIndex << " vel " << (int)velocity << std::endl;
 			if ((status == 145 || status == 155) && velocity != 0.0)
 				addKeyPressed(keyPressed, keyIndex, velocity);
 			else

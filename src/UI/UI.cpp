@@ -184,7 +184,7 @@ void UI::updateLoadedInstruments(std::vector<Instrument>& instruments, int& sele
 			catch (std::out_of_range& e)
 			{
 				_nodeEditor.loadFile(_selectedInstrument->master, _instruments["default"]);
-				std::cout << "No cache available, loading default" << std::endl;
+				Logger::log("NodeEditor", Debug) << "No cache available, loading default" << std::endl;
 			}
 		}
 	}

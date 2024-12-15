@@ -121,9 +121,3 @@ void handleInput(GLFWwindow* window, const MidiPlayerSettings& settings, InputMa
 void initInput(InputManager& inputManger);
 void generateAudio(AudioData& audio, std::vector<Instrument>& instruments, std::vector<MidiInfo>& keyPressed, double& time);
 int uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
-
-static void exitError(const char* str)
-{
-	std::cerr << str << std::endl;
-	exit(1);
-}

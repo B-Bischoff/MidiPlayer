@@ -6,7 +6,7 @@ void LinkManager::addLink(IDManager& idManager, NodeManager& nodeManager, ed::Pi
 	Pin& outputPin = nodeManager.findPinById(output);
 	if (inputPin.kind == outputPin.kind)
 	{
-		std::cout << "[WARNING | LinkManager] : do not link same pin kind." << std::endl;
+		Logger::log("LinkManager", Warning) << "Do not link same pin kind." << std::endl;
 		return;
 	}
 
@@ -14,7 +14,7 @@ void LinkManager::addLink(IDManager& idManager, NodeManager& nodeManager, ed::Pi
 	std::shared_ptr<Node>& outputNode = nodeManager.findNodeByPinId(output);;
 	if (inputNode == outputNode)
 	{
-		std::cout << "[WARNING | LinkManager] : do not link multiple pins from the same node." << std::endl;
+		Logger::log("LinkManager", Warning) << "Do not link multiple pins from the same node." << std::endl;
 		return;
 	}
 

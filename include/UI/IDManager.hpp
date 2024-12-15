@@ -4,6 +4,7 @@
 #include <set>
 #include <assert.h>
 #include "config.hpp"
+#include "Logger.hpp"
 
 #define INVALID_ID 0
 

@@ -33,7 +33,7 @@ public:
 			if (showWarning)
 			{
 				showWarning = false;
-				std::cout << "[WARNING] no input plugged in master" << std::endl;
+				Logger::log("Audio", Warning) << "No input plugged to master." << std::endl;
 			}
 			return 0;
 		}
