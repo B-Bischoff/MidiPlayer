@@ -16,9 +16,11 @@ ImPlotUI::ImPlotUI(AudioData& audio)
 
 void ImPlotUI::update(AudioData& audio, std::queue<Message>& messages)
 {
+	ImGui::Begin("Audio buffer");
 	ImPlotFlags f;
 	if (ImPlot::BeginPlot("Plot", ImVec2(ImGui::GetContentRegionAvail())))
 	{
+		ImPlot::SetupAxisLimits(ImAxis_Y1, -1.0, 1.0); // Set Y axis go from -1 to +1
 		ImPlot::PlotLine("line", _timeArray, audio.buffer, audio.getBufferSize());
 		double writeCursorX = audio.writeCursor / (double)audio.sampleRate;
 		double readCursorX = audio.leftPhase / (double)audio.sampleRate;
@@ -33,6 +35,8 @@ void ImPlotUI::update(AudioData& audio, std::queue<Message>& messages)
 
 	if (_printEnvelopeEditor)
 		printEnvelopeEditor(messages);
+
+	ImGui::End();
 }
 
 void ImPlotUI::handleControlPoints(std::queue<Message>& messages)

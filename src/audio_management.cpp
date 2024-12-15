@@ -7,8 +7,7 @@ int uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBufferFram
 	AudioData& audio = *(AudioData*)userData;
 
 	//std::cout << "callback time : " << streamTime << std::endl;
-	if (status)
-		std::cout << "[WARNING] Stream underflow detected!" << std::endl;
+	if (status) Logger::log("Audio", Warning) << "Stream underflow detected." << std::endl;
 
 	//std::cout << "buffer frames " << nBufferFrames << std::endl;
 

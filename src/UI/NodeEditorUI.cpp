@@ -12,8 +12,16 @@ NodeEditorUI::NodeEditorUI()
 	_nodeManager.addNode<MasterNode>(_idManager);
 }
 
-void NodeEditorUI::update(Master& master, std::queue<Message>& messages)
+void NodeEditorUI::update(Master& master, std::queue<Message>& messages, Instrument* selectedInstrument)
 {
+	ImGui::Begin("Node editor");
+	if (!selectedInstrument)
+	{
+		// [TODO] print a warning message ?
+		ImGui::End();
+		return;
+	}
+
 	ed::SetCurrentEditor(_context);
 	ed::Begin("Node editor", ImVec2(0, 0));
 
@@ -32,6 +40,8 @@ void NodeEditorUI::update(Master& master, std::queue<Message>& messages)
 		_navigateToContent = false;
 		ed::NavigateToContent();
 	}
+
+	ImGui::End();
 }
 
 void NodeEditorUI::render(std::queue<Message>& messages)

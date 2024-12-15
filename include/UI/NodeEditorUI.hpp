@@ -80,7 +80,7 @@ private:
 public:
 	NodeEditorUI();
 
-	void update(Master& master, std::queue<Message>& messages);
+	void update(Master& master, std::queue<Message>& messages, Instrument* selectedInstrument = nullptr);
 
 	void serialize(const fs::path& path);
 	void serialize(std::stringstream& stream);

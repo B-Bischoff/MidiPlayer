@@ -22,6 +22,8 @@
 #include <implot.h>
 #include <imgui_node_editor.h>
 
+#include <Logger.hpp>
+
 typedef std::chrono::time_point<std::chrono::high_resolution_clock> time_point;
 
 struct AudioComponent;
@@ -81,6 +83,10 @@ struct AudioData {
 	}
 };
 
+struct MidiPlayerSettings {
+	bool useKeyboardAsInput = true;
+};
+
 struct MidiInfo
 {
 	int keyIndex;
@@ -111,13 +117,7 @@ struct InputManager
 
 void rtAudioInit(AudioData& audio, int id);
 int uploadBuffer( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
-void handleInput(GLFWwindow* window, InputManager& inputManager, std::vector<MidiInfo>& keyPressed, double time);
+void handleInput(GLFWwindow* window, const MidiPlayerSettings& settings, InputManager& inputManager, std::vector<MidiInfo>& keyPressed, double time);
 void initInput(InputManager& inputManger);
 void generateAudio(AudioData& audio, std::vector<Instrument>& instruments, std::vector<MidiInfo>& keyPressed, double& time);
 int uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
-
-static void exitError(const char* str)
-{
-	std::cerr << str << std::endl;
-	exit(1);
-}

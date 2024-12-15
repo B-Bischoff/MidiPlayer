@@ -36,8 +36,7 @@ GLFWwindow* init(const int WIN_WIDTH, const int WIN_HEIGHT)
 	GLFWwindow* window = glfwCreateWindow(WIN_WIDTH, WIN_HEIGHT, "MidiPlayer", NULL, NULL);
 	if (window == nullptr)
 	{
-		std::cerr << "Failed to initialize GLFW window." << std::endl;
-		std::cin.get();
+		Logger::log("GLFW", Error) << "Failed to initialize window." << std::endl;
 		glfwTerminate();
 		exit(1);
 	}
@@ -48,8 +47,7 @@ GLFWwindow* init(const int WIN_WIDTH, const int WIN_HEIGHT)
 	glewExperimental = true; // Needed for core profile
 	if (glewInit() != GLEW_OK)
 	{
-		std::cerr << "Failed to initialize GLEW." << std::endl;
-		std::cin.get();
+		Logger::log("GLEW", Error) << "Failed to initialize GLEW." << std::endl;
 		glfwTerminate();
 		exit(1);
 	}
@@ -64,28 +62,28 @@ fs::path findRessourcesFolder(const fs::path& applicationPath, bool verbose = fa
 	path = path.parent_path(); // Remove application name at end of path
 
 	path.append(ressourceFolder);
-	if (verbose) std::cout << "trying: " << path.string() << std::endl;
+	if (verbose) Logger::log("Ressources", Debug) << "trying path: " << path.string() << std::endl;
 	while (!fs::exists(path))
 	{
 		path = path.parent_path(); // Remove ressources folder name
 		if (path == path.root_path())
 		{
-			std::cerr << "[FILESYSTEM] could not find ressources directory" << std::endl;
+			Logger::log("Ressources", Error) << "Could not find ressources directory." << std::endl;
 			return fs::path();
 		}
 
 		path = path.parent_path(); // Go up one directory
 		path.append(ressourceFolder);
-		if (verbose) std::cout << "trying: " << path.string() << std::endl;
+		if (verbose) Logger::log("Ressources", Debug) << "trying path: " << path.string() << std::endl;
 	}
-	if (verbose) std::cout << "Ressource folder found at : " << path.string() << std::endl;
+	Logger::log("Ressources", Info) << "Found ressources at: " << path.string() << std::endl;
 	return path;
 }
 
 int main(int argc, char* argv[])
 {
 	const fs::path applicationPath = fs::canonical(fs::path(argv[0]));
-	std::cout << "application path : " << applicationPath.string() << std::endl;
+	Logger::log("Application path",Info) << applicationPath.string() << std::endl;
 	const fs::path ressourceDirectoryPath = findRessourcesFolder(applicationPath);
 	if (ressourceDirectoryPath.string().empty())
 		exit(1);
@@ -99,6 +97,7 @@ int main(int argc, char* argv[])
 	const int SCREEN_WIDTH = 1920;
 	const int SCREEN_HEIGHT = 1080;
 	GLFWwindow* window = init(SCREEN_WIDTH, SCREEN_HEIGHT);
+	MidiPlayerSettings settings;
 
 	AudioData audio = {
 		.sampleRate = 44100,
@@ -117,7 +116,10 @@ int main(int argc, char* argv[])
 	audio.buffer = new float[audio.getBufferSize()];
 
 	if (audio.buffer == nullptr)
-		exitError("[ERROR]: ring buffer allocation failed.");
+	{
+		Logger::log("Audio init", Error) << "Ring buffer allocation failed" << std::endl;
+		exit(1);
+	}
 
 	memset(audio.buffer, 0, sizeof(float) * audio.getBufferSize());
 
@@ -132,6 +134,7 @@ int main(int argc, char* argv[])
 	//std::cout << "L/R/W : " << audio.leftPhase << " " << audio.rightPhase << " " << audio.writeCursor << std::endl;
 
 	UI ui(window, audio, path);
+	Logger::subscribeStream(Log::getStream()); // Duplicate all logs to UI
 
 	double t = 0.0;
 
@@ -155,7 +158,7 @@ int main(int argc, char* argv[])
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glfwPollEvents();
 
-		handleInput(window, inputManager, keyPressed, t);
+		handleInput(window, settings, inputManager, keyPressed, t);
 
 		generateAudio(audio, instruments, keyPressed, t);
 
@@ -168,7 +171,7 @@ int main(int argc, char* argv[])
 		}
 		*/
 
-		ui.update(audio, instruments);
+		ui.update(audio, instruments, settings);
 		ui.render();
 
 		glfwSwapBuffers(window);

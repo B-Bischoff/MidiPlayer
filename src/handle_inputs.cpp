@@ -12,7 +12,7 @@ void initInput(InputManager& inputManger) // [TODO] Should this be in a construc
 	int numDevices = Pm_CountDevices();
 	if (numDevices <= 0)
 	{
-		std::cerr << "No MIDI devices found." << std::endl;
+		Logger::log("PortMidi", Error) << "No MIDI devices found." << std::endl;
 		exit(1);
 	}
 
@@ -31,7 +31,7 @@ void initInput(InputManager& inputManger) // [TODO] Should this be in a construc
 	Pm_OpenInput(&inputManger.midiStream, 3, NULL, 512, NULL, NULL);
 }
 
-void handleInput(GLFWwindow* window, InputManager& inputManager, std::vector<MidiInfo>& keyPressed, double time)
+void handleInput(GLFWwindow* window, const MidiPlayerSettings& settings, InputManager& inputManager, std::vector<MidiInfo>& keyPressed, double time)
 {
 	unsigned int KbToPianoIndex[12] = { GLFW_KEY_Z, GLFW_KEY_S, GLFW_KEY_X, GLFW_KEY_D, GLFW_KEY_C, GLFW_KEY_V, GLFW_KEY_G, GLFW_KEY_B, GLFW_KEY_H, GLFW_KEY_N, GLFW_KEY_J, GLFW_KEY_M };
 
@@ -50,7 +50,7 @@ void handleInput(GLFWwindow* window, InputManager& inputManager, std::vector<Mid
 	for (MidiInfo& info : keyPressed)
 		info.risingEdge = false;
 
-	if (USE_KB_AS_MIDI_INPUT)
+	if (settings.useKeyboardAsInput)
 	{
 		// Octaves
 		if (inputManager.keys[GLFW_KEY_O].down && inputManager.octave > 0)
@@ -84,7 +84,7 @@ void handleInput(GLFWwindow* window, InputManager& inputManager, std::vector<Mid
 			int keyIndex = Pm_MessageData1(message);
 			int velocity = Pm_MessageData2(message);
 
-			std::cout << " state " << status << " key " << (int)keyIndex << " vel " << (int)velocity << std::endl;
+			Logger::log("KeyInfo", Debug) << "state " << status << " key " << (int)keyIndex << " vel " << (int)velocity << std::endl;
 			if ((status == 145 || status == 155) && velocity != 0.0)
 				addKeyPressed(keyPressed, keyIndex, velocity);
 			else

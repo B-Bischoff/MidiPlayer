@@ -5,17 +5,20 @@ void rtAudioInit(AudioData& audio, int id = -1)
 {
 	std::vector<unsigned int> deviceIds = audio.stream.getDeviceIds();
 	if (deviceIds.size() < 1)
-		exitError("[RTAUDIO ERROR]: No audio devices found.");
+	{
+		Logger::log("RtAudio", Error) << "No audio device found." << std::endl;
+		exit(1);
+	}
 
 	if (RT_AUDIO_DEBUG)
 	{
 		RtAudio& stream = audio.stream;
-		std::cout << "Default audio device id: " << stream.getDefaultOutputDevice() << std::endl;
+		Logger::log("RtAudio", Debug) << "Default audio device id: " << stream.getDefaultOutputDevice() << std::endl;
 
 		for (const unsigned int& id : deviceIds)
 		{
 			const RtAudio::DeviceInfo info = stream.getDeviceInfo(id);
-			std::cout << "id " << id << " Name: " << info.name << std::endl;
+			Logger::log("RtAudio", Debug) << "id " << id << " Name: " << info.name << std::endl;
 		}
 	}
 
@@ -29,8 +32,14 @@ void rtAudioInit(AudioData& audio, int id = -1)
 	//unsigned int bufferFrames = 735;
 
 	if (audio.stream.openStream(&parameters, NULL, RTAUDIO_FLOAT64, sampleRate, &bufferFrames, &uploadBuffer, &audio))
-		exitError("[RTAUDIO ERROR]: Cannot open stream.");
+	{
+		Logger::log("RtAudio", Error) << "Failed to open stream." << std::endl;
+		exit(1);
+	}
 
 	if (audio.stream.startStream())
-		exitError("[RTAUDIO ERROR]: Cannot start stream.");
+	{
+		Logger::log("RtAudio", Error) << "Failed to start stream." << std::endl;
+		exit(1);
+	}
 }
