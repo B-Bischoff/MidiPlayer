@@ -85,7 +85,8 @@ fs::path findRessourcesFolder(const fs::path& applicationPath, bool verbose = fa
 int main(int argc, char* argv[])
 {
 	const fs::path applicationPath = fs::canonical(fs::path(argv[0]));
-	std::cout << "application path : " << applicationPath.string() << std::endl;
+	//std::cout << "application path : " << applicationPath.string() << std::endl;
+	Logger::log("Application path",Info) << applicationPath.string() << std::endl;
 	const fs::path ressourceDirectoryPath = findRessourcesFolder(applicationPath);
 	if (ressourceDirectoryPath.string().empty())
 		exit(1);
@@ -99,6 +100,7 @@ int main(int argc, char* argv[])
 	const int SCREEN_WIDTH = 1920;
 	const int SCREEN_HEIGHT = 1080;
 	GLFWwindow* window = init(SCREEN_WIDTH, SCREEN_HEIGHT);
+	MidiPlayerSettings settings;
 
 	AudioData audio = {
 		.sampleRate = 44100,
@@ -132,6 +134,7 @@ int main(int argc, char* argv[])
 	//std::cout << "L/R/W : " << audio.leftPhase << " " << audio.rightPhase << " " << audio.writeCursor << std::endl;
 
 	UI ui(window, audio, path);
+	Logger::subscribeStream(Log::getStream()); // Duplicate all logs to UI
 
 	double t = 0.0;
 
@@ -155,7 +158,7 @@ int main(int argc, char* argv[])
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glfwPollEvents();
 
-		handleInput(window, inputManager, keyPressed, t);
+		handleInput(window, settings, inputManager, keyPressed, t);
 
 		generateAudio(audio, instruments, keyPressed, t);
 
@@ -168,7 +171,7 @@ int main(int argc, char* argv[])
 		}
 		*/
 
-		ui.update(audio, instruments);
+		ui.update(audio, instruments, settings);
 		ui.render();
 
 		glfwSwapBuffers(window);

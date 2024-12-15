@@ -14,12 +14,23 @@
 #include "path.hpp"
 #include "Message.hpp"
 
+#include "UI/Log.hpp"
+
+struct WindowsState {
+	bool showLog;
+	bool showSettings;
+};
+
 class UI {
 private:
 	ImGuiContext* _context;
 	ImPlotUI _imPlot;
 	NodeEditorUI _nodeEditor;
 	const ApplicationPath& _path;
+
+	Log _log;
+
+	WindowsState _windowsState;
 
 	std::map<std::string, fs::path> _instruments;
 
@@ -32,7 +43,7 @@ private:
 
 public:
 	UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path);
-	void update(AudioData& audio, std::vector<Instrument>& instruments);
+	void update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings);
 	void render();
 
 private:

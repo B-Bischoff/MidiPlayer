@@ -35,9 +35,12 @@ UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 			_instruments[presetName] = file;
 		}
 	}
+
+	// Windows state init
+	_windowsState.showLog = false;
 }
 
-void UI::update(AudioData& audio, std::vector<Instrument>& instruments)
+void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings)
 {
 	initUpdate(1920, 1080);
 
@@ -57,24 +60,23 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments)
 		_nodeEditor.loadFile(_selectedInstrument->master, _instruments["default"]);
 	}
 
-	ImGui::Begin("Stored instruments", NULL);
-		updateSavedInstruments(instruments, selectedStoredInstrument);
-	ImGui::End();
+	updateSavedInstruments(instruments, selectedStoredInstrument);
+	updateLoadedInstruments(instruments, selectedInstrument, loadDefaultInstrument);
 
-	ImGui::Begin("Loaded instruments");
-		updateLoadedInstruments(instruments, selectedInstrument, loadDefaultInstrument);
-	ImGui::End();
+	_nodeEditor.update(_selectedInstrument->master, _messages, _selectedInstrument);
+	_imPlot.update(audio, _messages);
 
-	ImGui::SameLine();
+	if (_windowsState.showLog)
+		_log.draw("Log", &_windowsState.showLog);
 
-	ImGui::Begin("Node editor");
-	if (_selectedInstrument)
-		_nodeEditor.update(_selectedInstrument->master, _messages);
-	ImGui::End();
+	if (_windowsState.showSettings)
+	{
+		ImGui::Begin("Settings", &_windowsState.showSettings);
 
-	ImGui::Begin("Audio buffer");
-		_imPlot.update(audio, _messages);
-	ImGui::End();
+		bool a;
+		ImGui::Checkbox("Use keyboard as MIDI input", &settings.useKeyboardAsInput);
+		ImGui::End();
+	}
 
 	endUpdate();
 }
@@ -92,12 +94,22 @@ void UI::updateMenuBar()
 
 			ImGui::EndMenu();
 		}
+		if (ImGui::BeginMenu("View"))
+		{
+			if (ImGui::MenuItem("Log", NULL, _windowsState.showLog))
+				_windowsState.showLog = !_windowsState.showLog;
+			if (ImGui::MenuItem("Settings", NULL, _windowsState.showSettings))
+				_windowsState.showSettings = !_windowsState.showSettings;
+
+			ImGui::EndMenu();
+		}
 		ImGui::EndMenuBar();
 	}
 }
 
 void UI::updateSavedInstruments(std::vector<Instrument>& instruments, std::string& selectedStoredInstrument)
 {
+	ImGui::Begin("Stored instruments");
 	ImGui::Text("Save new instrument");
 	ImGui::Separator();
 	static char instrumentFilename[128] = "";
@@ -132,10 +144,12 @@ void UI::updateSavedInstruments(std::vector<Instrument>& instruments, std::strin
 		if (ImGui::Selectable(buf,selectedStoredInstrument == it->first))
 			selectedStoredInstrument = it->first;
 	}
+	ImGui::End();
 }
 
 void UI::updateLoadedInstruments(std::vector<Instrument>& instruments, int& selectedInstrument, bool& loadDefaultInstrument)
 {
+	ImGui::Begin("Loaded instruments");
 	ImGui::Text("Loaded instruments");
 	ImGui::Separator();
 	if (ImGui::Button("Create new instrument"))
@@ -174,6 +188,7 @@ void UI::updateLoadedInstruments(std::vector<Instrument>& instruments, int& sele
 			}
 		}
 	}
+	ImGui::End();
 }
 
 void UI::processEventQueue()
