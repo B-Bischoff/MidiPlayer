@@ -38,6 +38,7 @@ UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 
 	// Windows state init
 	_windowsState.showLog = false;
+	_windowsState.showSettings = false;
 }
 
 void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings)
@@ -73,7 +74,6 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlay
 	{
 		ImGui::Begin("Settings", &_windowsState.showSettings);
 
-		bool a;
 		ImGui::Checkbox("Use keyboard as MIDI input", &settings.useKeyboardAsInput);
 		ImGui::End();
 	}

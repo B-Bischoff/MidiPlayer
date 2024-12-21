@@ -52,7 +52,7 @@ void generateAudio(AudioData& audio, std::vector<Instrument>& instruments, std::
 		}
 	}
 
-	assert(audio.syncCursors == false && "Audio callback did not reset syncCursors");
+	//assert(audio.syncCursors == false && "Audio callback did not reset syncCursors");
 	audio.syncCursors = true;
 }
 

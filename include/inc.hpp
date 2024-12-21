@@ -110,7 +110,7 @@ struct InputManager
 	PmEvent buffer[32];
 
 	// Keyboard data
-	KeyData keys[GLFW_KEY_LAST];
+	KeyData keys[GLFW_KEY_LAST] = {};
 	unsigned int octave = 4;
 	static const unsigned int maxOctave = 8;
 };
