@@ -16,6 +16,8 @@
 
 #include "UI/Log.hpp"
 
+#include <kiss_fft.h>
+
 struct WindowsState {
 	bool showLog;
 	bool showSettings;

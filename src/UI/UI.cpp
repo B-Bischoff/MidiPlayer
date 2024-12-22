@@ -78,6 +78,37 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlay
 		ImGui::End();
 	}
 
+	// Audio spectrum begin
+
+	ImGui::Begin("Audio Spectrum");
+
+	kiss_fft_cfg cfg = kiss_fft_alloc(audio.sampleRate, 0, nullptr, nullptr);
+	std::vector<kiss_fft_cpx> audioSpectrumArrayIn(audio.sampleRate, {0, 0});
+	std::vector<kiss_fft_cpx> audioSpectrumArrayOut(audio.sampleRate, {0, 0});
+
+	for (int i = 0; i < audio.sampleRate; i++)
+	{
+		const int bufferIndex = i * audio.channels;
+		audioSpectrumArrayIn[i].r = audio.buffer[bufferIndex];
+		if (audio.channels == 2)
+		{
+			audioSpectrumArrayIn[i].r += audio.buffer[bufferIndex + 1];
+			audioSpectrumArrayIn[i].r /= 2.0;
+		}
+	}
+	kiss_fft(cfg, audioSpectrumArrayIn.data(), audioSpectrumArrayOut.data());
+	kiss_fft_cleanup();
+	free(cfg);
+
+	std::vector<float> frequenciesMagnitude(audio.sampleRate / 2.0, 0.0f);
+	for (int i = 0; i < audio.sampleRate /  2.0; i++)
+		frequenciesMagnitude[i] = sqrt((audioSpectrumArrayOut[i].i *audioSpectrumArrayOut[i].i)+(audioSpectrumArrayOut[i].r*audioSpectrumArrayOut[i].r));
+	ImGui::PlotHistogram("Histogram", frequenciesMagnitude.data(), audio.sampleRate / 2.0, 0, NULL, 0.0f, 50.0f, ImVec2(500, 80.0f));
+
+	ImGui::End();
+
+	// Audio spectrum end
+
 	endUpdate();
 }
 
