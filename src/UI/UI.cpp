@@ -82,17 +82,28 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlay
 
 	ImGui::Begin("Audio Spectrum");
 
-	kiss_fft_cfg cfg = kiss_fft_alloc(audio.sampleRate, 0, nullptr, nullptr);
-	std::vector<kiss_fft_cpx> audioSpectrumArrayIn(audio.sampleRate, {0, 0});
-	std::vector<kiss_fft_cpx> audioSpectrumArrayOut(audio.sampleRate, {0, 0});
+	const int FFT_SIZE = 4096;
+	const int SAMPLE_NB = audio.getFramesPerUpdate();
+	kiss_fft_cfg cfg = kiss_fft_alloc(FFT_SIZE, 0, nullptr, nullptr);
+	std::vector<kiss_fft_cpx> audioSpectrumArrayIn(FFT_SIZE, {0, 0});
+	std::vector<kiss_fft_cpx> audioSpectrumArrayOut(FFT_SIZE, {0, 0});
 
-	for (int i = 0; i < audio.sampleRate; i++)
+	// Find in audio buffer, sound that will be played this update
+	// which is not directly at writeCursor because of the latency.
+	int dataStart = (int)audio.writeCursor - (int)(audio.getFramesPerUpdate() * audio.latency);
+
+	// Make sure index is in buffer
+	dataStart = dataStart % (int)audio.getBufferSize();
+	if (dataStart < 0) dataStart = (int)audio.getBufferSize() - abs(dataStart);
+
+	for (int i = 0; i < SAMPLE_NB; i++)
 	{
-		const int bufferIndex = i * audio.channels;
-		audioSpectrumArrayIn[i].r = audio.buffer[bufferIndex];
+		const int bufferIndex = (dataStart + i * audio.channels) % audio.getBufferSize();
+
+		audioSpectrumArrayIn[i].r = audio.buffer[bufferIndex] * (0.5 * (1 - cos(2 * M_PI * i / (SAMPLE_NB - 1))));
 		if (audio.channels == 2)
 		{
-			audioSpectrumArrayIn[i].r += audio.buffer[bufferIndex + 1];
+			audioSpectrumArrayIn[i].r += audio.buffer[bufferIndex + 1] * (0.5 * (1 - cos(2 * M_PI * i / (SAMPLE_NB - 1))));
 			audioSpectrumArrayIn[i].r /= 2.0;
 		}
 	}
@@ -100,10 +111,15 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlay
 	kiss_fft_cleanup();
 	free(cfg);
 
-	std::vector<float> frequenciesMagnitude(audio.sampleRate / 2.0, 0.0f);
-	for (int i = 0; i < audio.sampleRate /  2.0; i++)
-		frequenciesMagnitude[i] = sqrt((audioSpectrumArrayOut[i].i *audioSpectrumArrayOut[i].i)+(audioSpectrumArrayOut[i].r*audioSpectrumArrayOut[i].r));
-	ImGui::PlotHistogram("Histogram", frequenciesMagnitude.data(), audio.sampleRate / 2.0, 0, NULL, 0.0f, 50.0f, ImVec2(500, 80.0f));
+	std::vector<float> frequenciesMagnitude(FFT_SIZE, 0.0f); // Size is half the fft size because of the "mirror effect" at Nyquist frequency
+	for (int i = 0; i < FFT_SIZE / 2.0; i++)
+	{
+		const double& real = audioSpectrumArrayOut[i].r;
+		const double& imaginary = audioSpectrumArrayOut[i].i;
+		frequenciesMagnitude[i] = sqrt((imaginary * imaginary) + (real * real));
+	}
+
+	ImGui::PlotHistogram("Histogram", frequenciesMagnitude.data(), FFT_SIZE / 2, 0, NULL, 0.0f, 100.0f, ImGui::GetContentRegionAvail());
 
 	ImGui::End();
 
