@@ -111,7 +111,7 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlay
 	kiss_fft_cleanup();
 	free(cfg);
 
-	std::vector<float> frequenciesMagnitude(FFT_SIZE, 0.0f); // Size is half the fft size because of the "mirror effect" at Nyquist frequency
+	std::vector<double> frequenciesMagnitude(FFT_SIZE, 0.0f); // Size is half the fft size because of the "mirror effect" at Nyquist frequency
 	for (int i = 0; i < FFT_SIZE / 2.0; i++)
 	{
 		const double& real = audioSpectrumArrayOut[i].r;
@@ -119,7 +119,19 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlay
 		frequenciesMagnitude[i] = sqrt((imaginary * imaginary) + (real * real));
 	}
 
-	ImGui::PlotHistogram("Histogram", frequenciesMagnitude.data(), FFT_SIZE / 2, 0, NULL, 0.0f, 100.0f, ImGui::GetContentRegionAvail());
+	// Graph
+	double frequencyAxis[FFT_SIZE / 2];
+	for (int i = 0; i < FFT_SIZE / 2; i++)
+		frequencyAxis[i] = (double)audio.sampleRate / (double)FFT_SIZE  * i;
+
+	if (ImPlot::BeginPlot("Plot", ImVec2(ImGui::GetContentRegionAvail())))
+	{
+		ImPlot::SetupAxisScale(ImAxis_X1, ImPlotScale_Log10);
+		ImPlot::SetupAxisLimits(ImAxis_X1, 1.0, audio.sampleRate / 2.0);
+		ImPlot::SetupAxisLimits(ImAxis_Y1, 0.0, 10.0); // Set Y axis go from 0 to 10
+		ImPlot::PlotLine("Audio Spectrum", frequencyAxis, frequenciesMagnitude.data(), FFT_SIZE / 2);
+		ImPlot::EndPlot();
+	}
 
 	ImGui::End();
 
