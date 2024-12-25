@@ -3,6 +3,10 @@
 #include "AudioBackend/Components/Components.hpp"
 #include "AudioBackend/Instrument.hpp"
 
+#include <fstream>
+#include "minimp3.h"
+#include "minimp3_ex.h"
+
 void applyLowPassFilter(double& sample)
 {
 	static double lowPassState = 0.0;
@@ -24,6 +28,58 @@ void generateAudio(AudioData& audio, std::vector<Instrument>& instruments, std::
 		writeOneMoreFrame = TEST % complementaryFrame == 0;
 	}
 	TEST++;
+
+	static bool init = true;
+	static std::vector<int16_t> audio_buffer;
+	static int counter = 0;
+	if (init)
+	{
+		init = false;
+		const char* mp3_filename = "/home/brice/Downloads/doremifasollasido.mp3";
+
+		std::ifstream file(mp3_filename, std::ios::binary | std::ios::ate);
+		if (!file.is_open()) {
+			std::cerr << "Failed to open file: " << mp3_filename << std::endl;
+			exit(1);
+		}
+
+		// Read the file into a buffer
+		std::streamsize size = file.tellg();
+		file.seekg(0, std::ios::beg);
+		std::vector<uint8_t> mp3_data(size);
+		if (!file.read(reinterpret_cast<char*>(mp3_data.data()), size)) {
+			std::cerr << "Failed to read file: " << mp3_filename << std::endl;
+			exit(1);
+		}
+		file.close();
+
+		// Decode MP3 data
+		mp3dec_ex_t mp3_decoder;
+		if (mp3dec_ex_open_buf(&mp3_decoder, mp3_data.data(), mp3_data.size(), MP3D_SEEK_TO_SAMPLE) != 0) {
+			std::cerr << "Failed to initialize MP3 decoder" << std::endl;
+			exit(1);
+		}
+
+		Logger::log("HERE") << std::endl;
+
+		// Allocate buffer for decoded audio
+		audio_buffer.reserve(mp3_decoder.samples);
+		size_t samples_decoded = mp3dec_ex_read(&mp3_decoder, audio_buffer.data(), mp3_decoder.samples);
+		if (samples_decoded == 0) {
+			std::cerr << "Failed to decode MP3 data" << std::endl;
+			mp3dec_ex_close(&mp3_decoder);
+			exit(1);
+		}
+
+		// Print information about the audio
+		std::cout << "Decoded " << samples_decoded << " samples from " << mp3_filename << std::endl;
+		std::cout << "Sample rate: " << mp3_decoder.info.hz << " Hz" << std::endl;
+		std::cout << "Channels: " << mp3_decoder.info.channels << std::endl;
+		Logger::log("test") << audio_buffer.size() << std::endl;
+
+		// Cleanup
+		mp3dec_ex_close(&mp3_decoder);
+	}
 	//std::cout << writeOneMoreFrame << std::endl;
 	//for (int i = 0; i < audio.sampleRate / audio.targetFPS + (int)writeOneMoreFrame; i++)
 
@@ -47,7 +103,8 @@ void generateAudio(AudioData& audio, std::vector<Instrument>& instruments, std::
 
 		for (int j = 0; j < audio.channels; j++)
 		{
-			audio.buffer[audio.writeCursor] = value;
+			//audio.buffer[audio.writeCursor] = value;
+			audio.buffer[audio.writeCursor] = (float)audio_buffer[counter++] / 32767.0;
 			audio.incrementWriteCursor();
 		}
 	}
