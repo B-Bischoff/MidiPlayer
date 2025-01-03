@@ -1,7 +1,10 @@
 #pragma once
 
+#include "inc.hpp"
 #include <unordered_map>
 #include <queue>
+#include <list>
+#include <fstream>
 #include <assert.h>
 
 #include "Logger.hpp"
@@ -11,7 +14,7 @@
 using id = unsigned int;
 
 template<typename T>
-class IDManager {
+class IDManager_ {
 private:
 	std::unordered_map<id, T> data;
 	std::queue<id> freeIds;
@@ -59,15 +62,31 @@ public:
 		return it->second;
 	}
 
-	bool exists(const id& id)
+	bool exists(const id& id) const
 	{
 		return data.find(id) != data.end();
+	}
+
+	std::list<id> getUsedIds() const
+	{
+		std::list<id> usedIds;
+		for (const auto& elem : data)
+			usedIds.push_back(elem.first);
+
+		return usedIds;
 	}
 };
 
 class AudioFileManager {
 private:
-	IDManager<AudioFile> _audioFiles;
+	static IDManager_<AudioFile> _audioFiles;
+
+	static AudioFile extractMP3AudioData(std::ifstream& file, const std::string& filename);
 
 public:
+	static const AudioFile& getAudioFile(const id& id) ;
+	static void removeAudioFile(const id& id) {
+		// Free audio data
+	}
+	static id addAudioFile(const fs::path& filepath);
 };

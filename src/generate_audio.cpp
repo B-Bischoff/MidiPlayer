@@ -4,8 +4,6 @@
 #include "AudioBackend/Instrument.hpp"
 
 #include <fstream>
-#include "minimp3.h"
-#include "minimp3_ex.h"
 
 void applyLowPassFilter(double& sample)
 {
@@ -35,7 +33,7 @@ void generateAudio(AudioData& audio, std::vector<Instrument>& instruments, std::
 	if (init)
 	{
 		init = false;
-		const char* mp3_filename = "/home/brice/Downloads/doremifasollasido.mp3";
+		const char* mp3_filename = "/home/brice/Downloads/Do Re Mi Fa So La Ti Do - Piano.mp3";
 
 		std::ifstream file(mp3_filename, std::ios::binary | std::ios::ate);
 		if (!file.is_open()) {
@@ -103,8 +101,8 @@ void generateAudio(AudioData& audio, std::vector<Instrument>& instruments, std::
 
 		for (int j = 0; j < audio.channels; j++)
 		{
-			//audio.buffer[audio.writeCursor] = value;
-			audio.buffer[audio.writeCursor] = (float)audio_buffer[counter++] / 32767.0;
+			audio.buffer[audio.writeCursor] = value;
+			//audio.buffer[audio.writeCursor] = (float)audio_buffer[counter++] / 32767.0;
 			audio.incrementWriteCursor();
 		}
 	}

@@ -14,7 +14,7 @@
 
 namespace ed = ax::NodeEditor;
 
-enum UI_NodeType { NodeUI, MasterUI, NumberUI, OscUI, ADSRUI, KbFreqUI, MultUI, LowPassUI, CombFilterUI};
+enum UI_NodeType { NodeUI, MasterUI, NumberUI, OscUI, ADSRUI, KbFreqUI, MultUI, LowPassUI, CombFilterUI, FilePlayerUI};
 
 #define MASTER_NODE_ID 1
 
@@ -547,6 +547,17 @@ struct CombFilterNode : public Node {
 	}
 
 	AudioComponent* convertNodeToAudioComponent() const override { return new CombFilter; }
+};
+
+struct FilePlayerNode : public Node {
+	FilePlayerNode(IDManager* idManager = nullptr)
+	{
+		id = getId(idManager);
+		name = "FilePlayer";
+		type = FilePlayerUI;
+
+		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
+	}
 };
 
 // Register every Node child classes

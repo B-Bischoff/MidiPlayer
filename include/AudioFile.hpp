@@ -7,7 +7,6 @@ struct AudioFile {
 
 	unsigned int channels;
 	unsigned int sampleRate;
-
 	unsigned int dataLength;
-	char* data;
+	short* data;
 };

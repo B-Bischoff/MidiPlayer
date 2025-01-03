@@ -4,10 +4,13 @@
 #include <filesystem>
 #include <unistd.h>
 
+#define MINIMP3_IMPLEMENTATION
+
 #include "inc.hpp"
 
 #include "UI/UI.hpp"
 #include "AudioBackend/Instrument.hpp"
+#include "AudioFileManager.hpp"
 
 static void handleFrameProcessTime(const time_point& startTime, const std::chrono::duration<double>& targetFrameDuration, AudioData& audio);
 

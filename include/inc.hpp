@@ -1,7 +1,8 @@
 #pragma once
 
 #define GLEW_STATIC
-#define MINIMP3_IMPLEMENTATION
+#include "minimp3.h"
+#include "minimp3_ex.h"
 
 // [TODO] Compile from source if not installed
 #include <GL/glew.h>

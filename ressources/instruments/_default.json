@@ -1,0 +1,220 @@
+{
+    "node": {
+        "polymorphic_id": 2147483649,
+        "polymorphic_name": "MasterNode",
+        "ptr_wrapper": {
+            "id": 2147483649,
+            "data": {
+                "node_id": 1,
+                "node_name": "Master",
+                "node_type": 1,
+                "node_inputs": [
+                    {
+                        "pin_id": 2,
+                        "node_id": 1,
+                        "pin_name": "> input",
+                        "pin_kind": 1,
+                        "pin_input_id": 0,
+                        "pin_mode": 0
+                    }
+                ],
+                "node_outputs": [],
+                "node_hidden": false
+            }
+        }
+    },
+    "node_position": {
+        "x": 367.0,
+        "y": -16.0
+    },
+    "node": {
+        "polymorphic_id": 2147483650,
+        "polymorphic_name": "OscNode",
+        "ptr_wrapper": {
+            "id": 2147483650,
+            "data": {
+                "base_node": {
+                    "node_id": 3,
+                    "node_name": "Osc",
+                    "node_type": 3,
+                    "node_inputs": [
+                        {
+                            "pin_id": 4,
+                            "node_id": 3,
+                            "pin_name": "> freq",
+                            "pin_kind": 1,
+                            "pin_input_id": 0,
+                            "pin_mode": 1
+                        },
+                        {
+                            "pin_id": 5,
+                            "node_id": 3,
+                            "pin_name": "> phase",
+                            "pin_kind": 1,
+                            "pin_input_id": 1,
+                            "pin_mode": 0
+                        },
+                        {
+                            "pin_id": 6,
+                            "node_id": 3,
+                            "pin_name": "> LFO Hz",
+                            "pin_kind": 1,
+                            "pin_input_id": 2,
+                            "pin_mode": 0
+                        },
+                        {
+                            "pin_id": 7,
+                            "node_id": 3,
+                            "pin_name": "> LFO Amplitude",
+                            "pin_kind": 1,
+                            "pin_input_id": 3,
+                            "pin_mode": 0
+                        }
+                    ],
+                    "node_outputs": [
+                        {
+                            "pin_id": 8,
+                            "node_id": 3,
+                            "pin_name": "output >",
+                            "pin_kind": 0,
+                            "pin_input_id": -1,
+                            "pin_mode": 0
+                        }
+                    ],
+                    "node_hidden": false
+                },
+                "oscillator_type": 0
+            }
+        }
+    },
+    "node_position": {
+        "x": 15.0,
+        "y": -17.0
+    },
+    "node": {
+        "polymorphic_id": 2147483651,
+        "polymorphic_name": "MultNode",
+        "ptr_wrapper": {
+            "id": 2147483651,
+            "data": {
+                "node_id": 11,
+                "node_name": "Multiplier",
+                "node_type": 6,
+                "node_inputs": [
+                    {
+                        "pin_id": 12,
+                        "node_id": 11,
+                        "pin_name": "> input A",
+                        "pin_kind": 1,
+                        "pin_input_id": 0,
+                        "pin_mode": 0
+                    },
+                    {
+                        "pin_id": 13,
+                        "node_id": 11,
+                        "pin_name": "> input B",
+                        "pin_kind": 1,
+                        "pin_input_id": 1,
+                        "pin_mode": 1
+                    }
+                ],
+                "node_outputs": [
+                    {
+                        "pin_id": 14,
+                        "node_id": 11,
+                        "pin_name": "output >",
+                        "pin_kind": 0,
+                        "pin_input_id": -1,
+                        "pin_mode": 0
+                    }
+                ],
+                "node_hidden": false
+            }
+        }
+    },
+    "node_position": {
+        "x": 213.0,
+        "y": -16.0
+    },
+    "node": {
+        "polymorphic_id": 2147483652,
+        "polymorphic_name": "NumberNode",
+        "ptr_wrapper": {
+            "id": 2147483652,
+            "data": {
+                "base_node": {
+                    "node_id": 9,
+                    "node_name": "Number",
+                    "node_type": 2,
+                    "node_inputs": [],
+                    "node_outputs": [
+                        {
+                            "pin_id": 10,
+                            "node_id": 9,
+                            "pin_name": "output >",
+                            "pin_kind": 0,
+                            "pin_input_id": -1,
+                            "pin_mode": 0
+                        }
+                    ],
+                    "node_hidden": true
+                },
+                "number_value": 440.0
+            }
+        }
+    },
+    "node_position": {
+        "x": 3.4028234663852887e38,
+        "y": 3.4028234663852887e38
+    },
+    "node": {
+        "polymorphic_id": 4,
+        "ptr_wrapper": {
+            "id": 2147483653,
+            "data": {
+                "base_node": {
+                    "node_id": 16,
+                    "node_name": "Number",
+                    "node_type": 2,
+                    "node_inputs": [],
+                    "node_outputs": [
+                        {
+                            "pin_id": 17,
+                            "node_id": 16,
+                            "pin_name": "output >",
+                            "pin_kind": 0,
+                            "pin_input_id": -1,
+                            "pin_mode": 0
+                        }
+                    ],
+                    "node_hidden": true
+                },
+                "number_value": 0.11999999731779099
+            }
+        }
+    },
+    "node_position": {
+        "x": 3.4028234663852887e38,
+        "y": 3.4028234663852887e38
+    },
+    "link": {
+        "link_id": 19,
+        "link_input_id": 12,
+        "link_output_id": 8
+    },
+    "link": {
+        "link_id": 20,
+        "link_input_id": 2,
+        "link_output_id": 14
+    },
+    "link": {
+        "link_id": 15,
+        "link_input_id": 4,
+        "link_output_id": 10
+    },
+    "link": {
+        "link_id": 18,
+        "link_input_id": 13,
+        "link_output_id": 17
+    }
+}

@@ -10,6 +10,8 @@
 #include "ImGuiNotify.hpp"
 #include "fa-solid-900.h"
 
+#include "imfilebrowser.h"
+
 #include "AudioBackend/Instrument.hpp"
 
 #include <map>

@@ -177,6 +177,25 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlay
 		ImGui::End();
 	}
 
+	// File browsing tests
+
+	static ImGui::FileBrowser fileDialog;
+	fileDialog.SetTitle("title");
+	fileDialog.SetTypeFilters({ ".mp3" });
+	static bool testinit = false;
+	if (testinit)
+	{
+		fileDialog.Open();
+		testinit = false;
+	}
+
+	fileDialog.Display();
+	if (fileDialog.HasSelected())
+	{
+		Logger::log("ImDisplay", Debug) << "Selected: " << fileDialog.GetSelected().string() << std::endl;
+		fileDialog.ClearSelected();
+	}
+
 	endUpdate();
 }
 

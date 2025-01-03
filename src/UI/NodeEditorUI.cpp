@@ -8,6 +8,7 @@ NodeEditorUI::NodeEditorUI()
 	_UIModified = false;
 	_navigateToContent = false;
 
+	// [TODO] The node string can be retrieved from the Node class
 	_nodeManager.registerNode<MasterNode>("Master");
 	_nodeManager.registerNode<NumberNode>("Number");
 	_nodeManager.registerNode<OscNode>("Oscillator");
@@ -16,6 +17,7 @@ NodeEditorUI::NodeEditorUI()
 	_nodeManager.registerNode<MultNode>("Multiply");
 	_nodeManager.registerNode<LowPassFilterNode>("Low Pass Filter");
 	_nodeManager.registerNode<CombFilterNode>("Comb Filter");
+	_nodeManager.registerNode<FilePlayerNode>("FilePlayer");
 
 	_nodeManager.addNode<MasterNode>(_idManager);
 
