@@ -2,7 +2,7 @@
 #include "imgui.h"
 
 UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
-	: _imPlot(audio), _path(path), _selectedInstrument(nullptr)
+	: _imPlot(audio), _audioSpectrum(audio.getFramesPerUpdate(), 4096), _path(path), _selectedInstrument(nullptr)
 {
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 	const char* glsl_version = "#version 100";
@@ -66,6 +66,7 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlay
 
 	_nodeEditor.update(_selectedInstrument->master, _messages, _selectedInstrument);
 	_imPlot.update(audio, _messages);
+	_audioSpectrum.update(audio);
 
 	if (_windowsState.showLog)
 		_log.draw("Log", &_windowsState.showLog);
@@ -77,65 +78,6 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlay
 		ImGui::Checkbox("Use keyboard as MIDI input", &settings.useKeyboardAsInput);
 		ImGui::End();
 	}
-
-	// Audio spectrum begin
-
-	ImGui::Begin("Audio Spectrum");
-
-	const int FFT_SIZE = 4096;
-	const int SAMPLE_NB = audio.getFramesPerUpdate();
-	kiss_fft_cfg cfg = kiss_fft_alloc(FFT_SIZE, 0, nullptr, nullptr);
-	std::vector<kiss_fft_cpx> audioSpectrumArrayIn(FFT_SIZE, {0, 0});
-	std::vector<kiss_fft_cpx> audioSpectrumArrayOut(FFT_SIZE, {0, 0});
-
-	// Find in audio buffer, sound that will be played this update
-	// which is not directly at writeCursor because of the latency.
-	int dataStart = (int)audio.writeCursor - (int)(audio.getFramesPerUpdate() * audio.latency);
-
-	// Make sure index is in buffer
-	dataStart = dataStart % (int)audio.getBufferSize();
-	if (dataStart < 0) dataStart = (int)audio.getBufferSize() - abs(dataStart);
-
-	for (int i = 0; i < SAMPLE_NB; i++)
-	{
-		const int bufferIndex = (dataStart + i * audio.channels) % audio.getBufferSize();
-
-		audioSpectrumArrayIn[i].r = audio.buffer[bufferIndex] * (0.5 * (1 - cos(2 * M_PI * i / (SAMPLE_NB - 1))));
-		if (audio.channels == 2)
-		{
-			audioSpectrumArrayIn[i].r += audio.buffer[bufferIndex + 1] * (0.5 * (1 - cos(2 * M_PI * i / (SAMPLE_NB - 1))));
-			audioSpectrumArrayIn[i].r /= 2.0;
-		}
-	}
-	kiss_fft(cfg, audioSpectrumArrayIn.data(), audioSpectrumArrayOut.data());
-	kiss_fft_cleanup();
-	free(cfg);
-
-	std::vector<double> frequenciesMagnitude(FFT_SIZE, 0.0f); // Size is half the fft size because of the "mirror effect" at Nyquist frequency
-	for (int i = 0; i < FFT_SIZE / 2.0; i++)
-	{
-		const double& real = audioSpectrumArrayOut[i].r;
-		const double& imaginary = audioSpectrumArrayOut[i].i;
-		frequenciesMagnitude[i] = sqrt((imaginary * imaginary) + (real * real));
-	}
-
-	// Graph
-	double frequencyAxis[FFT_SIZE / 2];
-	for (int i = 0; i < FFT_SIZE / 2; i++)
-		frequencyAxis[i] = (double)audio.sampleRate / (double)FFT_SIZE  * i;
-
-	if (ImPlot::BeginPlot("Plot", ImVec2(ImGui::GetContentRegionAvail())))
-	{
-		ImPlot::SetupAxisScale(ImAxis_X1, ImPlotScale_Log10);
-		ImPlot::SetupAxisLimits(ImAxis_X1, 1.0, audio.sampleRate / 2.0);
-		ImPlot::SetupAxisLimits(ImAxis_Y1, 0.0, 10.0); // Set Y axis go from 0 to 10
-		ImPlot::PlotLine("Audio Spectrum", frequencyAxis, frequenciesMagnitude.data(), FFT_SIZE / 2);
-		ImPlot::EndPlot();
-	}
-
-	ImGui::End();
-
-	// Audio spectrum end
 
 	endUpdate();
 }

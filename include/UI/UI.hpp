@@ -6,6 +6,7 @@
 
 #include "ImPlotUI.hpp"
 #include "NodeEditorUI.hpp"
+#include "AudioSpectrum.hpp"
 
 #include "AudioBackend/Instrument.hpp"
 
@@ -15,8 +16,6 @@
 #include "Message.hpp"
 
 #include "UI/Log.hpp"
-
-#include <kiss_fft.h>
 
 struct WindowsState {
 	bool showLog;
@@ -28,6 +27,7 @@ private:
 	ImGuiContext* _context;
 	ImPlotUI _imPlot;
 	NodeEditorUI _nodeEditor;
+	AudioSpectrum _audioSpectrum;
 	const ApplicationPath& _path;
 
 	Log _log;

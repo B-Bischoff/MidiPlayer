@@ -80,7 +80,6 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/rtaudio)
 add_subdirectory(portmidi)
 
 # KISSFFT
-# set(KISSFFT_PKGCONFIG "rtaudio_uninstall" CACHE STRING "Name of 'uninstall' build target" FORCE)
 set(KISSFFT_TEST OFF CACHE BOOL "" FORCE)
 set(KISSFFT_PKGCONFIG OFF CACHE BOOL "" FORCE)
 set(KISSFFT_TOOLS OFF CACHE BOOL "" FORCE)
