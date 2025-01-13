@@ -6,6 +6,7 @@
 
 #include "ImPlotUI.hpp"
 #include "NodeEditorUI.hpp"
+#include "AudioSpectrum.hpp"
 
 #include "AudioBackend/Instrument.hpp"
 
@@ -26,6 +27,7 @@ private:
 	ImGuiContext* _context;
 	ImPlotUI _imPlot;
 	NodeEditorUI _nodeEditor;
+	AudioSpectrum _audioSpectrum;
 	const ApplicationPath& _path;
 
 	Log _log;

@@ -2,7 +2,7 @@
 #include "imgui.h"
 
 UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
-	: _imPlot(audio), _path(path), _selectedInstrument(nullptr)
+	: _imPlot(audio), _audioSpectrum(audio.getFramesPerUpdate(), 4096), _path(path), _selectedInstrument(nullptr)
 {
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 	const char* glsl_version = "#version 100";
@@ -38,6 +38,7 @@ UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 
 	// Windows state init
 	_windowsState.showLog = false;
+	_windowsState.showSettings = false;
 }
 
 void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings)
@@ -65,6 +66,7 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlay
 
 	_nodeEditor.update(_selectedInstrument->master, _messages, _selectedInstrument);
 	_imPlot.update(audio, _messages);
+	_audioSpectrum.update(audio);
 
 	if (_windowsState.showLog)
 		_log.draw("Log", &_windowsState.showLog);
@@ -73,7 +75,6 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlay
 	{
 		ImGui::Begin("Settings", &_windowsState.showSettings);
 
-		bool a;
 		ImGui::Checkbox("Use keyboard as MIDI input", &settings.useKeyboardAsInput);
 		ImGui::End();
 	}

@@ -28,7 +28,12 @@ void initInput(InputManager& inputManger) // [TODO] Should this be in a construc
 #endif
 	}
 
-	Pm_OpenInput(&inputManger.midiStream, 3, NULL, 512, NULL, NULL);
+	PmError errnum = Pm_OpenInput(&inputManger.midiStream, 1, NULL, 512, NULL, NULL);
+	if (errnum != pmNoError)
+	{
+		Logger::log("PortMidi", Error) << Pm_GetErrorText(errnum) << std::endl;
+		exit(1);
+	}
 }
 
 void handleInput(GLFWwindow* window, const MidiPlayerSettings& settings, InputManager& inputManager, std::vector<MidiInfo>& keyPressed, double time)

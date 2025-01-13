@@ -78,3 +78,9 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/rtaudio)
 
 #PORTMIDI
 add_subdirectory(portmidi)
+
+# KISSFFT
+set(KISSFFT_TEST OFF CACHE BOOL "" FORCE)
+set(KISSFFT_PKGCONFIG OFF CACHE BOOL "" FORCE)
+set(KISSFFT_TOOLS OFF CACHE BOOL "" FORCE)
+add_subdirectory(kissfft)

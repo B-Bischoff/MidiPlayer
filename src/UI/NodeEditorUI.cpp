@@ -14,7 +14,9 @@ NodeEditorUI::NodeEditorUI()
 
 void NodeEditorUI::update(Master& master, std::queue<Message>& messages, Instrument* selectedInstrument)
 {
-	ImGui::Begin("Node editor");
+	if (!ImGui::Begin("Node editor"))
+		return;
+
 	if (!selectedInstrument)
 	{
 		// [TODO] print a warning message ?
@@ -167,27 +169,27 @@ void NodeEditorUI::handleNodeCreation()
 
 void NodeEditorUI::handleLinkCreation(Master& master)
 {
-	if (ed::BeginCreate())
+	if (!ed::BeginCreate())
+		return;
+
+	ed::PinId inputPinId, outputPinId;
+	if (ed::QueryNewLink(&inputPinId, &outputPinId))
 	{
-		ed::PinId inputPinId, outputPinId;
-		if (ed::QueryNewLink(&inputPinId, &outputPinId))
+		Pin& inputPin = _nodeManager.findPinById(inputPinId);
+		Pin& outputPin = _nodeManager.findPinById(outputPinId);
+
+		// Do not accept link on pin using slider
+		if (inputPin.mode == Pin::Mode::Slider || outputPin.mode == Pin::Mode::Slider)
+			ed::RejectNewItem();
+		else if (ed::AcceptNewItem())
 		{
-			Pin& inputPin = _nodeManager.findPinById(inputPinId);
-			Pin& outputPin = _nodeManager.findPinById(outputPinId);
-
-			// Do not accept link on pin using slider
-			if (inputPin.mode == Pin::Mode::Slider || outputPin.mode == Pin::Mode::Slider)
-				ed::RejectNewItem();
-			else if (ed::AcceptNewItem())
-			{
-				_linkManager.addLink(_idManager, _nodeManager, inputPinId, outputPinId);
-				_UIModified = true;
-			}
-
-			// You may choose to reject connection between these nodes
-			// by calling ed::RejectNewItem(). This will allow editor to give
-			// visual feedback by changing link thickness and color.
+			_linkManager.addLink(_idManager, _nodeManager, inputPinId, outputPinId);
+			_UIModified = true;
 		}
+
+		// You may choose to reject connection between these nodes
+		// by calling ed::RejectNewItem(). This will allow editor to give
+		// visual feedback by changing link thickness and color.
 	}
 	ed::EndCreate();
 }
