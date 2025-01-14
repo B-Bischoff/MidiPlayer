@@ -130,6 +130,7 @@ void NodeManager::setAudioPlayerNodeFileId(const id fileId)
 			{
 				filePlayerNode->fileId = fileId;
 				filePlayerNode->wantsToLoadFile = false;
+				Node::propertyChanged = true;
 			}
 		}
 	}

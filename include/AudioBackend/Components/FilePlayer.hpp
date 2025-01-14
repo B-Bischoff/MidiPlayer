@@ -13,9 +13,19 @@ struct AudioPlayer : public AudioComponent {
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
 		// [TODO] handle mono/stereo
+
+		if (fileId == 0)
+			return 0;
+
 		const AudioFile& audioFile = AudioFileManager::getAudioFile(fileId);
 
-		const float value = audioFile.data[readCursor++];
+		const float value = audioFile.data[readCursor];
+		readCursor++;
+		readCursor++;
+
+		if (readCursor >= audioFile.dataLength - 1)
+			readCursor = 0;
+
 		return value / (float)std::numeric_limits<short>::max();
 	}
 };
