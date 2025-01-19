@@ -9,6 +9,15 @@ NodeEditorUI::NodeEditorUI()
 	_UIModified = false;
 	_navigateToContent = false;
 
+	_nodeManager.registerNode<MasterNode>("Master");
+	_nodeManager.registerNode<NumberNode>("Number");
+	_nodeManager.registerNode<OscNode>("Oscillator");
+	_nodeManager.registerNode<ADSR_Node>("ADSR Envelope");
+	_nodeManager.registerNode<KeyboardFrequencyNode>("Keyboard Frequency");
+	_nodeManager.registerNode<MultNode>("Multiply");
+	_nodeManager.registerNode<LowPassFilterNode>("Low Pass Filter");
+	_nodeManager.registerNode<CombFilterNode>("Comb Filter");
+
 	_nodeManager.addNode<MasterNode>(_idManager);
 }
 
@@ -80,20 +89,15 @@ void NodeEditorUI::handleNodeCreation()
 	{
 		std::shared_ptr<Node> node = nullptr;
 
-		if (ImGui::MenuItem("Number"))
-			node = _nodeManager.addNode<NumberNode>(_idManager);
-		if (ImGui::MenuItem("Oscillator"))
-			node = _nodeManager.addNode<OscNode>(_idManager);
-		if (ImGui::MenuItem("ADSR Envelope"))
-			node = _nodeManager.addNode<ADSR_Node>(_idManager);
-		if (ImGui::MenuItem("Keyboard Frequency"))
-			node = _nodeManager.addNode<KeyboardFrequencyNode>(_idManager);
-		if (ImGui::MenuItem("Multiply"))
-			node = _nodeManager.addNode<MultNode>(_idManager);
-		if (ImGui::MenuItem("Low Pass Filter"))
-			node = _nodeManager.addNode<LowPassFilterNode>(_idManager);
-		if (ImGui::MenuItem("Comb Filter"))
-			node = _nodeManager.addNode<CombFilterNode>(_idManager);
+		// Loop over all the registered node and print their name to the menu item
+		for (const auto& info : _nodeManager._nodesInfo)
+		{
+			// Do not allow another master node creation
+			if (info.second.name == "Master") continue;
+
+			if (ImGui::MenuItem(info.second.name.c_str()))
+				node = _nodeManager.addNode(info.second.instantiateFunction(&_idManager));
+		}
 
 		if (node)
 		{
