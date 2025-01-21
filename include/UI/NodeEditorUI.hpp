@@ -79,6 +79,7 @@ private:
 
 public:
 	NodeEditorUI();
+	~NodeEditorUI();
 
 	void update(Master& master, std::queue<Message>& messages, Instrument* selectedInstrument = nullptr);
 

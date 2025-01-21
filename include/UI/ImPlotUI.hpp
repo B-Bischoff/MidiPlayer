@@ -8,6 +8,7 @@
 
 class ImPlotUI {
 private:
+	ImPlotContext* _context;
 	float* _timeArray;
 
 	// Envelope editor
@@ -17,6 +18,8 @@ private:
 
 public:
 	ImPlotUI(AudioData& audio);
+	~ImPlotUI();
+
 	void update(AudioData& audio, std::queue<Message>& messages);
 	void setPrintEnvelopeEditor(bool value, Vec2* controlPoints = nullptr, unsigned int nodeId = 0);
 	unsigned int getNodeId() const;

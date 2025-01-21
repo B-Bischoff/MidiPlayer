@@ -21,6 +21,11 @@ NodeEditorUI::NodeEditorUI()
 	_nodeManager.addNode<MasterNode>(_idManager);
 }
 
+NodeEditorUI::~NodeEditorUI()
+{
+	ed::DestroyEditor(_context);
+}
+
 void NodeEditorUI::update(Master& master, std::queue<Message>& messages, Instrument* selectedInstrument)
 {
 	if (!ImGui::Begin("Node editor"))

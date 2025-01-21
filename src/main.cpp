@@ -138,12 +138,6 @@ int main(int argc, char* argv[])
 
 	double t = 0.0;
 
-	float* timeArray = new float[audio.getBufferSize()];
-	for (int i = 0; i < audio.getBufferSize(); i++)
-		timeArray[i] = 1.0 / (double)audio.sampleRate * i;
-	bool copyAudioBuffer = true;
-	float* bufferCopy = new float[audio.getBufferSize()];
-
 	ImVector<LinkInfo> links;
 	std::vector<Instrument> instruments;
 
@@ -179,12 +173,13 @@ int main(int argc, char* argv[])
 		handleFrameProcessTime(startTime, targetFrameDuration, audio);
 	}
 
+	delete [] audio.buffer;
+
 	// [TODO] should this be in destructor ?
 	Pm_Close(inputManager.midiStream);
 	Pm_Terminate();
 	// [TODO] clean up audio
 
-	ImPlot::DestroyContext();
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
