@@ -78,39 +78,12 @@ void createAudioComponentsFromNodes(AudioComponent& component, Node& outputNode,
 
 AudioComponent* UIToBackendAdapter::allocateAudioComponent(Node& node)
 {
-	UI_NodeType type = node.type;
-
-	switch (type)
+	AudioComponent* audioComponent = node.convertNodeToAudioComponent();
+	if (audioComponent == nullptr)
 	{
-		case NodeUI: break;
-		case MasterUI: break;
-		case NumberUI: {
-			NumberNode* numberNode = dynamic_cast<NumberNode*>(&node);
-			assert(numberNode);
-			Number* number = new Number(); // [TODO] create adequate constructor
-			number->number = numberNode->value;
-			return number;
-		}
-		case OscUI: {
-			OscNode* oscUI = dynamic_cast<OscNode*>(&node);
-			assert(oscUI);
-			Oscillator* osc = new Oscillator();
-			osc->type = oscUI->oscType;
-			return osc;
-		}
-		case ADSRUI: {
-			ADSR_Node* adsrNode = dynamic_cast<ADSR_Node*>(&node);
-			assert(adsrNode);
-			ADSR* adsr = new ADSR();
-			for (int i = 0; i < 8; i++)
-				adsr->reference.controlPoints[i] = adsrNode->controlPoints[i];
-			return adsr;
-		}
-		case KbFreqUI: return new KeyboardFrequency();
-		case MultUI: return new Multiplier();
-		case LowPassUI: return new LowPassFilter();
-		case CombFilterUI: return new CombFilter();
+		Logger::log("UIToBackendAdapter", Error) << "Failed audio component allocation" << std::endl;
+		exit(1);
 	}
-	assert(0 && "Invalid type");
-	return nullptr;
+
+	return audioComponent;
 }

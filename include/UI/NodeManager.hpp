@@ -83,7 +83,6 @@ void NodeManager::registerNode(const std::string& nodeName) {
 
 	// Register instantion function of this new node type
 	info.instantiateFunction = [](IDManager* idManager) -> Node* {
-		Logger::log("instantiate") << typeid(T).name() << std::endl;
 		return new T(idManager);
 	};
 	info.name = nodeName;

@@ -8,6 +8,8 @@
 #include "UI/Message.hpp"
 #include "MidiMath.hpp"
 
+#include "AudioBackend/Components/Components.hpp"
+
 #include "cereal/types/polymorphic.hpp"
 
 namespace ed = ax::NodeEditor;
@@ -74,6 +76,8 @@ struct Node
 	{ }
 
 	virtual ~Node() {}
+
+	virtual AudioComponent* convertNodeToAudioComponent() = 0;
 
 	virtual void render(std::queue<Message>& messages)
 	{
@@ -214,6 +218,8 @@ struct MasterNode : public Node
 
 		inputs.push_back(createPin(idManager, "> input", PinKind::Input));
 	}
+
+	AudioComponent* convertNodeToAudioComponent() override { return new Master; }
 };
 
 struct NumberNode : public Node
@@ -228,6 +234,13 @@ struct NumberNode : public Node
 
 		value = 0.0f;
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
+	}
+
+	AudioComponent* convertNodeToAudioComponent() override
+	{
+		Number* audioComponent = new Number;
+		audioComponent->number = value;
+		return audioComponent;
 	}
 
 	void render(std::queue<Message>& messages) override
@@ -274,6 +287,13 @@ struct OscNode : public Node
 		inputs.push_back(createPin(idManager, "> LFO Hz", PinKind::Input));
 		inputs.push_back(createPin(idManager, "> LFO Amplitude", PinKind::Input));
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
+	}
+
+	AudioComponent* convertNodeToAudioComponent() override
+	{
+		Oscillator* audioComponent = new Oscillator;
+		audioComponent->type = oscType;
+		return audioComponent;
 	}
 
 	template<class Archive>
@@ -350,6 +370,14 @@ struct ADSR_Node : public Node {
 		inputs.push_back(createPin(idManager, "> trigger", PinKind::Input));
 	}
 
+	AudioComponent* convertNodeToAudioComponent() override
+	{
+		ADSR* audioComponent = new ADSR;
+		for (int i = 0; i < 8; i++)
+			audioComponent->reference.controlPoints[i] = controlPoints[i];
+		return audioComponent;
+	}
+
 	void render(std::queue<Message>& messages) override
 	{
 		Node::startRender();
@@ -381,6 +409,8 @@ struct KeyboardFrequencyNode : public Node {
 
 		outputs.push_back(createPin(idManager, "frequency >", PinKind::Output));
 	}
+
+	AudioComponent* convertNodeToAudioComponent() override { return new KeyboardFrequency; }
 };
 
 struct MultNode : public Node {
@@ -394,6 +424,8 @@ struct MultNode : public Node {
 		inputs.push_back(createPin(idManager, "> input B", PinKind::Input));
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
+
+	AudioComponent* convertNodeToAudioComponent() override { return new Multiplier; }
 };
 
 struct LowPassFilterNode : public Node {
@@ -406,6 +438,8 @@ struct LowPassFilterNode : public Node {
 		inputs.push_back(createPin(idManager, "> alpha", PinKind::Input));
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
+
+	AudioComponent* convertNodeToAudioComponent() override { return new LowPassFilter; }
 };
 
 struct CombFilterNode : public Node {
@@ -420,6 +454,8 @@ struct CombFilterNode : public Node {
 		inputs.push_back(createPin(idManager, "> feedback", PinKind::Input));
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
+
+	AudioComponent* convertNodeToAudioComponent() override { return new CombFilter; }
 };
 
 // Register every Node child classes
