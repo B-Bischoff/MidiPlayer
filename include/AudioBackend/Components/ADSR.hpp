@@ -13,36 +13,20 @@ private:
 		bool playedThisFrame = false;
 	};
 public:
+	enum Inputs { input, trigger };
 
 	sEnvelopeADSR reference; // Used to store envelope settings value
 	std::vector<EnvelopeInfo> envelopes;
-	std::vector<AudioComponent*> inputs;
-	std::vector<AudioComponent*> trigger;
 
-	Components getInputs() override
-	{
-		return combineVectorsToForwardList(inputs, trigger);
-	}
-
-	void clearInputs() override
-	{
-		clearVectors(inputs, trigger);
-	}
-
-	void addInput(const std::string& inputName, AudioComponent* input) override
-	{
-		if (inputName == "> input") inputs.push_back(input);
-		else if (inputName == "> trigger") trigger.push_back(input);
-		else assert(0 && "[ADSR node] unknown input");
-	}
+	ADSR() : AudioComponent() { inputs.resize(2); }
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
 		if (!inputs.size())
 			return 0.0;
 
+		double inputValue = getInputsValue(input, keyPressed, currentKey);
 		double triggerValue = getInputsValue(trigger, keyPressed, currentKey);
-		double inputValue = getInputsValue(inputs, keyPressed, currentKey);
 
 		if (currentKey == 0)
 		{
@@ -103,7 +87,7 @@ public:
 					std::vector<MidiInfo> newKeyPressed;
 					if (envelopeInfo.info.keyIndex != 0)
 						newKeyPressed.push_back(envelopeInfo.info);
-					inputValue = getInputsValue(inputs, newKeyPressed, 0);
+					inputValue = getInputsValue(input, newKeyPressed, 0);
 					value += envelopeInfo.envelope.GetAmplitude(time, false) * inputValue;
 				}
 			}

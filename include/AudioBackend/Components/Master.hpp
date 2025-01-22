@@ -8,23 +8,9 @@ private:
 	bool showWarning = true;
 
 public:
-	std::vector<AudioComponent*> inputs;
+	enum Inputs { input };
 
-	Components getInputs() override
-	{
-		return combineVectorsToForwardList(inputs);
-	}
-
-	void addInput(const std::string& inputName, AudioComponent* input) override
-	{
-		// [TODO] check inputName even thought it is not necessary for 1 input nodes ?
-		inputs.push_back(input);
-	}
-
-	void clearInputs() override
-	{
-		clearVectors(inputs);
-	}
+	Master() : AudioComponent() { inputs.resize(1); }
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
@@ -43,7 +29,7 @@ public:
 		double value = 0.0;
 
 
-		for (AudioComponent* input : inputs)
+		for (AudioComponent* input : inputs[input])
 		{
 			int i = 0;
 			do

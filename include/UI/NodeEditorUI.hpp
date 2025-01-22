@@ -33,6 +33,7 @@ void serialize(Archive& archive, Pin& pin)
 		cereal::make_nvp("node_id", pin.node->id),
 		cereal::make_nvp("pin_name", pin.name),
 		cereal::make_nvp("pin_kind", (int)pin.kind),
+		cereal::make_nvp("pin_input_id", pin.inputId),
 		cereal::make_nvp("pin_mode", (int)pin.mode)
 	);
 }

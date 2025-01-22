@@ -42,14 +42,20 @@ void UIToBackendAdapter::updateBackendNode(AudioComponent& component, Node& node
 		AudioComponent* newInput = allocateAudioComponent(*inputNode);
 
 		// Find input name
-		std::string inputName;
+		int inputId = -1;
 		for (Pin& pin : node.inputs)
 		{
 			if (pin.id == link.InputId.Get())
-				inputName = pin.name;
+				inputId = pin.inputId;
 		}
 
-		component.addInput(inputName, newInput);
+		if (inputId < 0)
+		{
+			Logger::log("UIToBackendAdapter", Error) << "InputId should not be undefined" << std::endl;
+			exit(1);
+		}
+
+		component.addInput(inputId, newInput);
 
 		updateBackendNode(*newInput, *inputNode, nodeManager, linkManager);
 	}

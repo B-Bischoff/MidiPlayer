@@ -4,31 +4,14 @@
 #include "audio_backend.hpp"
 
 struct Multiplier : public AudioComponent {
-	std::vector<AudioComponent*> inputsA;
-	std::vector<AudioComponent*> inputsB;
+	enum Inputs { inputA, inputB };
 
-	Components getInputs() override
-	{
-		return combineVectorsToForwardList(inputsA, inputsB);
-	}
-
-	void clearInputs() override
-	{
-		clearVectors(inputsA, inputsB);
-	}
-
-	void addInput(const std::string& inputName, AudioComponent* input) override
-	{
-		// [TODO] remove those "> "
-		if (inputName == "> input A") inputsA.push_back(input);
-		else if (inputName == "> input B") inputsB.push_back(input);
-		else assert(0 && "[Oscillator node] unknown input");
-	}
+	Multiplier() : AudioComponent() { inputs.resize(2); }
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
-		double valueA = getInputsValue(inputsA, keyPressed, currentKey);
-		double valueB = getInputsValue(inputsB, keyPressed, currentKey);
+		double valueA = getInputsValue(inputA, keyPressed, currentKey);
+		double valueB = getInputsValue(inputB, keyPressed, currentKey);
 		return valueA * valueB;
 	}
 };

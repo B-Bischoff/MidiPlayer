@@ -1,24 +1,64 @@
 #pragma once
 
 #include "inc.hpp"
+#include <unordered_map>
+#include "Logger.hpp"
+#include <list>
 
 struct AudioComponent {
 	AudioComponent() { }
 	virtual ~AudioComponent() {};
 
+	// [TODO] storing inputs in a map has a lot of benefits but having to select
+	// an input using a string (no syntax/type safetey) might lead to tricky mistakes
+	std::vector<ComponentInput> inputs;
+
 	virtual double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) = 0;
-	virtual Components getInputs() { return Components(); }
-	virtual void clearInputs() { }
-	virtual void addInput(const std::string& inputName, AudioComponent* input) {
-		assert(0 && "Node does not have input");
+
+	//virtual Components getInputs() { return Components(); }
+	Components getInputs()
+	{
+		Components result;
+		for (auto& input : inputs) // Loop over all inputs
+		{
+			for (AudioComponent* component : input) // Loop over all components plugged on that input
+				result.push_front(component);
+		}
+		return result;
 	}
-	virtual double getInputsValue(std::vector<AudioComponent*>& inputs, std::vector<MidiInfo>& keyPressed, int currentKey = 0) {
+
+	void clearInputs()
+	{
+		for (auto& input : inputs)
+			input.clear();
+	}
+
+	void addInput(const unsigned int& index, AudioComponent* newInput)
+	{
+		if (inputs.size() <= index)
+		{
+			Logger::log("AudioComponent", Error) << "Out of bound index in addInput method. Index: " << index << " Input size: " << inputs.size() << std::endl;
+			exit(1);
+		}
+
+		inputs[index].push_back(newInput);
+	}
+
+	virtual double getInputsValue(const unsigned int& index, std::vector<MidiInfo>& keyPressed, int currentKey = 0)
+	{
+		if (inputs.size() <= index)
+		{
+			Logger::log("AudioComponent", Error) << "Out of bound index in getInputValue method" << std::endl;
+			exit(1);
+		}
+
+		ComponentInput& input = inputs[index];
+
 		double value = 0.0;
-		for (AudioComponent* input : inputs)
-			value += input->process(keyPressed, currentKey);
+		for (AudioComponent* component : input)
+			value += component->process(keyPressed, currentKey);
 		return value;
 	}
 
 	static double time;
 };
-

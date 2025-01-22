@@ -41,6 +41,10 @@ struct Pin
 	std::string name;
 	PinKind kind;
 
+	// Used to map this pin to a specific input of the underlying audio component, value must not be negative
+	// Only applies for input pin, -1 is used on output pin
+	int inputId;
+
 	Mode mode;
 	float* sliderValue;
 
@@ -50,12 +54,13 @@ struct Pin
 		node = nullptr;
 		name.clear();
 		kind = PinKind::Input;
+		inputId = -1;
 		mode = Mode::Link;
 		sliderValue = nullptr;
 	}
 
 	Pin(int id, const char* name):
-		id(id), node(nullptr), name(name), kind(PinKind::Input), mode(Mode::Link), sliderValue(nullptr)
+		id(id), node(nullptr), name(name), kind(PinKind::Input), inputId(-1), mode(Mode::Link), sliderValue(nullptr)
 	{ }
 };
 
@@ -186,7 +191,7 @@ protected:
 		return str + std::to_string(id);
 	}
 
-	Pin createPin(IDManager* idManager, const std::string& name, PinKind kind)
+	Pin createPin(IDManager* idManager, const std::string& name, PinKind kind, unsigned int inputId = -1)
 	{
 		Pin pin;
 		pin.id = INVALID_ID;
@@ -195,6 +200,7 @@ protected:
 		pin.name = name;
 		pin.node = this; // Is this really necessary ?
 		pin.kind = kind;
+		pin.inputId = inputId;
 
 		return pin;
 	}
@@ -216,7 +222,7 @@ struct MasterNode : public Node
 		name = "Master";
 		type = MasterUI;
 
-		inputs.push_back(createPin(idManager, "> input", PinKind::Input));
+		inputs.push_back(createPin(idManager, "> input", PinKind::Input, Master::Inputs::input));
 	}
 
 	AudioComponent* convertNodeToAudioComponent() override { return new Master; }
@@ -282,10 +288,10 @@ struct OscNode : public Node
 
 		oscType = OscType::Sine;
 
-		inputs.push_back(createPin(idManager, "> freq", PinKind::Input));
-		inputs.push_back(createPin(idManager, "> phase", PinKind::Input));
-		inputs.push_back(createPin(idManager, "> LFO Hz", PinKind::Input));
-		inputs.push_back(createPin(idManager, "> LFO Amplitude", PinKind::Input));
+		inputs.push_back(createPin(idManager, "> freq", PinKind::Input, Oscillator::Inputs::frequency));
+		inputs.push_back(createPin(idManager, "> phase", PinKind::Input, Oscillator::Inputs::phase));
+		inputs.push_back(createPin(idManager, "> LFO Hz", PinKind::Input, Oscillator::Inputs::LFO_Hz));
+		inputs.push_back(createPin(idManager, "> LFO Amplitude", PinKind::Input, Oscillator::Inputs::LFO_Amplitude));
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 
@@ -365,9 +371,9 @@ struct ADSR_Node : public Node {
 		controlPoints[6] = {3.0f, 0.0f}; // ctrl 2
 		controlPoints[7] = {4.0f, 0.0f}; // static 4
 
+		inputs.push_back(createPin(idManager, "> input", PinKind::Input, ADSR::Inputs::input));
+		inputs.push_back(createPin(idManager, "> trigger", PinKind::Input, ADSR::Inputs::trigger));
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
-		inputs.push_back(createPin(idManager, "> input", PinKind::Input));
-		inputs.push_back(createPin(idManager, "> trigger", PinKind::Input));
 	}
 
 	AudioComponent* convertNodeToAudioComponent() override
@@ -420,8 +426,8 @@ struct MultNode : public Node {
 		name = "Multiplier";
 		type = MultUI;
 
-		inputs.push_back(createPin(idManager, "> input A", PinKind::Input));
-		inputs.push_back(createPin(idManager, "> input B", PinKind::Input));
+		inputs.push_back(createPin(idManager, "> input A", PinKind::Input, Multiplier::Inputs::inputA));
+		inputs.push_back(createPin(idManager, "> input B", PinKind::Input, Multiplier::Inputs::inputB));
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 
@@ -434,8 +440,9 @@ struct LowPassFilterNode : public Node {
 		id = getId(idManager);
 		name = "Low Pass Filter";
 		type = LowPassUI;
-		inputs.push_back(createPin(idManager, "> signal", PinKind::Input));
-		inputs.push_back(createPin(idManager, "> alpha", PinKind::Input));
+
+		inputs.push_back(createPin(idManager, "> input", PinKind::Input, LowPassFilter::Inputs::input));
+		inputs.push_back(createPin(idManager, "> alpha", PinKind::Input, LowPassFilter::Inputs::alpha));
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 
@@ -449,9 +456,9 @@ struct CombFilterNode : public Node {
 		name = "Comb Filter";
 		type = CombFilterUI;
 
-		inputs.push_back(createPin(idManager, "> input", PinKind::Input));
-		inputs.push_back(createPin(idManager, "> delay samples", PinKind::Input));
-		inputs.push_back(createPin(idManager, "> feedback", PinKind::Input));
+		inputs.push_back(createPin(idManager, "> input", PinKind::Input, CombFilter::Input::input));
+		inputs.push_back(createPin(idManager, "> delay samples", PinKind::Input, CombFilter::Input::delaySamples));
+		inputs.push_back(createPin(idManager, "> feedback", PinKind::Input, CombFilter::Input::feedback));
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 
