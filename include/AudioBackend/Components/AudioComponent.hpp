@@ -9,13 +9,11 @@ struct AudioComponent {
 	AudioComponent() { }
 	virtual ~AudioComponent() {};
 
-	// [TODO] storing inputs in a map has a lot of benefits but having to select
-	// an input using a string (no syntax/type safetey) might lead to tricky mistakes
 	std::vector<ComponentInput> inputs;
+	std::string componentName; // Used to debug/log things
 
 	virtual double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) = 0;
 
-	//virtual Components getInputs() { return Components(); }
 	Components getInputs()
 	{
 		Components result;

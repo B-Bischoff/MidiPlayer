@@ -18,7 +18,7 @@ public:
 	sEnvelopeADSR reference; // Used to store envelope settings value
 	std::vector<EnvelopeInfo> envelopes;
 
-	ADSR() : AudioComponent() { inputs.resize(2); }
+	ADSR() : AudioComponent() { inputs.resize(2); componentName = "ADSR"; }
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{

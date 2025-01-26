@@ -7,7 +7,7 @@ struct Oscillator : public AudioComponent {
 	enum Inputs { frequency, phase, LFO_Hz, LFO_Amplitude };
 	OscType type;
 
-	Oscillator() : AudioComponent() { inputs.resize(4); }
+	Oscillator() : AudioComponent() { inputs.resize(4); componentName = "Oscillator"; }
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{

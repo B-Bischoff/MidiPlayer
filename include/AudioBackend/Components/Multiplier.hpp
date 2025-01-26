@@ -6,7 +6,7 @@
 struct Multiplier : public AudioComponent {
 	enum Inputs { inputA, inputB };
 
-	Multiplier() : AudioComponent() { inputs.resize(2); }
+	Multiplier() : AudioComponent() { inputs.resize(2); componentName = "Multiplier"; }
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{

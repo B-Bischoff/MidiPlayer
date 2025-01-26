@@ -9,7 +9,7 @@ struct CombFilter : public AudioComponent {
 	std::vector<double> delayBuffer;
 	int bufferIndex = 0;
 
-	CombFilter() : AudioComponent() { inputs.resize(3); }
+	CombFilter() : AudioComponent() { inputs.resize(3); componentName = "CombFilter"; }
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{

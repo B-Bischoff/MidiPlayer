@@ -8,7 +8,7 @@ struct LowPassFilter : public AudioComponent {
 
 	double state = 0.0;
 
-	LowPassFilter() : AudioComponent() { inputs.resize(2); }
+	LowPassFilter() : AudioComponent() { inputs.resize(2); componentName = "LowPassFilter"; }
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{

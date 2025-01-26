@@ -10,7 +10,7 @@ private:
 public:
 	enum Inputs { input };
 
-	Master() : AudioComponent() { inputs.resize(1); }
+	Master() : AudioComponent() { inputs.resize(1); componentName = "Master"; }
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
