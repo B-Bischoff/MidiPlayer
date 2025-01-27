@@ -73,11 +73,12 @@ struct Node
 	ImColor color;
 	UI_NodeType type;
 	bool hidden;
+	unsigned int audioComponentId; // Used to identify audioComponent pointed by this node
 
 	static bool propertyChanged;
 
 	Node()
-		: id(0), name(""), inputs(), outputs(), color(ImColor(0)), type(NodeUI), hidden(false)
+		: id(0), name(""), inputs(), outputs(), color(ImColor(0)), type(NodeUI), hidden(false), audioComponentId(0)
 	{ }
 
 	virtual ~Node() {}

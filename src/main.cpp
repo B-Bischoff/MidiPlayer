@@ -12,6 +12,7 @@
 static void handleFrameProcessTime(const time_point& startTime, const std::chrono::duration<double>& targetFrameDuration, AudioData& audio);
 
 double AudioComponent::time = 0.0;
+unsigned int AudioComponent::nextId = 1;
 unsigned int KeyboardFrequency::keyIndex = 0;
 
 GLFWwindow* init(const int WIN_WIDTH, const int WIN_HEIGHT)

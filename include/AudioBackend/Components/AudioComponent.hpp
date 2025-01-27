@@ -6,11 +6,14 @@
 #include <list>
 
 struct AudioComponent {
-	AudioComponent() { }
+	AudioComponent() : id(nextId++) { }
 	virtual ~AudioComponent() {};
 
 	std::vector<ComponentInput> inputs;
 	std::string componentName; // Used to debug/log things
+
+	static unsigned int nextId;
+	unsigned int id;
 
 	virtual double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) = 0;
 
