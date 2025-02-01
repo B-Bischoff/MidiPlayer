@@ -106,7 +106,7 @@ struct Node
 	{
 		ImGui::PushID(appendId(name).c_str());
 #if NODE_DEBUG
-		ImGui::Text("%s", (name + "_" + std::to_string(id)).c_str());
+		ImGui::Text("%s", (name + "_" + std::to_string(id) + "_" + std::to_string(audioComponentId)).c_str());
 #else
 		ImGui::Text("%s", name.c_str());
 #endif

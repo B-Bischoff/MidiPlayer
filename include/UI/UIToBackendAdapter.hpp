@@ -13,20 +13,24 @@ public:
 	static void printTreesDiff(AudioComponent* component, Node& node, LinkManager& linkManager, NodeManager& nodeManager);
 	static void printTree(const AudioComponent* component, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
 	static void printTree(const Node& node, LinkManager& linkManager, NodeManager& nodeManager, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
+	static void deleteComponentAndInputs(AudioComponent* component, AudioComponent* master);
 
 private:
-	static void deleteComponentAndInputs(AudioComponent* component);
-	static void updateBackendNode(AudioComponent& component, Node& node, NodeManager& nodeManager, LinkManager& linkManager);
+	static void removeComponentFromBackend(AudioComponent* component, AudioComponent* componentToRemove, unsigned int depth = 0);
+	static void updateBackendNode(AudioComponent& master, AudioComponent& component, Node& node, NodeManager& nodeManager, LinkManager& linkManager);
 	static AudioComponent* allocateAudioComponent(Node& node);
 
 	// Print tree helpers
 	static void drawTree(int depth, int inputIndex, std::vector<bool> drawVertical, const std::string& text);
 
-	static void printUIDiff(const AudioComponent* component, Node& node, LinkManager& linkManager, NodeManager& nodeManager, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
-	static void printBackendDiff(const AudioComponent* component, Node& node, LinkManager& linkManager, NodeManager& nodeManager, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
+	static void printUIDiff(AudioComponent* component, Node& node, LinkManager& linkManager, NodeManager& nodeManager, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
+	static void printBackendDiff(AudioComponent* component, Node& node, LinkManager& linkManager, NodeManager& nodeManager, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
 
-	static bool idExists(const AudioComponent* component, const unsigned int id);
+	static AudioComponent* getAudioComponent(AudioComponent* component, const unsigned int id);
+	static bool idExists(AudioComponent* component, const unsigned int id);
+
 	// Method actually find audio component id linked to node.
 	// It does not check for the UI node internal id.
-	static bool idExists(const Node& node, NodeManager& nodeManager, LinkManager& linkManager, const unsigned int id);
+	static Node* getNode(Node& node, NodeManager& nodeManager, LinkManager& linkManager, const unsigned int id);
+	static bool idExists(Node& node, NodeManager& nodeManager, LinkManager& linkManager, const unsigned int id);
 };

@@ -95,8 +95,8 @@ int main(int argc, char* argv[])
 	};
 
 	int FRAME_COUNT = 0;
-	const int SCREEN_WIDTH = 1920;
-	const int SCREEN_HEIGHT = 1080;
+	const int SCREEN_WIDTH = 1200;
+	const int SCREEN_HEIGHT = 800;
 	GLFWwindow* window = init(SCREEN_WIDTH, SCREEN_HEIGHT);
 	MidiPlayerSettings settings;
 
@@ -175,6 +175,14 @@ int main(int argc, char* argv[])
 	}
 
 	delete [] audio.buffer;
+
+	// [TODO] this belongs in Instrument destructor
+	for (Instrument& instrument : instruments)
+	{
+		Components inputs = instrument.master.getInputs();
+		for (auto& input : inputs)
+			UIToBackendAdapter::deleteComponentAndInputs(input, &instrument.master);
+	}
 
 	// [TODO] should this be in destructor ?
 	Pm_Close(inputManager.midiStream);
