@@ -95,8 +95,8 @@ int main(int argc, char* argv[])
 	};
 
 	int FRAME_COUNT = 0;
-	const int SCREEN_WIDTH = 1200;
-	const int SCREEN_HEIGHT = 800;
+	const int SCREEN_WIDTH = 1920;
+	const int SCREEN_HEIGHT = 1080;
 	GLFWwindow* window = init(SCREEN_WIDTH, SCREEN_HEIGHT);
 	MidiPlayerSettings settings;
 

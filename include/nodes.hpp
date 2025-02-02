@@ -186,6 +186,11 @@ struct Node
 		return !(*this == node);
 	}
 
+	virtual bool operator==(const AudioComponent* component)
+	{
+		return component->id == audioComponentId;
+	}
+
 protected:
 	std::string appendId(const std::string& str)
 	{
@@ -250,6 +255,12 @@ struct NumberNode : public Node
 		return audioComponent;
 	}
 
+	bool operator==(const AudioComponent* component) override
+	{
+		const Number* number = dynamic_cast<const Number*>(component); assert(number);
+		return Node::operator==(component) && number->number == value;
+	}
+
 	void render(std::queue<Message>& messages) override
 	{
 		Node::startRender();
@@ -301,6 +312,12 @@ struct OscNode : public Node
 		Oscillator* audioComponent = new Oscillator;
 		audioComponent->type = oscType;
 		return audioComponent;
+	}
+
+	bool operator==(const AudioComponent* component) override
+	{
+		const Oscillator* oscillator = dynamic_cast<const Oscillator*>(component); assert(oscillator);
+		return Node::operator==(component) && oscillator->type == oscType;
 	}
 
 	template<class Archive>

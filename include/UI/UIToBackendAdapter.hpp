@@ -5,6 +5,7 @@
 #include "UI/LinkManager.hpp"
 #include "UI/NodeManager.hpp"
 #include <list>
+#include <unordered_set>
 
 class UIToBackendAdapter {
 public:
@@ -20,11 +21,12 @@ private:
 	static void updateBackendNode(AudioComponent& master, AudioComponent& component, Node& node, NodeManager& nodeManager, LinkManager& linkManager);
 	static AudioComponent* allocateAudioComponent(Node& node);
 
-	// Print tree helpers
-	static void drawTree(int depth, int inputIndex, std::vector<bool> drawVertical, const std::string& text);
+	// Print tree helpers (defaults to white text color)
+	static void drawTree(int depth, int inputIndex, std::vector<bool> drawVertical, const std::string& text, const std::string& color = "\033[1;37m");
 
 	static void printUIDiff(AudioComponent* component, Node& node, LinkManager& linkManager, NodeManager& nodeManager, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
 	static void printBackendDiff(AudioComponent* component, Node& node, LinkManager& linkManager, NodeManager& nodeManager, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
+	static void testing(AudioComponent* component, Node* node, LinkManager& linkManager, NodeManager& nodeManager, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
 
 	static AudioComponent* getAudioComponent(AudioComponent* component, const unsigned int id);
 	static bool idExists(AudioComponent* component, const unsigned int id);
@@ -32,5 +34,6 @@ private:
 	// Method actually find audio component id linked to node.
 	// It does not check for the UI node internal id.
 	static Node* getNode(Node& node, NodeManager& nodeManager, LinkManager& linkManager, const unsigned int id);
+	static Node* getNodeDirectChild(Node* node, NodeManager& nodeManager, LinkManager& linkManager, const unsigned int id);
 	static bool idExists(Node& node, NodeManager& nodeManager, LinkManager& linkManager, const unsigned int id);
 };

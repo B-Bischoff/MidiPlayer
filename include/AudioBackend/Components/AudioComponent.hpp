@@ -17,7 +17,7 @@ struct AudioComponent {
 
 	virtual double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) = 0;
 
-	Components getInputs()
+	Components getInputs() const
 	{
 		Components result;
 		for (auto& input : inputs) // Loop over all inputs
@@ -26,6 +26,17 @@ struct AudioComponent {
 				result.push_front(component);
 		}
 		return result;
+	}
+
+	bool idIsDirectChild(const unsigned int id) const
+	{
+		Components inputs = getInputs();
+		for (const AudioComponent* audioComponent : inputs)
+		{
+			if (audioComponent->id == id)
+				return true;
+		}
+		return false;
 	}
 
 	void clearInputs()
@@ -54,7 +65,6 @@ struct AudioComponent {
 			{
 				if (*it == input)
 				{
-					Logger::log(componentName) << "remove " <<(*it)->componentName << " " << i << std::endl;
 					it = componentInput.erase(it);
 					if (it == componentInput.end())
 						break;
