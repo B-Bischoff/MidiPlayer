@@ -40,7 +40,6 @@ void UIToBackendAdapter::removeComponentFromBackend(AudioComponent* component, A
 // [TODO] This belongs to instruments class
 void UIToBackendAdapter::deleteComponentAndInputs(AudioComponent* component, AudioComponent* master)
 {
-	Logger::log("Clearing", Info) << component->componentName << " " << component->id << std::endl;
 	Components inputs = component->getInputs();
 
 	auto it = inputs.begin();
@@ -133,7 +132,6 @@ void UIToBackendAdapter::testing(AudioComponent* component, Node* node, LinkMana
 			nodesValueDiffers = !(*node == component);
 	}
 
-
 	const std::string WHITE = "\033[1;37m";
 	const std::string RED = "\033[1;31m";
 	const std::string BLUE = "\033[1;34m";
@@ -203,7 +201,9 @@ void UIToBackendAdapter::testing(AudioComponent* component, Node* node, LinkMana
 					if (processedChildren == childCount)
 						drawVertical.back() = false; // Stop drawing vertical for the last child
 
-					drawTree(depth + 1, inputIndex, drawVertical, inputNode->name, GREEN);
+					//drawTree(depth + 1, inputIndex, drawVertical, inputNode->name, GREEN);
+					printTree(*inputNode.get(), linkManager, nodeManager, depth + 1, currentInputIndex, drawVertical);
+					//testing(nullptr, inputNode.get(), linkManager, nodeManager, depth + 1, currentInputIndex, drawVertical);
 				}
 			}
 		}
@@ -321,7 +321,8 @@ void UIToBackendAdapter::printTree(const Node& node, LinkManager& linkManager, N
 {
 	if (depth == 0) std::cout << "================== UI NODES TREE ==================" << std::endl << std::endl;
 
-	drawTree(depth, inputIndex, drawVertical, node.name + " id: " + std::to_string(node.id) + " | comp id: " + std::to_string(node.audioComponentId));
+	const std::string GREEN = "\033[1;32m";
+	drawTree(depth, inputIndex, drawVertical, node.name + " id: " + std::to_string(node.id) + " | comp id: " + std::to_string(node.audioComponentId), GREEN);
 
 	drawVertical.push_back(true); // Assume there are children by default
 
