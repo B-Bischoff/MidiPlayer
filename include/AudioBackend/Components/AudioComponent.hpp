@@ -56,21 +56,27 @@ struct AudioComponent {
 		inputs[index].push_back(newInput);
 	}
 
-	void removeInput(AudioComponent* input)
+	bool removeInput(AudioComponent* input)
 	{
+		bool deleted = false;
 		for (int i = 0; i < inputs.size(); i++)
 		{
 			ComponentInput& componentInput = inputs[i];
-			for (auto it = componentInput.begin(); it != componentInput.end(); it++)
+			auto it = componentInput.begin();
+			while (it != componentInput.end())
 			{
 				if (*it == input)
 				{
-					it = componentInput.erase(it);
-					if (it == componentInput.end())
-						break;
+					deleted = true;
+					Logger::log("REMOVE INPUT") << "FROM " << id << " del " << input->id << std::endl;
+					componentInput.erase(it);
+					it = componentInput.begin();
 				}
+				else
+					it++;
 			}
 		}
+		return deleted;
 	}
 
 	virtual double getInputsValue(const unsigned int& index, std::vector<MidiInfo>& keyPressed, int currentKey = 0)

@@ -4,21 +4,27 @@ void UIToBackendAdapter::updateBackend(Master& master, NodeManager& nodeManager,
 {
 	Node& UIMaster = *nodeManager.getMasterNode();
 
-	//printTree(&master);
+	printTree(&master);
 	//printTree(UIMaster, linkManager, nodeManager);
 	printTreesDiff(&master, UIMaster, linkManager, nodeManager);
 
-	/*
+
+	Logger::log("Manual cleanup", Warning) << std::endl;
 	Components inputs = master.getInputs();
 	auto it = inputs.begin();
 	while (it != inputs.end())
 	{
-		deleteComponentAndInputs(*it, &master);
+		Logger::log("AA") << (*it)->componentName << " " << (*it)->id << std::endl;
+		if (idExists(&master, (*it)->id))
+			deleteComponentAndInputs(*it, &master);
+		else
+			it++;
 		inputs = master.getInputs();
 		it = inputs.begin();
 		if (it == inputs.end())
 			break;
-	}*/
+	}
+	Logger::log("Manual cleanup done", Warning) << std::endl;
 
 	updateBackendNode(master, master, UIMaster, nodeManager, linkManager);
 
@@ -26,19 +32,47 @@ void UIToBackendAdapter::updateBackend(Master& master, NodeManager& nodeManager,
 }
 
 // [TODO] This belongs to instruments class
-void UIToBackendAdapter::removeComponentFromBackend(AudioComponent* component, AudioComponent* componentToRemove, unsigned int depth)
+void UIToBackendAdapter::removeComponentFromBackend(AudioComponent* component, AudioComponent* componentToRemove, const bool deleteComponent, unsigned int depth)
 {
 	Components inputs = component->getInputs();
 	for (AudioComponent* input : inputs)
-		removeComponentFromBackend(input, componentToRemove, depth + 1);
+		removeComponentFromBackend(input, componentToRemove, deleteComponent, depth + 1);
 
 	component->removeInput(componentToRemove);
 
-	if (depth == 0)
+	if (deleteComponent && depth == 0)
 	{
-		Logger::log("Remove") << "REMOVING " << componentToRemove->id << std::endl;
+		Logger::log("Remove Component from Backend") << "REMOVING " << componentToRemove->id << std::endl;
 		delete componentToRemove;
 	}
+}
+
+// From component parameter, deletes component AND component childs that cannot be reached from master parameter
+void UIToBackendAdapter::deleteUnreachableComponentAndInputs(AudioComponent* master, AudioComponent* branchRoot, AudioComponent* component)
+{
+	Components inputs = component->getInputs();
+
+	Logger::log("FROM") << component->componentName << std::endl;
+	auto it = inputs.begin();
+	while (it != inputs.end())
+	{
+		if (idExists(master, (*it)->id) == false) // Continue to delete branch as long as its connected to root
+		{
+			Logger::log("deleteUnreachableComponentAndInputs", Debug) << "Should delete " << (*it)->componentName << " " << (*it)->id << std::endl;
+			deleteUnreachableComponentAndInputs(master, branchRoot, *it);
+			inputs = component->getInputs();
+			it = inputs.begin();
+			if (it == inputs.end())
+				break;
+		}
+		else
+		{
+			Logger::log("deleteUnreachableComponentAndInputs", Debug) << "Preserving " << (*it)->id << std::endl;
+			it++;
+		}
+	}
+	removeComponentFromBackend(master, component, false);
+	removeComponentFromBackend(branchRoot, component);
 }
 
 // [TODO] This belongs to instruments class
@@ -49,7 +83,11 @@ void UIToBackendAdapter::deleteComponentAndInputs(AudioComponent* component, Aud
 	auto it = inputs.begin();
 	while (it != inputs.end())
 	{
-		deleteComponentAndInputs(*it, master);
+		Logger::log("BB") << (*it)->componentName << " " << (*it)->id << std::endl;
+		if (idExists(master, (*it)->id))
+			deleteComponentAndInputs(*it, master);
+		else
+			it++;
 		inputs = component->getInputs();
 		it = inputs.begin();
 		if (it == inputs.end())
@@ -130,10 +168,33 @@ void UIToBackendAdapter::printTreesDiff(AudioComponent* component, Node& node, L
 		else if (dynamic_cast<const RemoveNode*>(instruction))
 		{
 			const RemoveNode* removeNode = dynamic_cast<const RemoveNode*>(instruction);
-			Logger::log("Remove node", Error) << removeNode->COMPONENT_ID << std::endl;
+			Logger::log("Remove node", Error) << "parent: " << removeNode->PARENT_COMPONENT_ID << " child: " << removeNode->CHILD_COMPONENT_ID << std::endl;
 
-			if (idExists(component, removeNode->COMPONENT_ID))
-				deleteComponentAndInputs(getAudioComponent(component, removeNode->COMPONENT_ID), component);
+			//if (idExists(component, removeNode->COMPONENT_ID))
+			//	deleteComponentAndInputs(getAudioComponent(component, removeNode->COMPONENT_ID), component);
+
+
+			// Remove backend link between component and child
+			AudioComponent* parentComponent = getAudioComponent(component, removeNode->PARENT_COMPONENT_ID); assert(parentComponent);
+			AudioComponent* childComponent = getAudioComponent(component, removeNode->CHILD_COMPONENT_ID);
+			if (!childComponent)
+			{
+				delete instruction;
+				Logger::log("Backend Update", Warning) << "Child could not be found, skipping" << std::endl;
+				continue;
+			}
+			parentComponent->removeInput(childComponent);
+
+			if (idExists(component, childComponent->id) == false)
+			{
+				// Removed child cannot be found from root => clean its branch
+				Logger::log("REMOVE") << "Child not found from root" << std::endl;
+				//deleteComponentAndInputs(childComponent, childComponent);
+				deleteUnreachableComponentAndInputs(component, childComponent, childComponent);
+				Logger::log("REMOVE") << "Deleted branch" << std::endl;
+			}
+			else
+				Logger::log("REMOVE") << "Child found" << std::endl;
 		}
 		else if (dynamic_cast<const UpdateNode*>(instruction))
 		{
@@ -147,17 +208,17 @@ void UIToBackendAdapter::printTreesDiff(AudioComponent* component, Node& node, L
 	}
 }
 
-void UIToBackendAdapter::testing(AudioComponent* component, Node* node, LinkManager& linkManager, NodeManager& nodeManager, std::vector<BackendInstruction*>& instructions, int depth, int inputIndex, std::vector<bool> drawVertical)
+void UIToBackendAdapter::testing(AudioComponent* component, Node* node, LinkManager& linkManager, NodeManager& nodeManager, std::vector<BackendInstruction*>& instructions, AudioComponent* parentNode, int depth, int inputIndex, std::vector<bool> drawVertical)
 {
 	if (depth == 0) std::cout << "================== NEW DIFF METHOD ==================" << std::endl << std::endl;
 
-	bool nodesAreIdentical = false;
+	bool ID_Match = false;
 	bool nodesValueDiffers = true;
 
 	if (node != nullptr)
 	{
-		nodesAreIdentical = (component->id == node->audioComponentId || component->id == 1); // Make exception for Master
-		if (nodesAreIdentical)
+		ID_Match = (component->id == node->audioComponentId || component->id == 1); // Make exception for Master
+		if (ID_Match)
 			nodesValueDiffers = !(*node == component);
 	}
 
@@ -168,10 +229,12 @@ void UIToBackendAdapter::testing(AudioComponent* component, Node* node, LinkMana
 	const std::string RESET = "\033[1;0m";
 	std::string color = WHITE;
 
-	if (!nodesAreIdentical)
+	if (!ID_Match)
 	{
 		RemoveNode* instruction = new RemoveNode; assert(instruction);
-		instruction->COMPONENT_ID = component->id;
+		assert(parentNode);
+		instruction->PARENT_COMPONENT_ID = parentNode->id;
+		instruction->CHILD_COMPONENT_ID = component->id;
 		instructions.push_back(instruction);
 
 		color = RED;
@@ -185,6 +248,9 @@ void UIToBackendAdapter::testing(AudioComponent* component, Node* node, LinkMana
 		color = BLUE;
 	}
 	drawTree(depth, inputIndex, drawVertical, component->componentName + " " + std::to_string(component->id), color);
+
+	if (!ID_Match)
+		return;
 
 	drawVertical.push_back(true); // Assume there are children by default
 
@@ -211,7 +277,7 @@ void UIToBackendAdapter::testing(AudioComponent* component, Node* node, LinkMana
 			if (processedChildren == childCount)
 				drawVertical.back() = false; // Stop drawing vertical for the last child
 
-			testing(input, getNodeDirectChild(node, nodeManager, linkManager, input->id), linkManager, nodeManager, instructions, depth + 1, currentInputIndex, drawVertical);
+			testing(input, getNodeDirectChild(node, nodeManager, linkManager, input->id), linkManager, nodeManager, instructions, component, depth + 1, currentInputIndex, drawVertical);
 			visitedChild.insert(input->id);
 		}
 
