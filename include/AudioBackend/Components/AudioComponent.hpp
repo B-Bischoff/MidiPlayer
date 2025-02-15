@@ -68,7 +68,6 @@ struct AudioComponent {
 				if (*it == input)
 				{
 					deleted = true;
-					Logger::log("REMOVE INPUT") << "FROM " << id << " del " << input->id << std::endl;
 					componentInput.erase(it);
 					it = componentInput.begin();
 				}

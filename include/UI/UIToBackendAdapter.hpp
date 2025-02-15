@@ -14,8 +14,8 @@ struct BackendInstruction {
 
 struct AddNode : public BackendInstruction {
 	unsigned int UI_NODE_ID;
-	unsigned int PARENT_NODE_ID;
-	unsigned int PARENT_NODE_INPUT_ID;
+	unsigned int UI_PARENT_NODE_ID;
+	unsigned int UI_PARENT_NODE_INPUT_ID;
 };
 
 struct RemoveNode : public BackendInstruction {
@@ -39,6 +39,7 @@ public:
 	static void deleteUnreachableComponentAndInputs(AudioComponent* master, AudioComponent* branchRoot, AudioComponent* component);
 
 private:
+	static void addAudioComponent(AudioComponent* master, Node& masterUI, LinkManager& linkManager, NodeManager& nodeManager, const AddNode& instruction);
 	static void removeComponentFromBackend(AudioComponent* component, AudioComponent* componentToRemove, const bool deleteComponent = true, unsigned int depth = 0);
 	static void updateBackendNode(AudioComponent& master, AudioComponent& component, Node& node, NodeManager& nodeManager, LinkManager& linkManager);
 	static AudioComponent* allocateAudioComponent(Node& node);
@@ -55,7 +56,12 @@ private:
 
 	// Method actually find audio component id linked to node.
 	// It does not check for the UI node internal id.
-	static Node* getNode(Node& node, NodeManager& nodeManager, LinkManager& linkManager, const unsigned int id);
+	static Node* getNode(Node& node, NodeManager& nodeManager, LinkManager& linkManager, const unsigned int audioComponentId);
+
+	// Find a Node by its id by recursevly traversing the tree from root.
+	// Return nullptr if it can't find it.
+	static Node* getUINode(Node& root, NodeManager& nodeManager, LinkManager& linkManager, const unsigned int nodeId);
+
 	static Node* getNodeDirectChild(Node* node, NodeManager& nodeManager, LinkManager& linkManager, const unsigned int id);
 	static bool idExists(Node& node, NodeManager& nodeManager, LinkManager& linkManager, const unsigned int id);
 };

@@ -83,7 +83,7 @@ struct Node
 
 	virtual ~Node() {}
 
-	virtual AudioComponent* convertNodeToAudioComponent() = 0;
+	virtual AudioComponent* convertNodeToAudioComponent() const = 0;
 
 	virtual void render(std::queue<Message>& messages)
 	{
@@ -231,7 +231,7 @@ struct MasterNode : public Node
 		inputs.push_back(createPin(idManager, "> input", PinKind::Input, Master::Inputs::input));
 	}
 
-	AudioComponent* convertNodeToAudioComponent() override { return new Master; }
+	AudioComponent* convertNodeToAudioComponent() const override { return new Master; }
 };
 
 struct NumberNode : public Node
@@ -248,7 +248,7 @@ struct NumberNode : public Node
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 
-	AudioComponent* convertNodeToAudioComponent() override
+	AudioComponent* convertNodeToAudioComponent() const override
 	{
 		Number* audioComponent = new Number;
 		audioComponent->number = value;
@@ -307,7 +307,7 @@ struct OscNode : public Node
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 
-	AudioComponent* convertNodeToAudioComponent() override
+	AudioComponent* convertNodeToAudioComponent() const override
 	{
 		Oscillator* audioComponent = new Oscillator;
 		audioComponent->type = oscType;
@@ -394,7 +394,7 @@ struct ADSR_Node : public Node {
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 
-	AudioComponent* convertNodeToAudioComponent() override
+	AudioComponent* convertNodeToAudioComponent() const override
 	{
 		ADSR* audioComponent = new ADSR;
 		for (int i = 0; i < 8; i++)
@@ -434,7 +434,7 @@ struct KeyboardFrequencyNode : public Node {
 		outputs.push_back(createPin(idManager, "frequency >", PinKind::Output));
 	}
 
-	AudioComponent* convertNodeToAudioComponent() override { return new KeyboardFrequency; }
+	AudioComponent* convertNodeToAudioComponent() const override { return new KeyboardFrequency; }
 };
 
 struct MultNode : public Node {
@@ -449,7 +449,7 @@ struct MultNode : public Node {
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 
-	AudioComponent* convertNodeToAudioComponent() override { return new Multiplier; }
+	AudioComponent* convertNodeToAudioComponent() const override { return new Multiplier; }
 };
 
 struct LowPassFilterNode : public Node {
@@ -464,7 +464,7 @@ struct LowPassFilterNode : public Node {
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 
-	AudioComponent* convertNodeToAudioComponent() override { return new LowPassFilter; }
+	AudioComponent* convertNodeToAudioComponent() const override { return new LowPassFilter; }
 };
 
 struct CombFilterNode : public Node {
@@ -480,7 +480,7 @@ struct CombFilterNode : public Node {
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 
-	AudioComponent* convertNodeToAudioComponent() override { return new CombFilter; }
+	AudioComponent* convertNodeToAudioComponent() const override { return new CombFilter; }
 };
 
 // Register every Node child classes
