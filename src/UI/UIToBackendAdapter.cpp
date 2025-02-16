@@ -9,6 +9,7 @@ void UIToBackendAdapter::updateBackend(Master& master, NodeManager& nodeManager,
 	printTreesDiff(&master, UIMaster, linkManager, nodeManager);
 
 
+	/*
 	Logger::log("Manual cleanup", Warning) << std::endl;
 	Components inputs = master.getInputs();
 	auto it = inputs.begin();
@@ -25,8 +26,9 @@ void UIToBackendAdapter::updateBackend(Master& master, NodeManager& nodeManager,
 			break;
 	}
 	Logger::log("Manual cleanup done", Warning) << std::endl;
+	*/
 
-	updateBackendNode(master, master, UIMaster, nodeManager, linkManager);
+	//updateBackendNode(master, master, UIMaster, nodeManager, linkManager);
 
 	//printTree(&master);
 }
@@ -199,6 +201,10 @@ void UIToBackendAdapter::printTreesDiff(AudioComponent* component, Node& node, L
 		{
 			const UpdateNode* updateNode = dynamic_cast<const UpdateNode*>(instruction);
 			Logger::log("Update node", Info) << updateNode->UI_ID << std::endl;
+
+			const Node* node = nodeManager.findNodeById(updateNode->UI_ID).get(); assert(node);
+			AudioComponent* audioComponent = getAudioComponent(component, node->audioComponentId); assert(audioComponent);
+			node->assignToAudioComponent(audioComponent);
 		}
 		else
 			assert(0);
@@ -238,7 +244,7 @@ void UIToBackendAdapter::testing(AudioComponent* component, Node* node, LinkMana
 
 		color = RED;
 	}
-	else if (nodesValueDiffers)
+	else if (nodesValueDiffers && node->id != 1) // Block Master node update
 	{
 		UpdateNode* instruction = new UpdateNode; assert(instruction);
 		instruction->UI_ID = node->id;

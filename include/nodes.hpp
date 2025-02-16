@@ -84,6 +84,11 @@ struct Node
 	virtual ~Node() {}
 
 	virtual AudioComponent* convertNodeToAudioComponent() const = 0;
+	virtual void assignToAudioComponent(AudioComponent* audioComponentId) const
+	{
+		Logger::log("Node", Error) << "Method 'assignToAudioComponent' is not overloaded for node : " << name << std::endl;
+		exit(1);
+	}
 
 	virtual void render(std::queue<Message>& messages)
 	{
@@ -255,6 +260,12 @@ struct NumberNode : public Node
 		return audioComponent;
 	}
 
+	void assignToAudioComponent(AudioComponent* audioComponent) const override
+	{
+		Number* number = dynamic_cast<Number*>(audioComponent); assert(number);
+		number->number = value;
+	}
+
 	bool operator==(const AudioComponent* component) override
 	{
 		const Number* number = dynamic_cast<const Number*>(component); assert(number);
@@ -312,6 +323,12 @@ struct OscNode : public Node
 		Oscillator* audioComponent = new Oscillator;
 		audioComponent->type = oscType;
 		return audioComponent;
+	}
+
+	void assignToAudioComponent(AudioComponent* audioComponent) const override
+	{
+		Oscillator* oscillator = dynamic_cast<Oscillator*>(audioComponent); assert(oscillator);
+		oscillator->type = oscType;
 	}
 
 	bool operator==(const AudioComponent* component) override
