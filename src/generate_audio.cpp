@@ -36,7 +36,7 @@ void generateAudio(AudioData& audio, std::vector<Instrument>& instruments, std::
 
 		value = 0.0;
 		for (Instrument& instrument : instruments)
-			value += instrument.process(keyPressed) * 0.0;
+			value += instrument.process(keyPressed) * 1.0;
 
 		//if (writeOneMoreFrame && i == audio.sampleRate/audio.targetFPS)
 		//	value = 0;

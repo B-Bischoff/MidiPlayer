@@ -34,12 +34,15 @@ public:
 
 	static void printTreesDiff(AudioComponent* component, Node& node, LinkManager& linkManager, NodeManager& nodeManager);
 	static void printTree(const AudioComponent* component, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
-	static void printTree(const Node& node, LinkManager& linkManager, NodeManager& nodeManager, std::vector<BackendInstruction*>& instructions, const unsigned int parentId, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
+	static void printTree(AudioComponent* master, AudioComponent* branchRoot, const Node& node, LinkManager& linkManager, NodeManager& nodeManager, std::vector<BackendInstruction*>& instructions, const unsigned int parentId, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
 	static void deleteComponentAndInputs(AudioComponent* component, AudioComponent* master);
 	static void deleteUnreachableComponentAndInputs(AudioComponent* master, AudioComponent* branchRoot, AudioComponent* component);
 
 private:
 	static void addAudioComponent(AudioComponent* master, Node& masterUI, LinkManager& linkManager, NodeManager& nodeManager, const AddNode& instruction);
+	static void updateAudioComponent(AudioComponent* master, NodeManager& nodeManager, const UpdateNode& instruction);
+	static void removeAudioComponent(AudioComponent* master, const RemoveNode& instruction);
+
 	static void removeComponentFromBackend(AudioComponent* component, AudioComponent* componentToRemove, const bool deleteComponent = true, unsigned int depth = 0);
 	static void updateBackendNode(AudioComponent& master, AudioComponent& component, Node& node, NodeManager& nodeManager, LinkManager& linkManager);
 	static AudioComponent* allocateAudioComponent(Node& node);
@@ -49,7 +52,7 @@ private:
 
 	static void printUIDiff(AudioComponent* component, Node& node, LinkManager& linkManager, NodeManager& nodeManager, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
 	static void printBackendDiff(AudioComponent* component, Node& node, LinkManager& linkManager, NodeManager& nodeManager, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
-	static void testing(AudioComponent* component, Node* node, LinkManager& linkManager, NodeManager& nodeManager, std::vector<BackendInstruction*>& instructions, AudioComponent* parentComponent = nullptr, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
+	static void testing(AudioComponent* master, AudioComponent* component, Node* node, LinkManager& linkManager, NodeManager& nodeManager, std::vector<BackendInstruction*>& instructions, AudioComponent* parentComponent = nullptr, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
 
 	static AudioComponent* getAudioComponent(AudioComponent* component, const unsigned int id);
 	static bool idExists(AudioComponent* component, const unsigned int id);
