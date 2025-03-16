@@ -356,5 +356,6 @@ void NodeEditorUI::updateBackend(Master& master)
 {
 	_UIModified = false;
 	Node::propertyChanged = false;
-	UIToBackendAdapter::updateBackend(master, _nodeManager, _linkManager);
+	NodeUIManagers managers = {_nodeManager, _linkManager};
+	UIToBackendAdapter::updateBackend(master, managers);
 }

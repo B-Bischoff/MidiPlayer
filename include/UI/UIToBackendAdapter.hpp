@@ -1,12 +1,19 @@
 #pragma once
 
 #include <cstring>
-#include "AudioBackend/Components/Components.hpp"
-#include "UI/LinkManager.hpp"
-#include "UI/NodeManager.hpp"
 #include <list>
 #include <unordered_set>
 #include <vector>
+
+#include "AudioBackend/Components/Components.hpp"
+#include "NodeManager.hpp"
+#include "LinkManager.hpp"
+
+struct NodeUIManagers {
+	NodeManager& node;
+	LinkManager& link;
+};
+
 
 struct BackendInstruction {
 	virtual ~BackendInstruction() {}
@@ -30,16 +37,15 @@ struct UpdateNode : public BackendInstruction {
 
 class UIToBackendAdapter {
 public:
-	static void updateBackend(Master& master, NodeManager& nodeManager, LinkManager& linkManager);
+	static void updateBackend(Master& master, NodeUIManagers& managers);
 
 	static void printTreesDiff(Master& master, Node& node, LinkManager& linkManager, NodeManager& nodeManager);
-	static void printTree(const AudioComponent* component, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
-	static void printTree(AudioComponent* master, const Node& node, LinkManager& linkManager, NodeManager& nodeManager, std::vector<BackendInstruction*>& instructions, const unsigned int parentId, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
+	static void printTree(AudioComponent* master, const Node& node, NodeUIManagers& managers, std::vector<BackendInstruction*>& instructions, const unsigned int parentId, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
 	static void deleteComponentAndInputs(AudioComponent* component, AudioComponent* master);
-	static void deleteUnreachableComponentAndInputs(AudioComponent* master, AudioComponent* branchRoot, AudioComponent* component);
+	static void removeUnreachableComponentAndInputs(AudioComponent* master, AudioComponent* branchRoot, AudioComponent* component);
 
 private:
-	static void addAudioComponent(Master& master, Node& masterUI, LinkManager& linkManager, NodeManager& nodeManager, const AddNode& instruction);
+	static void addAudioComponent(Master& master, Node& masterUI, NodeUIManagers& managers, const AddNode& instruction);
 	static void updateAudioComponent(Master& master, NodeManager& nodeManager, const UpdateNode& instruction);
 	static void removeAudioComponent(Master& master, const RemoveNode& instruction);
 
@@ -52,7 +58,9 @@ private:
 
 	static void printUIDiff(AudioComponent* component, Node& node, LinkManager& linkManager, NodeManager& nodeManager, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
 	static void printBackendDiff(AudioComponent* component, Node& node, LinkManager& linkManager, NodeManager& nodeManager, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
-	static void testing(AudioComponent* master, AudioComponent* component, Node* node, LinkManager& linkManager, NodeManager& nodeManager, std::vector<BackendInstruction*>& instructions, AudioComponent* parentComponent = nullptr, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
+
+	static void createInstructions(AudioComponent* master, AudioComponent* component, Node* node, NodeUIManagers& managers, std::vector<BackendInstruction*>& instructions, AudioComponent* parentComponent = nullptr, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
+	static void processInstructions(Master& master, Node& UIMaster, NodeUIManagers& managers, std::vector<BackendInstruction*>& instructions);
 
 	static AudioComponent* getAudioComponent(AudioComponent* component, const unsigned int id);
 	static bool idExists(AudioComponent* component, const unsigned int id);
@@ -65,6 +73,6 @@ private:
 	// Return nullptr if it can't find it.
 	static Node* getUINode(Node& root, NodeManager& nodeManager, LinkManager& linkManager, const unsigned int nodeId);
 
-	static Node* getNodeDirectChild(Node* node, NodeManager& nodeManager, LinkManager& linkManager, const unsigned int id);
+	static Node* getNodeDirectChild(Node* node, NodeUIManagers& managers, const unsigned int id);
 	static bool idExists(Node& node, NodeManager& nodeManager, LinkManager& linkManager, const unsigned int id);
 };
