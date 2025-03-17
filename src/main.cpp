@@ -176,14 +176,6 @@ int main(int argc, char* argv[])
 
 	delete [] audio.buffer;
 
-	// [TODO] this belongs in Instrument destructor
-	for (Instrument& instrument : instruments)
-	{
-		Components inputs = instrument.master.getInputs();
-		for (auto& input : inputs)
-			UIToBackendAdapter::deleteComponentAndInputs(input, &instrument.master);
-	}
-
 	// [TODO] should this be in destructor ?
 	Pm_Close(inputManager.midiStream);
 	Pm_Terminate();

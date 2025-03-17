@@ -15,6 +15,8 @@ struct AudioComponent {
 	static unsigned int nextId;
 	unsigned int id;
 
+	static double time;
+
 	virtual double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) = 0;
 
 	Components getInputs() const
@@ -26,17 +28,6 @@ struct AudioComponent {
 				result.push_front(component);
 		}
 		return result;
-	}
-
-	bool idIsDirectChild(const unsigned int id) const
-	{
-		Components inputs = getInputs();
-		for (const AudioComponent* audioComponent : inputs)
-		{
-			if (audioComponent->id == id)
-				return true;
-		}
-		return false;
 	}
 
 	void clearInputs()
@@ -94,5 +85,51 @@ struct AudioComponent {
 		return value;
 	}
 
-	static double time;
+	bool idIsDirectChild(const unsigned int id) const
+	{
+		Components inputs = getInputs();
+		for (const AudioComponent* audioComponent : inputs)
+		{
+			if (audioComponent->id == id)
+				return true;
+		}
+		return false;
+	}
+
+	void removeComponentFromBranch(AudioComponent* componentToRemove, const bool deleteComponent, unsigned int depth = 0)
+	{
+		Components componentInputs = getInputs();
+		for (AudioComponent* input : componentInputs)
+			input->removeComponentFromBranch(componentToRemove, deleteComponent, depth + 1);
+
+		removeInput(componentToRemove);
+
+		if (deleteComponent && depth == 0)
+		{
+			Logger::log("Remove Component from Backend") << "REMOVING " << componentToRemove->id << std::endl;
+			delete componentToRemove;
+		}
+	}
+
+	AudioComponent* getAudioComponent(const unsigned int id)
+	{
+		if (this->id == id)
+			return this;
+
+		for (const ComponentInput& componentInputs : inputs) // loop over component inputs
+		{
+			for (AudioComponent* input : componentInputs) // loop over all the component plugged to one input
+			{
+				AudioComponent* foundAudioComponent =  input->getAudioComponent(id);
+				if (foundAudioComponent != nullptr)
+					return foundAudioComponent;
+			}
+		}
+		return nullptr;
+	}
+
+	bool idExists(const unsigned int id)
+	{
+		return getAudioComponent(id) != nullptr;
+	}
 };
