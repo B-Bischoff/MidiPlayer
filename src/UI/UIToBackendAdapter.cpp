@@ -14,20 +14,11 @@ void UIToBackendAdapter::processInstructions(Master& master, Node& UIMaster, Nod
 	for (const BackendInstruction* instruction : instructions)
 	{
 		if (dynamic_cast<const AddNode*>(instruction))
-		{
-			const AddNode* addNode = dynamic_cast<const AddNode*>(instruction);
-			addAudioComponent(master, UIMaster, managers, *addNode);
-		}
+			addAudioComponent(master, UIMaster, managers, *dynamic_cast<const AddNode*>(instruction));
 		else if (dynamic_cast<const RemoveNode*>(instruction))
-		{
-			const RemoveNode* removeNode = dynamic_cast<const RemoveNode*>(instruction);
-			removeAudioComponent(master, *removeNode);
-		}
+			removeAudioComponent(master, *dynamic_cast<const RemoveNode*>(instruction));
 		else if (dynamic_cast<const UpdateNode*>(instruction))
-		{
-			const UpdateNode* updateNode = dynamic_cast<const UpdateNode*>(instruction);
-			updateAudioComponent(master, managers.node, *updateNode);
-		}
+			updateAudioComponent(master, managers.node, *dynamic_cast<const UpdateNode*>(instruction));
 		else
 		{
 			Logger::log("UIToBackendAdapter", Error) << "Unrecognized backend instruction." << std::endl;
@@ -102,76 +93,13 @@ void UIToBackendAdapter::deleteComponentAndInputs(AudioComponent* component, Aud
 	removeComponentFromBackend(master, component);
 }
 
-void UIToBackendAdapter::updateBackendNode(AudioComponent& master, AudioComponent& component, Node& node, NodeManager& nodeManager, LinkManager& linkManager)
-{
-	// Get all links where node is the input
-	std::list<LinkInfo> nodeLinks = linkManager.findNodeLinks(nodeManager, node.id, 1);
-
-	// Tells UI node which audioComponent it points to
-	node.audioComponentId = component.id;
-
-	for (LinkInfo& link : nodeLinks)
-	{
-		std::shared_ptr<Node>& inputNode = nodeManager.findNodeByPinId(link.OutputId);
-		assert(inputNode);
-		AudioComponent* newInput = getAudioComponent(&master, inputNode->audioComponentId);
-		const bool inputAlreadyExists = newInput != nullptr;
-		if (newInput == nullptr)
-			newInput = allocateAudioComponent(*inputNode);
-
-		// Find input name
-		int inputId = -1;
-		for (Pin& pin : node.inputs)
-		{
-			if (pin.id == link.InputId.Get())
-				inputId = pin.inputId;
-		}
-
-		if (inputId < 0)
-		{
-			Logger::log("UIToBackendAdapter", Error) << "InputId should not be undefined" << std::endl;
-			exit(1);
-		}
-
-		component.addInput(inputId, newInput);
-
-		/*
-		* The inputAlreadyExists variable avoid to update node and add children multiple times.
-		* Without it, the following pattern would update two times components B & D.
-		* Component A (root) -------------------> Component B -> Component D
-		*                   `---> Component C -->'
-		*/
-		if (!inputAlreadyExists)
-			updateBackendNode(master, *newInput, *inputNode, nodeManager, linkManager);
-	}
-}
-
-AudioComponent* UIToBackendAdapter::allocateAudioComponent(Node& node)
-{
-	AudioComponent* audioComponent = node.convertNodeToAudioComponent();
-	if (audioComponent == nullptr)
-	{
-		Logger::log("UIToBackendAdapter", Error) << "Failed audio component allocation" << std::endl;
-		exit(1);
-	}
-
-	return audioComponent;
-}
-
+/*
+ * This method goes through the audio backend tree (made of audio components) and compares it with the UI nodes tree.
+ * Things can differ between trees: UI node can be deleted/added or have different properties than the its corresponding audio components.
+ * In such cases, a backend instruction is created and added to the vector instructions passed in parameter.
+*/
 void UIToBackendAdapter::createInstructions(AudioComponent* master, AudioComponent* component, Node* node, NodeUIManagers& managers, std::vector<BackendInstruction*>& instructions, AudioComponent* parentNode, int depth, int inputIndex, std::vector<bool> drawVertical)
 {
-	if (depth == 0) std::cout << "================== NEW DIFF METHOD ==================" << std::endl << std::endl;
-
-	bool ID_Match = false;
-	bool nodesValueDiffers = true;
-
-	if (node != nullptr)
-	{
-		ID_Match = (component->id == node->audioComponentId || component->id == 1); // Make exception for Master
-		if (ID_Match)
-			nodesValueDiffers = !(*node == component);
-	}
-
 	const std::string WHITE = "\033[1;37m";
 	const std::string RED = "\033[1;31m";
 	const std::string BLUE = "\033[1;34m";
@@ -179,31 +107,20 @@ void UIToBackendAdapter::createInstructions(AudioComponent* master, AudioCompone
 	const std::string RESET = "\033[1;0m";
 	std::string color = WHITE;
 
-	if (!ID_Match)
-	{
-		RemoveNode* instruction = new RemoveNode; assert(instruction);
-		assert(parentNode);
-		instruction->PARENT_COMPONENT_ID = parentNode->id;
-		instruction->CHILD_COMPONENT_ID = component->id;
-		instructions.push_back(instruction);
+	if (depth == 0) std::cout << "================== NEW DIFF METHOD ==================" << std::endl << std::endl;
 
-		color = RED;
-	}
-	else if (nodesValueDiffers && node->id != 1) // Block Master node update
-	{
-		UpdateNode* instruction = new UpdateNode; assert(instruction);
-		instruction->UI_ID = node->id;
-		instructions.push_back(instruction);
+	int comparisonReturn = compareNodes(component, node, parentNode->id, instructions);
+	if (comparisonReturn == 1) color = RED; // Id mismatch
+	if (comparisonReturn == 2) color = BLUE; // Properties mismatch
 
-		color = BLUE;
-	}
 	drawTree(depth, inputIndex, drawVertical, component->componentName + " " + std::to_string(component->id), color);
 
-	if (!ID_Match)
+	if (comparisonReturn == 1) // Stop comparing trees branch when node differs
 		return;
 
 	drawVertical.push_back(true); // Assume there are children by default
 
+	// Get child count to know when to print branch end character '└'
 	int childCount = 0;
 	for (const auto& inputs : component->inputs)
 		childCount += inputs.size();
@@ -267,6 +184,47 @@ void UIToBackendAdapter::createInstructions(AudioComponent* master, AudioCompone
 
 		currentInputIndex++;
 	}
+}
+
+/*
+ * Compare audio component with its associated ui node.
+ * Add an instruction to the instruction vector when difference occurs.
+ * Return:
+ *     0 when ids and properties are similar
+ *     1 when ids are different
+ *     2 when properties are different
+*/
+int UIToBackendAdapter::compareNodes(AudioComponent* component, Node* node, const unsigned int& parentNodeId, std::vector<BackendInstruction*>& instructions)
+{
+	bool ID_Match = false; // Used to indicate if UI node points to the correct audio component
+	bool nodesPropertiesAreSimilar = false; // If id matches, compare the properties of the ui node and the matching audio component
+
+	if (node != nullptr)
+	{
+		// Make an exception when comparing master. As this component doesn't have any parent no AddInstruction can be created.
+		// This special case is handled in the addAudioComponent() method. Where master component and its node are manually linked together.
+		ID_Match = (component->id == node->audioComponentId || component->id == 1);
+		if (ID_Match)
+			nodesPropertiesAreSimilar = (*node == component);
+	}
+
+	if (ID_Match == false)
+	{
+		RemoveNode* instruction = new RemoveNode; assert(instruction);
+		assert(parentNode);
+		instruction->PARENT_COMPONENT_ID = parentNodeId;
+		instruction->CHILD_COMPONENT_ID = component->id;
+		instructions.push_back(instruction);
+		return 1;
+	}
+	else if (nodesPropertiesAreSimilar == false && node->id != 1) // Master node cannot be updated
+	{
+		UpdateNode* instruction = new UpdateNode; assert(instruction);
+		instruction->UI_ID = node->id;
+		instructions.push_back(instruction);
+		return 2;
+	}
+	return 0;
 }
 
 void UIToBackendAdapter::printTree(AudioComponent* master, const Node& node, NodeUIManagers& managers, std::vector<BackendInstruction*>& instructions, const unsigned int parentId, int depth, int inputIndex, std::vector<bool> drawVertical)
@@ -364,23 +322,6 @@ bool UIToBackendAdapter::idExists(AudioComponent* component, const unsigned int 
 	return getAudioComponent(component, id) != nullptr;
 }
 
-Node* UIToBackendAdapter::getNode(Node& node, NodeManager& nodeManager, LinkManager& linkManager, const unsigned int audioComponentId)
-{
-	if (node.audioComponentId == audioComponentId)
-		return &node;
-
-	const std::list<LinkInfo> nodeLinks = linkManager.findNodeLinks(nodeManager, node.id, 1);
-
-	for (const LinkInfo& link : nodeLinks) // Loop over links where node is an input
-	{
-		const std::shared_ptr<Node>& inputNode = nodeManager.findNodeByPinId(link.OutputId);
-		assert(inputNode.get());
-
-		if (getNode(*inputNode, nodeManager, linkManager, audioComponentId))
-			return inputNode.get();
-	}
-	return nullptr;
-}
 
 Node* UIToBackendAdapter::getNodeDirectChild(Node* node, NodeUIManagers& managers, const unsigned int id)
 {
@@ -398,11 +339,6 @@ Node* UIToBackendAdapter::getNodeDirectChild(Node* node, NodeUIManagers& manager
 	}
 
 	return nullptr;
-}
-
-bool UIToBackendAdapter::idExists(Node& node, NodeManager& nodeManager, LinkManager& linkManager, const unsigned int id)
-{
-	return getNode(node, nodeManager, linkManager, id) != nullptr;
 }
 
 // Process instruction methods
@@ -432,7 +368,7 @@ void UIToBackendAdapter::addAudioComponent(Master& master, Node& masterUI, NodeU
 	AudioComponent* parentAudioComponent = getAudioComponent(&master, parentNode->audioComponentId); assert(parentAudioComponent);
 	if (!parentAudioComponent->idIsDirectChild(newAudioComponent->id))
 		parentAudioComponent->addInput(instruction.UI_PARENT_NODE_INPUT_ID - 1, newAudioComponent);
-	else // [TODO] If in the future linking two nodes multiple is desired: remove this check and add a post processing step to instructions list to remove duplication instructions.
+	else // [TODO] If in the future linking two nodes multiple time is desired: remove this check and add a post processing step to instructions list to remove duplication instructions.
 		Logger::log("Add node instruction", Warning) << "Parent " << parentAudioComponent->id << " was already linked to child " << newAudioComponent->id << std::endl;
 }
 

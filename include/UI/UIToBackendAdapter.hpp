@@ -50,8 +50,6 @@ private:
 	static void removeAudioComponent(Master& master, const RemoveNode& instruction);
 
 	static void removeComponentFromBackend(AudioComponent* component, AudioComponent* componentToRemove, const bool deleteComponent = true, unsigned int depth = 0);
-	static void updateBackendNode(AudioComponent& master, AudioComponent& component, Node& node, NodeManager& nodeManager, LinkManager& linkManager);
-	static AudioComponent* allocateAudioComponent(Node& node);
 
 	// Print tree helpers (defaults to white text color)
 	static void drawTree(int depth, int inputIndex, std::vector<bool> drawVertical, const std::string& text, const std::string& color = "\033[1;37m");
@@ -61,6 +59,8 @@ private:
 
 	static void createInstructions(AudioComponent* master, AudioComponent* component, Node* node, NodeUIManagers& managers, std::vector<BackendInstruction*>& instructions, AudioComponent* parentComponent = nullptr, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
 	static void processInstructions(Master& master, Node& UIMaster, NodeUIManagers& managers, std::vector<BackendInstruction*>& instructions);
+
+	static int compareNodes(AudioComponent* component, Node* node, const unsigned int& parentNodeId, std::vector<BackendInstruction*>& instructions);
 
 	static AudioComponent* getAudioComponent(AudioComponent* component, const unsigned int id);
 	static bool idExists(AudioComponent* component, const unsigned int id);
