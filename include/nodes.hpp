@@ -196,6 +196,17 @@ struct Node
 		return component->id == audioComponentId;
 	}
 
+	int getInputIndexFromPinId(const unsigned int& pinId) const
+	{
+		for (int i = 0; i < inputs.size(); i++)
+		{
+			const Pin& pin = inputs[i];
+			if (pin.id == pinId)
+				return (i + 1);
+		}
+		return -1;
+	}
+
 protected:
 	std::string appendId(const std::string& str)
 	{
