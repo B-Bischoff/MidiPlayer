@@ -48,14 +48,16 @@ class UIToBackendAdapter {
 public:
 	static void updateBackend(Master& master, NodeUIManagers& managers);
 
-	static void printTreesDiff(Master& master, Node& node, LinkManager& linkManager, NodeManager& nodeManager);
-	static void printTree(AudioComponent* master, const Node& node, NodeUIManagers& managers, std::vector<BackendInstruction*>& instructions, const unsigned int parentId, int depth = 0, int inputIndex = 1);
+	static void printTreesDiff(Master& master, NodeUIManagers& managers);
+	static void printTEST(AudioComponent* master, AudioComponent* component, Node* node, NodeUIManagers& managers, AudioComponent* parentNode = nullptr, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
+	static void printTreeNODE(AudioComponent* master, const Node& node, NodeUIManagers& managers, const unsigned int parentId, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
+
 	static void deleteComponentAndInputs(AudioComponent* component, AudioComponent* master);
-	static void removeUnreachableComponentAndInputs(AudioComponent* master, AudioComponent* branchRoot, AudioComponent* component);
 
 private:
-	static void createInstructions(AudioComponent* master, AudioComponent* component, Node* node, NodeUIManagers& managers, std::vector<BackendInstruction*>& instructions, AudioComponent* parentComponent = nullptr, int depth = 0);
-	static void processNodeLinks(AudioComponent* master, Node* node, NodeUIManagers& managers, std::vector<BackendInstruction*>& instructions, const std::unordered_set<int>& visitedChild, int depth, int currentInputIndex);
+	static void createInstructions(AudioComponent* master, AudioComponent* component, Node* node, NodeUIManagers& managers, std::vector<BackendInstruction*>& instructions, AudioComponent* parentComponent = nullptr);
+	static void processNodeLinks(AudioComponent* master, Node* node, NodeUIManagers& managers, std::vector<BackendInstruction*>& instructions, const std::unordered_set<int>& visitedChild, int currentInputIndex);
+	static void browseNodeBranch(AudioComponent* master, const Node& node, NodeUIManagers& managers, std::vector<BackendInstruction*>& instructions, const unsigned int parentId, int inputIndex = 1);
 	static int compareNodes(AudioComponent* component, Node* node, const unsigned int& parentNodeId);
 
 	static void processInstructions(Master& master, Node& UIMaster, NodeUIManagers& managers, std::vector<BackendInstruction*>& instructions);
@@ -66,4 +68,5 @@ private:
 	static void drawTree(int depth, int inputIndex, std::vector<bool> drawVertical, const std::string& text, const std::string& color = "\033[1;37m");
 
 	static Node* getNodeDirectChild(Node* node, NodeUIManagers& managers, const unsigned int id);
+	static void removeUnreachableComponentAndInputs(AudioComponent* master, AudioComponent* branchRoot, AudioComponent* component);
 };
