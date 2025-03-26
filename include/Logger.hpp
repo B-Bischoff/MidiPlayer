@@ -4,6 +4,8 @@
 #include <ostream>
 #include <vector>
 
+#include "colors.hpp"
+
 enum LogLevel { Debug, Info, Warning, Error };
 
 class LoggerStream {

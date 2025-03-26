@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "colors.hpp"
 #include "AudioBackend/Components/Components.hpp"
 #include "NodeManager.hpp"
 #include "LinkManager.hpp"
@@ -44,14 +45,24 @@ struct UpdateNode : public BackendInstruction {
 		: UI_ID(UI_ID) { }
 };
 
+struct PrintTreeControls {
+	int depth = 0;
+	int inputIndex = 1;
+	std::vector<bool> drawVertical = {};
+
+	PrintTreeControls incrementDepth()
+	{
+		PrintTreeControls newPrint = *this;
+		newPrint.depth++;
+		return newPrint;
+	}
+};
+
 class UIToBackendAdapter {
 public:
 	static void updateBackend(Master& master, NodeUIManagers& managers);
 
 	static void printTreesDiff(Master& master, NodeUIManagers& managers);
-	static void printTEST(AudioComponent* master, AudioComponent* component, Node* node, NodeUIManagers& managers, AudioComponent* parentNode = nullptr, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
-	static void printTreeNODE(AudioComponent* master, const Node& node, NodeUIManagers& managers, const unsigned int parentId, int depth = 0, int inputIndex = 1, std::vector<bool> drawVertical = {});
-
 	static void deleteComponentAndInputs(AudioComponent* component, AudioComponent* master);
 
 private:
@@ -65,8 +76,14 @@ private:
 	static void updateAudioComponent(Master& master, NodeManager& nodeManager, const UpdateNode& instruction);
 	static void removeAudioComponent(Master& master, const RemoveNode& instruction);
 
-	static void drawTree(int depth, int inputIndex, std::vector<bool> drawVertical, const std::string& text, const std::string& color = "\033[1;37m");
-
 	static Node* getNodeDirectChild(Node* node, NodeUIManagers& managers, const unsigned int id);
 	static void removeUnreachableComponentAndInputs(AudioComponent* master, AudioComponent* branchRoot, AudioComponent* component);
+
+	// Print tree helpers
+	static void printTreesDiff(AudioComponent* master, AudioComponent* component, Node* node, NodeUIManagers& managers, AudioComponent* parentNode = nullptr, PrintTreeControls print = {});
+	static void printNewNodes(AudioComponent* master, const Node& node, NodeUIManagers& managers, const unsigned int parentId, PrintTreeControls print = {});
+	static void drawTree(const PrintTreeControls& print, const std::string& text, const std::string& color = ANSI_FG_WHITE);
+	static void printNodeLinks(AudioComponent* master, Node* node, NodeUIManagers& managers, std::vector<BackendInstruction*>& instructions, const std::unordered_set<int>& visitedChild, int currentInputIndex);
+	static unsigned int getChildCount(AudioComponent* component, Node* node, NodeUIManagers& managers);
+	static void upateProcessedChildrenCount(const int childCount, int& processedChildren, std::vector<bool>& drawVertical);
 };

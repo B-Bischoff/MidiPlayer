@@ -1,15 +1,15 @@
 #include "Logger.hpp"
 
 std::string Logger::_colors[9] = {
-	"\033[1;0m", // reset
-	"\033[1;30m", // black
-	"\033[1;31m", // red
-	"\033[1;32m", // green
-	"\033[1;33m", // yellow
-	"\033[1;34m", // blue
-	"\033[1;35m", // magenta
-	"\033[1;36m", // cyan
-	"\033[1;37m", // white
+	ANSI_RESET,
+	ANSI_FG_BLACK,
+	ANSI_FG_RED,
+	ANSI_FG_GREEN,
+	ANSI_FG_YELLOW,
+	ANSI_FG_BLUE,
+	ANSI_FG_MAGENTA,
+	ANSI_FG_CYAN,
+	ANSI_FG_WHITE,
 };
 std::string* Logger::_debugColors[4] = {
 	&_colors[magenta], // debug

@@ -1,138 +1,6 @@
 #include "UI/UIToBackendAdapter.hpp"
 
-void UIToBackendAdapter::printTreesDiff(Master& master, NodeUIManagers& managers)
-{
-	Node& UIMaster = *(managers.node.getMasterNode());
-	printTEST(&master, &master, &UIMaster, managers);
-	//createInstructions(&master, &master, &UIMaster, managers, instructions);
-}
-
-void UIToBackendAdapter::printTEST(AudioComponent* master, AudioComponent* component, Node* node, NodeUIManagers& managers, AudioComponent* parentNode, int depth, int inputIndex, std::vector<bool> drawVertical)
-{
-	int comparisonReturn = compareNodes(component, node, parentNode->id);
-
-	std::string color = "\033[1;37m"; // White
-	if (comparisonReturn == 1) color = "\033[1;31m"; // Id mismatch, color red
-	if (comparisonReturn == 2) color = "\033[1;34m"; // Properties mismatch, color blue
-
-	drawTree(depth, inputIndex, drawVertical, component->componentName + " " + std::to_string(component->id), color);
-
-	if (comparisonReturn == 1) // Stop comparing trees branch when node differs
-		return;
-
-	drawVertical.push_back(true); // Assume there are children by default
-
-	// Get child count to know when to print branch end character '└'
-	int childCount = 0;
-	for (const auto& inputs : component->inputs)
-		childCount += inputs.size();
-	if (node)
-	{
-		std::list<LinkInfo> nodeLinks = managers.link.findNodeLinks(managers.node, node->id, 1);
-		if (nodeLinks.size() > childCount)
-			childCount = nodeLinks.size();
-	}
-
-	int currentInputIndex = 1;
-	int processedChildren = 0;
-
-	for (const ComponentInput& inputs : component->inputs) // loop over audio component inputs
-	{
-		std::unordered_set<int> visitedChild;
-
-		for (AudioComponent* input : inputs) // loop over all the component plugged to one input
-		{
-			processedChildren++;
-			if (processedChildren == childCount)
-				drawVertical.back() = false; // Stop drawing vertical for the last child
-
-			printTEST(master, input, getNodeDirectChild(node, managers, input->id), managers, component, depth + 1, currentInputIndex, drawVertical);
-			visitedChild.insert(input->id);
-		}
-
-		// Loop over node childs present in the UI tree but missing backend side
-		if (node)
-		{
-			// Get node direct childrens
-			const std::list<LinkInfo> nodeLinks = managers.link.findNodeLinks(managers.node, node->id, 1);
-			for (const LinkInfo& link : nodeLinks) // Loop over links where node is an input
-			{
-				const std::shared_ptr<Node>& inputNode = managers.node.findNodeByPinId(link.OutputId);
-				assert(inputNode.get());
-
-				// Find input id
-				int linkInputIndex = -1;
-				for (int i = 0; i < node->inputs.size(); i++)
-				{
-					const Pin& pin = node->inputs[i];
-					if (pin.id == link.InputId.Get())
-					{
-						linkInputIndex = i+1;
-						break;
-					}
-				}
-				assert(currentInputIndex != -1);
-
-				if (currentInputIndex == linkInputIndex && visitedChild.find(inputNode->audioComponentId) == visitedChild.end())
-				{
-					processedChildren++;
-					if (processedChildren == childCount)
-						drawVertical.back() = false; // Stop drawing vertical for the last child
-
-					printTreeNODE(master, *inputNode.get(), managers, node->id, depth + 1, currentInputIndex, drawVertical);
-				}
-			}
-		}
-
-		currentInputIndex++;
-	}
-}
-
-
-void UIToBackendAdapter::printTreeNODE(AudioComponent* master, const Node& node, NodeUIManagers& managers, const unsigned int parentId, int depth, int inputIndex, std::vector<bool> drawVertical)
-{
-	if (depth == 0) std::cout << "================== UI NODES TREE ==================" << std::endl << std::endl;
-
-	const std::string GREEN = "\033[1;32m";
-
-	Node* parentNode = managers.node.findNodeById(parentId).get();
-	AudioComponent* parentAudioComponent = master->getAudioComponent(parentNode->audioComponentId);
-	AudioComponent* childAudioComponent = master->getAudioComponent(node.audioComponentId);
-
-	drawTree(depth, inputIndex, drawVertical, node.name + " id: " + std::to_string(node.id) + " | comp id: " + std::to_string(node.audioComponentId), GREEN);
-
-	drawVertical.push_back(true); // Assume there are children by default
-
-	const std::list<LinkInfo> nodeLinks = managers.link.findNodeLinks(managers.node, node.id, 1);
-	const int childCount = nodeLinks.size();
-
-	int processedChildren = 0;
-	for (const LinkInfo& link : nodeLinks) // Loop over links where node is an input
-	{
-		const std::shared_ptr<Node>& inputNode = managers.node.findNodeByPinId(link.OutputId);
-		assert(inputNode.get());
-		processedChildren++;
-		if (processedChildren == childCount)
-			drawVertical.back() = false; // Stop drawing vertical for the last child
-
-		// Find input index
-		int currentInputIndex = -1;
-		for (int i = 0; i < node.inputs.size(); i++)
-		{
-			const Pin& pin = node.inputs[i];
-			if (pin.id == link.InputId.Get())
-			{
-				currentInputIndex = i+1;
-				break;
-			}
-		}
-		assert(currentInputIndex != -1);
-
-		printTreeNODE(master, *inputNode, managers, node.id, depth + 1, currentInputIndex, drawVertical);
-	}
-}
-
-// ------------------------------------------------------------------------
+// Backend update methods
 
 void UIToBackendAdapter::updateBackend(Master& master, NodeUIManagers& managers)
 {
@@ -174,7 +42,6 @@ void UIToBackendAdapter::removeUnreachableComponentAndInputs(AudioComponent* mas
 	{
 		if (master->idExists((*it)->id) == false) // Continue to delete branch as long as its connected to root
 		{
-			Logger::log("removeUnreachableComponentAndInputs", Debug) << "Should delete " << (*it)->componentName << " " << (*it)->id << std::endl;
 			removeUnreachableComponentAndInputs(master, branchRoot, *it);
 			inputs = component->getInputs();
 			it = inputs.begin();
@@ -182,10 +49,7 @@ void UIToBackendAdapter::removeUnreachableComponentAndInputs(AudioComponent* mas
 				break;
 		}
 		else
-		{
-			Logger::log("deleteUnreachableComponentAndInputs", Debug) << "Preserving " << (*it)->id << std::endl;
 			it++;
-		}
 	}
 	master->removeComponentFromBranch(component, false);
 	branchRoot->removeComponentFromBranch(component, true);
@@ -297,24 +161,6 @@ void UIToBackendAdapter::browseNodeBranch(AudioComponent* master, const Node& no
 	}
 }
 
-void UIToBackendAdapter::drawTree(int depth, int inputIndex, std::vector<bool> drawVertical, const std::string& text, const std::string& color)
-{
-	const std::string RESET = "\033[1;0m";
-
-	for (int i = 0; i < depth; i++)
-	{
-		if (i == depth - 1 && drawVertical[i])
-			std::cout << color << "├─" << inputIndex << "─";
-		else if (i == depth - 1)
-			std::cout << color << "└─" << inputIndex << "─";
-		else if (drawVertical[i])
-			std::cout << "│   ";
-		else
-			std::cout << "    ";
-	}
-	std::cout << text << RESET << std::endl;
-}
-
 Node* UIToBackendAdapter::getNodeDirectChild(Node* node, NodeUIManagers& managers, const unsigned int id)
 {
 	if (!node) return nullptr;
@@ -337,7 +183,7 @@ Node* UIToBackendAdapter::getNodeDirectChild(Node* node, NodeUIManagers& manager
 
 void UIToBackendAdapter::addAudioComponent(Master& master, Node& masterUI, NodeUIManagers& managers, const AddNode& instruction)
 {
-	Logger::log("Add node instruction", Debug) << "id: " << instruction.UI_NODE_ID << " parent id: " << instruction.UI_PARENT_NODE_ID << " parent input id: " << instruction.UI_PARENT_NODE_INPUT_ID << std::endl;
+	//Logger::log("Add node instruction", Debug) << "id: " << instruction.UI_NODE_ID << " parent id: " << instruction.UI_PARENT_NODE_ID << " parent input id: " << instruction.UI_PARENT_NODE_INPUT_ID << std::endl;
 
 	// Get UI Node from instruction data
 	Node* node = managers.node.findNodeById(instruction.UI_NODE_ID).get();
@@ -366,14 +212,14 @@ void UIToBackendAdapter::addAudioComponent(Master& master, Node& masterUI, NodeU
 
 void UIToBackendAdapter::removeAudioComponent(Master& master, const RemoveNode& instruction)
 {
-	Logger::log("Remove node", Error) << "parent: " << instruction.PARENT_COMPONENT_ID << " child: " << instruction.CHILD_COMPONENT_ID << std::endl;
+	//Logger::log("Remove node", Error) << "parent: " << instruction.PARENT_COMPONENT_ID << " child: " << instruction.CHILD_COMPONENT_ID << std::endl;
 
 	// Remove backend link between component and child
 	AudioComponent* parentComponent = master.getAudioComponent(instruction.PARENT_COMPONENT_ID); assert(parentComponent);
 	AudioComponent* childComponent = master.getAudioComponent(instruction.CHILD_COMPONENT_ID);
 	if (!childComponent) // Child might already have been deleted by a previous instruction
 	{
-		Logger::log("Backend Update", Warning) << "Child could not be found, skipping" << std::endl;
+		//Logger::log("Backend Update", Warning) << "Child could not be found, skipping" << std::endl;
 		return;
 	}
 	parentComponent->removeInput(childComponent);
@@ -385,10 +231,137 @@ void UIToBackendAdapter::removeAudioComponent(Master& master, const RemoveNode& 
 	}
 }
 
+// Print tree methods
+
+void UIToBackendAdapter::printTreesDiff(Master& master, NodeUIManagers& managers)
+{
+	Node& UIMaster = *(managers.node.getMasterNode());
+	printTreesDiff(&master, &master, &UIMaster, managers);
+}
+
+void UIToBackendAdapter::printTreesDiff(AudioComponent* master, AudioComponent* component, Node* node, NodeUIManagers& managers, AudioComponent* parentNode, PrintTreeControls print)
+{
+	int comparisonReturn = compareNodes(component, node, parentNode->id);
+	std::string color = comparisonReturn == 1 ? ANSI_FG_RED : comparisonReturn == 2 ? ANSI_FG_BLUE : ANSI_FG_WHITE;
+	drawTree(print, component->componentName + " " + std::to_string(component->id), color);
+
+	if (comparisonReturn == 1) // Stop comparing trees branch when node differs
+		return;
+
+	print.drawVertical.push_back(true); // Assume there are children by default
+
+	// Get child count to know when to print branch end character '└'
+	int childCount = getChildCount(component, node, managers);
+	int processedChildren = 0;
+	print.inputIndex = 1;
+
+	for (const ComponentInput& inputs : component->inputs) // loop over audio component inputs
+	{
+		std::unordered_set<int> visitedChild;
+
+		for (AudioComponent* input : inputs) // loop over all the component plugged to one input
+		{
+			upateProcessedChildrenCount(childCount, processedChildren, print.drawVertical);
+			printTreesDiff(master, input, getNodeDirectChild(node, managers, input->id), managers, component, print.incrementDepth());
+			visitedChild.insert(input->id);
+		}
+
+		if (node) // Loop over node childs present in the UI tree but missing backend side
+		{
+			// Get node direct childrens
+			const std::list<LinkInfo> nodeLinks = managers.link.findNodeLinks(managers.node, node->id, 1);
+			for (const LinkInfo& link : nodeLinks) // Loop over links where node is an input
+			{
+				const std::shared_ptr<Node>& inputNode = managers.node.findNodeByPinId(link.OutputId); assert(inputNode.get());
+				const int linkInputIndex = node->getInputIndexFromPinId(link.InputId.Get()); assert(linkInputIndex != -1);
+
+				if (print.inputIndex == linkInputIndex && visitedChild.find(inputNode->audioComponentId) == visitedChild.end())
+				{
+					upateProcessedChildrenCount(childCount, processedChildren, print.drawVertical);
+					printNewNodes(master, *inputNode.get(), managers, node->id, print.incrementDepth());
+				}
+			}
+		}
+
+		print.inputIndex++;
+	}
+}
+
+void UIToBackendAdapter::printNewNodes(AudioComponent* master, const Node& node, NodeUIManagers& managers, const unsigned int parentId, PrintTreeControls print)
+{
+	if (print.depth == 0) std::cout << "================== UI NODES TREE ==================" << std::endl << std::endl;
+
+	const std::string GREEN = "\033[1;32m";
+
+	Node* parentNode = managers.node.findNodeById(parentId).get();
+	AudioComponent* parentAudioComponent = master->getAudioComponent(parentNode->audioComponentId);
+	AudioComponent* childAudioComponent = master->getAudioComponent(node.audioComponentId);
+
+	drawTree(print, node.name + " id: " + std::to_string(node.id) + " | comp id: " + std::to_string(node.audioComponentId), GREEN);
+
+	print.drawVertical.push_back(true); // Assume there are children by default
+
+	const std::list<LinkInfo> nodeLinks = managers.link.findNodeLinks(managers.node, node.id, 1);
+	const int childCount = nodeLinks.size();
+
+	int processedChildren = 0;
+	for (const LinkInfo& link : nodeLinks) // Loop over links where node is an input
+	{
+		const std::shared_ptr<Node>& inputNode = managers.node.findNodeByPinId(link.OutputId); assert(inputNode.get());
+		upateProcessedChildrenCount(childCount, processedChildren, print.drawVertical);
+
+		print.inputIndex = node.getInputIndexFromPinId(link.InputId.Get());
+		printNewNodes(master, *inputNode, managers, node.id, print.incrementDepth());
+	}
+}
+
 void UIToBackendAdapter::updateAudioComponent(Master& master, NodeManager& nodeManager, const UpdateNode& instruction)
 {
-	Logger::log("Update node", Info) << instruction.UI_ID << std::endl;
+	//Logger::log("Update node", Info) << instruction.UI_ID << std::endl;
 	const Node* node = nodeManager.findNodeById(instruction.UI_ID).get(); assert(node);
 	AudioComponent* audioComponent = master.getAudioComponent(node->audioComponentId); assert(audioComponent);
 	node->assignToAudioComponent(audioComponent);
+}
+
+void UIToBackendAdapter::drawTree(const PrintTreeControls& print, const std::string& text, const std::string& color)
+{
+	const std::string RESET = "\033[1;0m";
+
+	for (int i = 0; i < print.depth; i++)
+	{
+		if (i == print.depth - 1 && print.drawVertical[i])
+			std::cout << color << "├─" << print.inputIndex << "─";
+		else if (i == print.depth - 1)
+			std::cout << color << "└─" << print.inputIndex << "─";
+		else if (print.drawVertical[i])
+			std::cout << "│   ";
+		else
+			std::cout << "    ";
+	}
+	std::cout << text << RESET << std::endl;
+}
+
+unsigned int UIToBackendAdapter::getChildCount(AudioComponent* component, Node* node, NodeUIManagers& managers)
+{
+	int childCount = 0;
+
+	if (component)
+	{
+		for (const auto& inputs : component->inputs)
+			childCount += inputs.size();
+	}
+	if (node)
+	{
+		std::list<LinkInfo> nodeLinks = managers.link.findNodeLinks(managers.node, node->id, 1);
+		if (nodeLinks.size() > childCount)
+			childCount = nodeLinks.size();
+	}
+	return childCount;
+}
+
+void UIToBackendAdapter::upateProcessedChildrenCount(const int childCount, int& processedChildren, std::vector<bool>& drawVertical)
+{
+	processedChildren++;
+	if (processedChildren == childCount)
+		drawVertical.back() = false; // Stop drawing vertical for the last child
 }

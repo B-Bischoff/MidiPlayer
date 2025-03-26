@@ -106,7 +106,7 @@ struct AudioComponent {
 
 		if (deleteComponent && depth == 0)
 		{
-			Logger::log("Remove Component from Backend") << "REMOVING " << componentToRemove->id << std::endl;
+			// Logger::log("Remove Component from Backend") << "REMOVING " << componentToRemove->id << std::endl;
 			delete componentToRemove;
 		}
 	}
