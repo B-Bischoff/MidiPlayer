@@ -8,6 +8,8 @@
 #include "UI/Message.hpp"
 #include "MidiMath.hpp"
 
+#include "AudioBackend/Components/Components.hpp"
+
 #include "cereal/types/polymorphic.hpp"
 
 namespace ed = ax::NodeEditor;
@@ -39,6 +41,10 @@ struct Pin
 	std::string name;
 	PinKind kind;
 
+	// Used to map this pin to a specific input of the underlying audio component, value must not be negative
+	// Only applies for input pin, -1 is used on output pin
+	int inputId;
+
 	Mode mode;
 	float* sliderValue;
 
@@ -48,12 +54,13 @@ struct Pin
 		node = nullptr;
 		name.clear();
 		kind = PinKind::Input;
+		inputId = -1;
 		mode = Mode::Link;
 		sliderValue = nullptr;
 	}
 
 	Pin(int id, const char* name):
-		id(id), node(nullptr), name(name), kind(PinKind::Input), mode(Mode::Link), sliderValue(nullptr)
+		id(id), node(nullptr), name(name), kind(PinKind::Input), inputId(-1), mode(Mode::Link), sliderValue(nullptr)
 	{ }
 };
 
@@ -66,14 +73,22 @@ struct Node
 	ImColor color;
 	UI_NodeType type;
 	bool hidden;
+	unsigned int audioComponentId; // Used to identify audioComponent pointed by this node
 
 	static bool propertyChanged;
 
 	Node()
-		: id(0), name(""), inputs(), outputs(), color(ImColor(0)), type(NodeUI), hidden(false)
+		: id(0), name(""), inputs(), outputs(), color(ImColor(0)), type(NodeUI), hidden(false), audioComponentId(0)
 	{ }
 
 	virtual ~Node() {}
+
+	virtual AudioComponent* convertNodeToAudioComponent() const = 0;
+	virtual void assignToAudioComponent(AudioComponent* audioComponentId) const
+	{
+		Logger::log("Node", Error) << "Method 'assignToAudioComponent' is not overloaded for node : " << name << std::endl;
+		exit(1);
+	}
 
 	virtual void render(std::queue<Message>& messages)
 	{
@@ -96,7 +111,7 @@ struct Node
 	{
 		ImGui::PushID(appendId(name).c_str());
 #if NODE_DEBUG
-		ImGui::Text("%s", (name + "_" + std::to_string(id)).c_str());
+		ImGui::Text("%s", (name + "_" + std::to_string(id) + "_" + std::to_string(audioComponentId)).c_str());
 #else
 		ImGui::Text("%s", name.c_str());
 #endif
@@ -176,13 +191,29 @@ struct Node
 		return !(*this == node);
 	}
 
+	virtual bool operator==(const AudioComponent* component)
+	{
+		return component->id == audioComponentId;
+	}
+
+	int getInputIndexFromPinId(const unsigned int& pinId) const
+	{
+		for (int i = 0; i < inputs.size(); i++)
+		{
+			const Pin& pin = inputs[i];
+			if (pin.id == pinId)
+				return (i + 1);
+		}
+		return -1;
+	}
+
 protected:
 	std::string appendId(const std::string& str)
 	{
 		return str + std::to_string(id);
 	}
 
-	Pin createPin(IDManager* idManager, const std::string& name, PinKind kind)
+	Pin createPin(IDManager* idManager, const std::string& name, PinKind kind, unsigned int inputId = -1)
 	{
 		Pin pin;
 		pin.id = INVALID_ID;
@@ -191,6 +222,7 @@ protected:
 		pin.name = name;
 		pin.node = this; // Is this really necessary ?
 		pin.kind = kind;
+		pin.inputId = inputId;
 
 		return pin;
 	}
@@ -212,8 +244,10 @@ struct MasterNode : public Node
 		name = "Master";
 		type = MasterUI;
 
-		inputs.push_back(createPin(idManager, "> input", PinKind::Input));
+		inputs.push_back(createPin(idManager, "> input", PinKind::Input, Master::Inputs::input));
 	}
+
+	AudioComponent* convertNodeToAudioComponent() const override { return new Master; }
 };
 
 struct NumberNode : public Node
@@ -228,6 +262,25 @@ struct NumberNode : public Node
 
 		value = 0.0f;
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
+	}
+
+	AudioComponent* convertNodeToAudioComponent() const override
+	{
+		Number* audioComponent = new Number;
+		audioComponent->number = value;
+		return audioComponent;
+	}
+
+	void assignToAudioComponent(AudioComponent* audioComponent) const override
+	{
+		Number* number = dynamic_cast<Number*>(audioComponent); assert(number);
+		number->number = value;
+	}
+
+	bool operator==(const AudioComponent* component) override
+	{
+		const Number* number = dynamic_cast<const Number*>(component); assert(number);
+		return Node::operator==(component) && number->number == value;
 	}
 
 	void render(std::queue<Message>& messages) override
@@ -269,11 +322,30 @@ struct OscNode : public Node
 
 		oscType = OscType::Sine;
 
-		inputs.push_back(createPin(idManager, "> freq", PinKind::Input));
-		inputs.push_back(createPin(idManager, "> phase", PinKind::Input));
-		inputs.push_back(createPin(idManager, "> LFO Hz", PinKind::Input));
-		inputs.push_back(createPin(idManager, "> LFO Amplitude", PinKind::Input));
+		inputs.push_back(createPin(idManager, "> freq", PinKind::Input, Oscillator::Inputs::frequency));
+		inputs.push_back(createPin(idManager, "> phase", PinKind::Input, Oscillator::Inputs::phase));
+		inputs.push_back(createPin(idManager, "> LFO Hz", PinKind::Input, Oscillator::Inputs::LFO_Hz));
+		inputs.push_back(createPin(idManager, "> LFO Amplitude", PinKind::Input, Oscillator::Inputs::LFO_Amplitude));
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
+	}
+
+	AudioComponent* convertNodeToAudioComponent() const override
+	{
+		Oscillator* audioComponent = new Oscillator;
+		audioComponent->type = oscType;
+		return audioComponent;
+	}
+
+	void assignToAudioComponent(AudioComponent* audioComponent) const override
+	{
+		Oscillator* oscillator = dynamic_cast<Oscillator*>(audioComponent); assert(oscillator);
+		oscillator->type = oscType;
+	}
+
+	bool operator==(const AudioComponent* component) override
+	{
+		const Oscillator* oscillator = dynamic_cast<const Oscillator*>(component); assert(oscillator);
+		return Node::operator==(component) && oscillator->type == oscType;
 	}
 
 	template<class Archive>
@@ -345,9 +417,17 @@ struct ADSR_Node : public Node {
 		controlPoints[6] = {3.0f, 0.0f}; // ctrl 2
 		controlPoints[7] = {4.0f, 0.0f}; // static 4
 
+		inputs.push_back(createPin(idManager, "> input", PinKind::Input, ADSR::Inputs::input));
+		inputs.push_back(createPin(idManager, "> trigger", PinKind::Input, ADSR::Inputs::trigger));
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
-		inputs.push_back(createPin(idManager, "> input", PinKind::Input));
-		inputs.push_back(createPin(idManager, "> trigger", PinKind::Input));
+	}
+
+	AudioComponent* convertNodeToAudioComponent() const override
+	{
+		ADSR* audioComponent = new ADSR;
+		for (int i = 0; i < 8; i++)
+			audioComponent->reference.controlPoints[i] = controlPoints[i];
+		return audioComponent;
 	}
 
 	void render(std::queue<Message>& messages) override
@@ -381,6 +461,8 @@ struct KeyboardFrequencyNode : public Node {
 
 		outputs.push_back(createPin(idManager, "frequency >", PinKind::Output));
 	}
+
+	AudioComponent* convertNodeToAudioComponent() const override { return new KeyboardFrequency; }
 };
 
 struct MultNode : public Node {
@@ -390,10 +472,12 @@ struct MultNode : public Node {
 		name = "Multiplier";
 		type = MultUI;
 
-		inputs.push_back(createPin(idManager, "> input A", PinKind::Input));
-		inputs.push_back(createPin(idManager, "> input B", PinKind::Input));
+		inputs.push_back(createPin(idManager, "> input A", PinKind::Input, Multiplier::Inputs::inputA));
+		inputs.push_back(createPin(idManager, "> input B", PinKind::Input, Multiplier::Inputs::inputB));
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
+
+	AudioComponent* convertNodeToAudioComponent() const override { return new Multiplier; }
 };
 
 struct LowPassFilterNode : public Node {
@@ -402,10 +486,13 @@ struct LowPassFilterNode : public Node {
 		id = getId(idManager);
 		name = "Low Pass Filter";
 		type = LowPassUI;
-		inputs.push_back(createPin(idManager, "> signal", PinKind::Input));
-		inputs.push_back(createPin(idManager, "> alpha", PinKind::Input));
+
+		inputs.push_back(createPin(idManager, "> input", PinKind::Input, LowPassFilter::Inputs::input));
+		inputs.push_back(createPin(idManager, "> alpha", PinKind::Input, LowPassFilter::Inputs::alpha));
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
+
+	AudioComponent* convertNodeToAudioComponent() const override { return new LowPassFilter; }
 };
 
 struct CombFilterNode : public Node {
@@ -415,11 +502,13 @@ struct CombFilterNode : public Node {
 		name = "Comb Filter";
 		type = CombFilterUI;
 
-		inputs.push_back(createPin(idManager, "> input", PinKind::Input));
-		inputs.push_back(createPin(idManager, "> delay samples", PinKind::Input));
-		inputs.push_back(createPin(idManager, "> feedback", PinKind::Input));
+		inputs.push_back(createPin(idManager, "> input", PinKind::Input, CombFilter::Input::input));
+		inputs.push_back(createPin(idManager, "> delay samples", PinKind::Input, CombFilter::Input::delaySamples));
+		inputs.push_back(createPin(idManager, "> feedback", PinKind::Input, CombFilter::Input::feedback));
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
+
+	AudioComponent* convertNodeToAudioComponent() const override { return new CombFilter; }
 };
 
 // Register every Node child classes

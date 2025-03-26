@@ -8,22 +8,15 @@ private:
 	bool showWarning = true;
 
 public:
-	std::vector<AudioComponent*> inputs;
+	enum Inputs { input };
 
-	Components getInputs() override
-	{
-		return combineVectorsToForwardList(inputs);
-	}
+	Master() : AudioComponent() { inputs.resize(1); componentName = "Master"; }
 
-	void addInput(const std::string& inputName, AudioComponent* input) override
+	virtual ~Master()
 	{
-		// [TODO] check inputName even thought it is not necessary for 1 input nodes ?
-		inputs.push_back(input);
-	}
-
-	void clearInputs() override
-	{
-		clearVectors(inputs);
+		Components inputs = getInputs();
+		for (auto& input : inputs)
+			deleteComponentAndInputs(input);
 	}
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
@@ -43,7 +36,7 @@ public:
 		double value = 0.0;
 
 
-		for (AudioComponent* input : inputs)
+		for (AudioComponent* input : inputs[input])
 		{
 			int i = 0;
 			do
@@ -53,5 +46,25 @@ public:
 		}
 
 		return value;
+	}
+
+	void deleteComponentAndInputs(AudioComponent* component)
+	{
+		Components inputs = component->getInputs();
+
+		auto it = inputs.begin();
+		while (it != inputs.end())
+		{
+			if (idExists((*it)->id))
+				deleteComponentAndInputs(*it);
+			else
+				it++;
+			inputs = component->getInputs();
+			it = inputs.begin();
+			if (it == inputs.end())
+				break;
+		}
+
+		removeComponentFromBranch(component, true);
 	}
 };

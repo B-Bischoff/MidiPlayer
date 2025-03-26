@@ -1,15 +1,17 @@
 #pragma once
 
+#include <fstream>
+#include <memory>
+#include <sstream>
+
 #include <cereal/archives/json.hpp>
 #include <cereal/archives/binary.hpp>
 #include <cereal/types/vector.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/types/base_class.hpp>
 #include <cereal/types/memory.hpp>
-
-#include <fstream>
-#include <memory>
 #include <imgui_node_editor.h>
+
 #include "audio_backend.hpp"
 #include "IDManager.hpp"
 #include "NodeManager.hpp"
@@ -19,10 +21,9 @@
 #include "Message.hpp"
 #include "audio_backend.hpp"
 #include "AudioBackend/Components/Components.hpp"
-#include <sstream>
-#include "MidiMath.hpp"
-
 #include "path.hpp"
+
+#include "MidiMath.hpp"
 
 // SERIALIZE HELPERS
 template<class Archive>
@@ -33,6 +34,7 @@ void serialize(Archive& archive, Pin& pin)
 		cereal::make_nvp("node_id", pin.node->id),
 		cereal::make_nvp("pin_name", pin.name),
 		cereal::make_nvp("pin_kind", (int)pin.kind),
+		cereal::make_nvp("pin_input_id", pin.inputId),
 		cereal::make_nvp("pin_mode", (int)pin.mode)
 	);
 }
@@ -79,6 +81,7 @@ private:
 
 public:
 	NodeEditorUI();
+	~NodeEditorUI();
 
 	void update(Master& master, std::queue<Message>& messages, Instrument* selectedInstrument = nullptr);
 

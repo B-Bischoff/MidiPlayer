@@ -14,6 +14,7 @@
                         "node_id": 1,
                         "pin_name": "> input",
                         "pin_kind": 1,
+                        "pin_input_id": 0,
                         "pin_mode": 0
                     }
                 ],
@@ -41,6 +42,7 @@
                         "node_id": 3,
                         "pin_name": "> input A",
                         "pin_kind": 1,
+                        "pin_input_id": 0,
                         "pin_mode": 0
                     },
                     {
@@ -48,6 +50,7 @@
                         "node_id": 3,
                         "pin_name": "> input B",
                         "pin_kind": 1,
+                        "pin_input_id": 1,
                         "pin_mode": 1
                     }
                 ],
@@ -57,6 +60,7 @@
                         "node_id": 3,
                         "pin_name": "output >",
                         "pin_kind": 0,
+                        "pin_input_id": -1,
                         "pin_mode": 0
                     }
                 ],
@@ -85,6 +89,7 @@
                             "node_id": 7,
                             "pin_name": "output >",
                             "pin_kind": 0,
+                            "pin_input_id": -1,
                             "pin_mode": 0
                         }
                     ],
@@ -112,6 +117,7 @@
                         "node_id": 11,
                         "pin_name": "> input A",
                         "pin_kind": 1,
+                        "pin_input_id": 0,
                         "pin_mode": 0
                     },
                     {
@@ -119,6 +125,7 @@
                         "node_id": 11,
                         "pin_name": "> input B",
                         "pin_kind": 1,
+                        "pin_input_id": 1,
                         "pin_mode": 0
                     }
                 ],
@@ -128,6 +135,7 @@
                         "node_id": 11,
                         "pin_name": "output >",
                         "pin_kind": 0,
+                        "pin_input_id": -1,
                         "pin_mode": 0
                     }
                 ],
@@ -153,6 +161,7 @@
                         "node_id": 16,
                         "pin_name": "> input A",
                         "pin_kind": 1,
+                        "pin_input_id": 0,
                         "pin_mode": 0
                     },
                     {
@@ -160,6 +169,7 @@
                         "node_id": 16,
                         "pin_name": "> input B",
                         "pin_kind": 1,
+                        "pin_input_id": 1,
                         "pin_mode": 1
                     }
                 ],
@@ -169,6 +179,7 @@
                         "node_id": 16,
                         "pin_name": "output >",
                         "pin_kind": 0,
+                        "pin_input_id": -1,
                         "pin_mode": 0
                     }
                 ],
@@ -196,6 +207,7 @@
                             "node_id": 20,
                             "pin_name": "output >",
                             "pin_kind": 0,
+                            "pin_input_id": -1,
                             "pin_mode": 0
                         }
                     ],
@@ -225,6 +237,7 @@
                             "node_id": 23,
                             "pin_name": "> freq",
                             "pin_kind": 1,
+                            "pin_input_id": 0,
                             "pin_mode": 1
                         },
                         {
@@ -232,6 +245,7 @@
                             "node_id": 23,
                             "pin_name": "> phase",
                             "pin_kind": 1,
+                            "pin_input_id": 1,
                             "pin_mode": 1
                         },
                         {
@@ -239,6 +253,7 @@
                             "node_id": 23,
                             "pin_name": "> LFO Hz",
                             "pin_kind": 1,
+                            "pin_input_id": 2,
                             "pin_mode": 0
                         },
                         {
@@ -246,6 +261,7 @@
                             "node_id": 23,
                             "pin_name": "> LFO Amplitude",
                             "pin_kind": 1,
+                            "pin_input_id": 3,
                             "pin_mode": 0
                         }
                     ],
@@ -255,6 +271,7 @@
                             "node_id": 23,
                             "pin_name": "output >",
                             "pin_kind": 0,
+                            "pin_input_id": -1,
                             "pin_mode": 0
                         }
                     ],
@@ -284,6 +301,7 @@
                             "node_id": 29,
                             "pin_name": "output >",
                             "pin_kind": 0,
+                            "pin_input_id": -1,
                             "pin_mode": 0
                         }
                     ],
@@ -313,6 +331,7 @@
                             "node_id": 32,
                             "pin_name": "output >",
                             "pin_kind": 0,
+                            "pin_input_id": -1,
                             "pin_mode": 0
                         }
                     ],
@@ -340,6 +359,7 @@
                         "node_id": 40,
                         "pin_name": "> input A",
                         "pin_kind": 1,
+                        "pin_input_id": 0,
                         "pin_mode": 0
                     },
                     {
@@ -347,6 +367,7 @@
                         "node_id": 40,
                         "pin_name": "> input B",
                         "pin_kind": 1,
+                        "pin_input_id": 1,
                         "pin_mode": 0
                     }
                 ],
@@ -356,6 +377,7 @@
                         "node_id": 40,
                         "pin_name": "output >",
                         "pin_kind": 0,
+                        "pin_input_id": -1,
                         "pin_mode": 0
                     }
                 ],
@@ -381,6 +403,7 @@
                         "node_id": 38,
                         "pin_name": "> input A",
                         "pin_kind": 1,
+                        "pin_input_id": 0,
                         "pin_mode": 0
                     },
                     {
@@ -388,6 +411,7 @@
                         "node_id": 38,
                         "pin_name": "> input B",
                         "pin_kind": 1,
+                        "pin_input_id": 1,
                         "pin_mode": 0
                     }
                 ],
@@ -397,6 +421,7 @@
                         "node_id": 38,
                         "pin_name": "output >",
                         "pin_kind": 0,
+                        "pin_input_id": -1,
                         "pin_mode": 0
                     }
                 ],
@@ -423,6 +448,7 @@
                             "node_id": 46,
                             "pin_name": "> freq",
                             "pin_kind": 1,
+                            "pin_input_id": 0,
                             "pin_mode": 1
                         },
                         {
@@ -430,6 +456,7 @@
                             "node_id": 46,
                             "pin_name": "> phase",
                             "pin_kind": 1,
+                            "pin_input_id": 1,
                             "pin_mode": 0
                         },
                         {
@@ -437,6 +464,7 @@
                             "node_id": 46,
                             "pin_name": "> LFO Hz",
                             "pin_kind": 1,
+                            "pin_input_id": 2,
                             "pin_mode": 0
                         },
                         {
@@ -444,6 +472,7 @@
                             "node_id": 46,
                             "pin_name": "> LFO Amplitude",
                             "pin_kind": 1,
+                            "pin_input_id": 3,
                             "pin_mode": 0
                         }
                     ],
@@ -453,6 +482,7 @@
                             "node_id": 46,
                             "pin_name": "output >",
                             "pin_kind": 0,
+                            "pin_input_id": -1,
                             "pin_mode": 0
                         }
                     ],
@@ -482,6 +512,7 @@
                             "node_id": 52,
                             "pin_name": "output >",
                             "pin_kind": 0,
+                            "pin_input_id": -1,
                             "pin_mode": 0
                         }
                     ],
@@ -511,6 +542,7 @@
                             "node_id": 58,
                             "pin_name": "output >",
                             "pin_kind": 0,
+                            "pin_input_id": -1,
                             "pin_mode": 0
                         }
                     ],
@@ -539,6 +571,7 @@
                             "node_id": 61,
                             "pin_name": "> freq",
                             "pin_kind": 1,
+                            "pin_input_id": 0,
                             "pin_mode": 1
                         },
                         {
@@ -546,6 +579,7 @@
                             "node_id": 61,
                             "pin_name": "> phase",
                             "pin_kind": 1,
+                            "pin_input_id": 1,
                             "pin_mode": 0
                         },
                         {
@@ -553,6 +587,7 @@
                             "node_id": 61,
                             "pin_name": "> LFO Hz",
                             "pin_kind": 1,
+                            "pin_input_id": 2,
                             "pin_mode": 0
                         },
                         {
@@ -560,6 +595,7 @@
                             "node_id": 61,
                             "pin_name": "> LFO Amplitude",
                             "pin_kind": 1,
+                            "pin_input_id": 3,
                             "pin_mode": 0
                         }
                     ],
@@ -569,6 +605,7 @@
                             "node_id": 61,
                             "pin_name": "output >",
                             "pin_kind": 0,
+                            "pin_input_id": -1,
                             "pin_mode": 0
                         }
                     ],
@@ -597,6 +634,7 @@
                         "node_id": 67,
                         "pin_name": "> signal",
                         "pin_kind": 1,
+                        "pin_input_id": 0,
                         "pin_mode": 0
                     },
                     {
@@ -604,6 +642,7 @@
                         "node_id": 67,
                         "pin_name": "> alpha",
                         "pin_kind": 1,
+                        "pin_input_id": 1,
                         "pin_mode": 1
                     }
                 ],
@@ -613,6 +652,7 @@
                         "node_id": 67,
                         "pin_name": "output >",
                         "pin_kind": 0,
+                        "pin_input_id": -1,
                         "pin_mode": 0
                     }
                 ],
@@ -640,6 +680,7 @@
                             "node_id": 73,
                             "pin_name": "output >",
                             "pin_kind": 0,
+                            "pin_input_id": -1,
                             "pin_mode": 0
                         }
                     ],
@@ -669,6 +710,7 @@
                             "node_id": 76,
                             "pin_name": "output >",
                             "pin_kind": 0,
+                            "pin_input_id": -1,
                             "pin_mode": 0
                         }
                     ],
@@ -697,6 +739,7 @@
                             "node_id": 79,
                             "pin_name": "> freq",
                             "pin_kind": 1,
+                            "pin_input_id": 0,
                             "pin_mode": 1
                         },
                         {
@@ -704,6 +747,7 @@
                             "node_id": 79,
                             "pin_name": "> phase",
                             "pin_kind": 1,
+                            "pin_input_id": 1,
                             "pin_mode": 0
                         },
                         {
@@ -711,6 +755,7 @@
                             "node_id": 79,
                             "pin_name": "> LFO Hz",
                             "pin_kind": 1,
+                            "pin_input_id": 2,
                             "pin_mode": 0
                         },
                         {
@@ -718,6 +763,7 @@
                             "node_id": 79,
                             "pin_name": "> LFO Amplitude",
                             "pin_kind": 1,
+                            "pin_input_id": 3,
                             "pin_mode": 0
                         }
                     ],
@@ -727,6 +773,7 @@
                             "node_id": 79,
                             "pin_name": "output >",
                             "pin_kind": 0,
+                            "pin_input_id": -1,
                             "pin_mode": 0
                         }
                     ],
@@ -756,6 +803,7 @@
                             "node_id": 85,
                             "pin_name": "output >",
                             "pin_kind": 0,
+                            "pin_input_id": -1,
                             "pin_mode": 0
                         }
                     ],

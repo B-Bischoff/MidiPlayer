@@ -6,6 +6,8 @@
 struct KeyboardFrequency : public AudioComponent {
 	static unsigned int keyIndex;
 
+	KeyboardFrequency() : AudioComponent() { componentName = "KeyboardFrequency"; }
+
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
 		if (!keyPressed.size())

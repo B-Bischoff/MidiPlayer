@@ -2,7 +2,7 @@
 
 ImPlotUI::ImPlotUI(AudioData& audio)
 {
-	ImPlot::CreateContext();
+	_context = ImPlot::CreateContext();
 
 	_timeArray = new float[audio.getBufferSize()];
 	for (int i = 0; i < audio.getBufferSize(); i++)
@@ -12,6 +12,12 @@ ImPlotUI::ImPlotUI(AudioData& audio)
 	ImPlotInputMap& map = ImPlot::GetInputMap();
 	map.Pan = ImGuiMouseButton_Right;
 	map.Select = ImGuiMouseButton_Middle;
+}
+
+ImPlotUI::~ImPlotUI()
+{
+	ImPlot::DestroyContext(_context);
+	delete [] _timeArray;
 }
 
 void ImPlotUI::update(AudioData& audio, std::queue<Message>& messages)

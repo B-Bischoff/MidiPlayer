@@ -4,30 +4,12 @@
 #include "audio_backend.hpp"
 
 struct CombFilter : public AudioComponent {
-	std::vector<AudioComponent*> input;
-	std::vector<AudioComponent*> delaySamples;
-	std::vector<AudioComponent*> feedback;
+	enum Input { input, delaySamples, feedback };
 
 	std::vector<double> delayBuffer;
 	int bufferIndex = 0;
 
-	Components getInputs() override
-	{
-		return combineVectorsToForwardList(input, delaySamples, feedback);
-	}
-
-	void clearInputs() override
-	{
-		clearVectors(input, delaySamples, feedback);
-	}
-
-	void addInput(const std::string& inputName, AudioComponent* input) override
-	{
-		if (inputName == "> input") this->input.push_back(input);
-		else if (inputName == "> delay samples") delaySamples.push_back(input);
-		else if (inputName ==  "> feedback") feedback.push_back(input);
-		else assert(0 && "[CombFilter] unknown input");
-	}
+	CombFilter() : AudioComponent() { inputs.resize(3); componentName = "CombFilter"; }
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
