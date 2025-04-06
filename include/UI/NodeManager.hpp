@@ -25,6 +25,7 @@ public:
 	template <typename T>
 	void registerNode(const std::string& nodeName);
 
+	// [TODO] This should not be public
 	std::unordered_map<std::type_index, NodeInfo> _nodesInfo;
 
 	template<typename T>

@@ -359,3 +359,31 @@ void NodeEditorUI::updateBackend(Master& master)
 	NodeUIManagers managers = {_nodeManager, _linkManager};
 	UIToBackendAdapter::updateBackend(master, managers);
 }
+
+void NodeEditorUI::copySelectedNode()
+{
+	Logger::log("Node editor UI") << "COPYING | " << ed::GetSelectedObjectCount() << std::endl;
+	const unsigned int selectedObjectCount = ed::GetSelectedObjectCount();
+	std::unique_ptr<ed::NodeId[]> selectedNodes(new ed::NodeId[selectedObjectCount]);
+	ed::GetSelectedNodes(selectedNodes.get(), selectedObjectCount);
+
+	for (int i = 0; i < selectedObjectCount; i++)
+	{
+		const ed::NodeId& id = selectedNodes[i];
+		if (id.Get() == MASTER_NODE_ID) continue; // Do not copy master node
+
+		// Retrieve node type_index
+		const std::shared_ptr<Node>& node = _nodeManager.findNodeById(id);
+		const auto& dereferencedNode = *node;
+		const std::type_index typeIndex = std::type_index(typeid(dereferencedNode));
+
+		// Instantiate node copy
+		const NodeInfo& nodeInfo = _nodeManager._nodesInfo[typeIndex];
+		Node* nodeCopy = nodeInfo.instantiateFunction(&_idManager);
+		_nodeManager.addNode(nodeCopy);
+
+		// Apply original node data to node copy
+	}
+
+	// Recreate links from original nodes
+}

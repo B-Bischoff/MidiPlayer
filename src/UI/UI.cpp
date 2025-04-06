@@ -41,12 +41,12 @@ UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 	_windowsState.showSettings = false;
 }
 
-void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings)
+void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings, std::queue<Message>& messageQueue)
 {
 	initUpdate(1920, 1080);
 
 	updateMenuBar();
-	processEventQueue();
+	processEventQueue(messageQueue);
 
 	static bool loadDefaultInstrument = false;
 	static int selectedInstrument = -1;
@@ -64,8 +64,8 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlay
 	updateSavedInstruments(instruments, selectedStoredInstrument);
 	updateLoadedInstruments(instruments, selectedInstrument, loadDefaultInstrument);
 
-	_nodeEditor.update(_selectedInstrument->master, _messages, _selectedInstrument);
-	_imPlot.update(audio, _messages);
+	_nodeEditor.update(_selectedInstrument->master, messageQueue, _selectedInstrument);
+	_imPlot.update(audio, messageQueue);
 	_audioSpectrum.update(audio);
 
 	if (_windowsState.showLog)
@@ -192,11 +192,11 @@ void UI::updateLoadedInstruments(std::vector<Instrument>& instruments, int& sele
 	ImGui::End();
 }
 
-void UI::processEventQueue()
+void UI::processEventQueue(std::queue<Message>& messageQueue)
 {
-	while (!_messages.empty())
+	while (!messageQueue.empty())
 	{
-		Message& message = _messages.front();
+		Message& message = messageQueue.front();
 		switch(message.id)
 		{
 			case UI_SHOW_ADSR_EDITOR : {
@@ -216,12 +216,25 @@ void UI::processEventQueue()
 				_nodeEditor.updateBackend(_selectedInstrument->master);
 				break;
 			}
+			case MESSAGE_COPY : {
+				if (_selectedInstrument)
+					_nodeEditor.copySelectedNode();
+				break;
+			}
+			case MESSAGE_CUT : {
+				Logger::log("CUT") << std::endl;
+				break;
+			}
+			case MESSAGE_PASTE : {
+				Logger::log("PASTE") << std::endl;
+				break;
+			}
 			default: {
 				assert(0 && "[UI] invalid message.");
 			}
 
 		}
-		_messages.pop();
+		messageQueue.pop();
 	}
 }
 

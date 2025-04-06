@@ -149,6 +149,8 @@ int main(int argc, char* argv[])
 
 	std::vector<MidiInfo> keyPressed;
 
+	std::queue<Message> messageQueue;
+
 	while (!glfwWindowShouldClose(window) && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
@@ -158,14 +160,8 @@ int main(int argc, char* argv[])
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glfwPollEvents();
-		handleInput(window, settings, inputManager, keyPressed, t);
-
-		if (inputManager.keys[GLFW_MOD_CONTROL].pressed && inputManager.keys[GLFW_KEY_C].down)
-			Logger::log("CONTROL C") << std::endl;
-		else if (inputManager.keys[GLFW_MOD_CONTROL].pressed && inputManager.keys[GLFW_KEY_V].down)
-			Logger::log("CONTROL V") << std::endl;
-		else if (inputManager.keys[GLFW_MOD_CONTROL].pressed && inputManager.keys[GLFW_KEY_X].down)
-			Logger::log("CONTROL X") << std::endl;
+		updateKeysState(window, settings, inputManager, keyPressed, t);
+		createKeysEvents(inputManager, messageQueue);
 
 		generateAudio(audio, instruments, keyPressed, t);
 
@@ -178,7 +174,7 @@ int main(int argc, char* argv[])
 		}
 		*/
 
-		ui.update(audio, instruments, settings);
+		ui.update(audio, instruments, settings, messageQueue);
 		ui.render();
 
 		glfwSwapBuffers(window);

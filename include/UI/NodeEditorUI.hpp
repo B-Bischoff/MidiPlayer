@@ -92,6 +92,8 @@ public:
 
 	void updateBackend(Master& master);
 
+	void copySelectedNode();
+
 private:
 	void render(std::queue<Message>& messages);
 

@@ -131,7 +131,7 @@ int UIToBackendAdapter::compareNodes(AudioComponent* component, Node* node, cons
 
 	if (ID_Match == false)
 		return 1;
-	else if (nodesPropertiesAreSimilar == false && node->id != 1) // Master node cannot be updated
+	else if (nodesPropertiesAreSimilar == false && node->id != MASTER_NODE_ID) // Master node cannot be updated
 		return 2;
 	return 0;
 }
@@ -191,7 +191,7 @@ void UIToBackendAdapter::addAudioComponent(Master& master, Node& masterUI, NodeU
 
 	// If root UI node (id == 1) was just instanciated, set its audioComponentId to 1 which is always master id
 	if (parentNode->id == 1 && parentNode->audioComponentId == 0)
-		parentNode->audioComponentId = 1;
+		parentNode->audioComponentId = MASTER_NODE_ID;
 
 	// Check if child AudioComponent already exists
 	AudioComponent* newAudioComponent = master.getAudioComponent(node->audioComponentId);

@@ -18,11 +18,15 @@
 #include <thread>
 #include <cstring>
 #include <limits>
+#include <queue>
 
 #include <implot.h>
 #include <imgui_node_editor.h>
 
 #include <Logger.hpp>
+
+// [TODO] This should not be in UI
+#include <UI/Message.hpp>
 
 typedef std::chrono::time_point<std::chrono::high_resolution_clock> time_point;
 
@@ -117,9 +121,10 @@ struct InputManager
 };
 
 void rtAudioInit(AudioData& audio, int id);
-int uploadBuffer( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
-void handleInput(GLFWwindow* window, const MidiPlayerSettings& settings, InputManager& inputManager, std::vector<MidiInfo>& keyPressed, double time);
+int uploadBuffer(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
+void updateKeysState(GLFWwindow* window, const MidiPlayerSettings& settings, InputManager& inputManager, std::vector<MidiInfo>& keyPressed, double time);
 void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void initInput(InputManager& inputManger);
 void generateAudio(AudioData& audio, std::vector<Instrument>& instruments, std::vector<MidiInfo>& keyPressed, double& time);
 int uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
+void createKeysEvents(InputManager& inputManager, std::queue<Message>& messageQueue);

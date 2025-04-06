@@ -16,6 +16,8 @@ namespace ed = ax::NodeEditor;
 
 enum UI_NodeType { NodeUI, MasterUI, NumberUI, OscUI, ADSRUI, KbFreqUI, MultUI, LowPassUI, CombFilterUI};
 
+#define MASTER_NODE_ID 1
+
 struct LinkInfo
 {
 	ed::LinkId Id;
