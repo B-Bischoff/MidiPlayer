@@ -130,6 +130,11 @@ int main(int argc, char* argv[])
 	InputManager inputManager;
 	initInput(inputManager);
 
+	// Setup a callback to get mods (ctrl, shift, ...) key state
+	// Others key state are obtained using glfwGetKey()
+	glfwSetWindowUserPointer(window, (void*)&inputManager);
+	glfwSetKeyCallback(window, glfwKeyCallback);
+
 	std::this_thread::sleep_for(std::chrono::milliseconds(100)); // let rtaudio get more stable [TODO] check if that is necessary
 	audio.writeCursor = (audio.leftPhase + audio.getLatencyInFramesPerUpdate()) % audio.getBufferSize();
 	//std::cout << "L/R/W : " << audio.leftPhase << " " << audio.rightPhase << " " << audio.writeCursor << std::endl;
@@ -151,9 +156,16 @@ int main(int argc, char* argv[])
 
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glfwPollEvents();
 
+		glfwPollEvents();
 		handleInput(window, settings, inputManager, keyPressed, t);
+
+		if (inputManager.keys[GLFW_MOD_CONTROL].pressed && inputManager.keys[GLFW_KEY_C].down)
+			Logger::log("CONTROL C") << std::endl;
+		else if (inputManager.keys[GLFW_MOD_CONTROL].pressed && inputManager.keys[GLFW_KEY_V].down)
+			Logger::log("CONTROL V") << std::endl;
+		else if (inputManager.keys[GLFW_MOD_CONTROL].pressed && inputManager.keys[GLFW_KEY_X].down)
+			Logger::log("CONTROL X") << std::endl;
 
 		generateAudio(audio, instruments, keyPressed, t);
 

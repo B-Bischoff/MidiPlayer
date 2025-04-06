@@ -36,20 +36,34 @@ void initInput(InputManager& inputManger) // [TODO] Should this be in a construc
 	}
 }
 
+void updateKeyData(KeyData& key, bool keyPressed)
+{
+	key.pressed = keyPressed;
+	key.down = key.pressed & !key.lastFramePressed;
+	key.up = !key.pressed & key.lastFramePressed;
+	key.lastFramePressed = key.pressed;
+}
+
+void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	InputManager* inputManager = static_cast<InputManager*>(glfwGetWindowUserPointer(window));
+	assert(inputManager);
+
+	constexpr std::array<unsigned int, 8> modKeys = { GLFW_MOD_SHIFT, GLFW_MOD_CONTROL, GLFW_MOD_ALT, GLFW_MOD_SUPER, GLFW_MOD_CAPS_LOCK, GLFW_MOD_NUM_LOCK, };
+	for (unsigned int i = 0; i < modKeys.size(); i++)
+	{
+		const unsigned int keyIndex = modKeys[i];
+		updateKeyData(inputManager->keys[keyIndex], mods & keyIndex);
+	}
+}
+
 void handleInput(GLFWwindow* window, const MidiPlayerSettings& settings, InputManager& inputManager, std::vector<MidiInfo>& keyPressed, double time)
 {
 	unsigned int KbToPianoIndex[12] = { GLFW_KEY_Z, GLFW_KEY_S, GLFW_KEY_X, GLFW_KEY_D, GLFW_KEY_C, GLFW_KEY_V, GLFW_KEY_G, GLFW_KEY_B, GLFW_KEY_H, GLFW_KEY_N, GLFW_KEY_J, GLFW_KEY_M };
 
 	// Get keyboard inputs
-	for (int i = 0; i < GLFW_KEY_LAST; i++)
-	{
-		KeyData& key = inputManager.keys[i];
-
-		key.pressed = (bool)glfwGetKey(window, i);
-		key.down = key.pressed & !key.lastFramePressed;
-		key.up = !key.pressed & key.lastFramePressed;
-		key.lastFramePressed = key.pressed;
-	}
+	for (int i = GLFW_KEY_SPACE; i < GLFW_KEY_LAST; i++)
+		updateKeyData(inputManager.keys[i], (bool)glfwGetKey(window, i));
 
 	// Reset rising edges
 	for (MidiInfo& info : keyPressed)

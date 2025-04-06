@@ -113,12 +113,13 @@ struct InputManager
 	// Keyboard data
 	KeyData keys[GLFW_KEY_LAST] = {};
 	unsigned int octave = 4;
-	static const unsigned int maxOctave = 8;
+	static constexpr unsigned int maxOctave = 8;
 };
 
 void rtAudioInit(AudioData& audio, int id);
 int uploadBuffer( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
 void handleInput(GLFWwindow* window, const MidiPlayerSettings& settings, InputManager& inputManager, std::vector<MidiInfo>& keyPressed, double time);
+void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void initInput(InputManager& inputManger);
 void generateAudio(AudioData& audio, std::vector<Instrument>& instruments, std::vector<MidiInfo>& keyPressed, double& time);
 int uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
