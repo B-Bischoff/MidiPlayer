@@ -334,7 +334,7 @@ struct OscNode : public Node
 	AudioComponent* convertNodeToAudioComponent() const override
 	{
 		Oscillator* audioComponent = new Oscillator;
-		audioComponent->type = oscType;
+		assignToAudioComponent(audioComponent);
 		return audioComponent;
 	}
 

@@ -372,16 +372,11 @@ void NodeEditorUI::copySelectedNode()
 		const ed::NodeId& id = selectedNodes[i];
 		if (id.Get() == MASTER_NODE_ID) continue; // Do not copy master node
 
-		// Retrieve node type_index
 		const std::shared_ptr<Node>& node = _nodeManager.findNodeById(id);
-		const auto& dereferencedNode = *node;
-		const std::type_index typeIndex = std::type_index(typeid(dereferencedNode));
-
-		// Instantiate node copy
-		const NodeInfo& nodeInfo = _nodeManager._nodesInfo[typeIndex];
-		Node* nodeCopy = nodeInfo.instantiateFunction(&_idManager);
+		const NodeInfo nodeInfo = _nodeManager.getNodeInfo(node.get());
+		Node* nodeCopy = nodeInfo.instantiateCopyFunction(node.get());
+		nodeCopy->id = _idManager.getID();
 		_nodeManager.addNode(nodeCopy);
-
 		// Apply original node data to node copy
 	}
 
