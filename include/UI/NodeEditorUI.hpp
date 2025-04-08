@@ -3,6 +3,7 @@
 #include <fstream>
 #include <memory>
 #include <sstream>
+#include <unordered_map>
 
 #include <cereal/archives/json.hpp>
 #include <cereal/archives/binary.hpp>

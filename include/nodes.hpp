@@ -209,6 +209,14 @@ struct Node
 		return -1;
 	}
 
+	void initPinsId(IDManager& idManager)
+	{
+		for (Pin& pin : inputs)
+			pin.id = idManager.getID();
+		for (Pin& pin : outputs)
+			pin.id = idManager.getID();
+	}
+
 protected:
 	std::string appendId(const std::string& str)
 	{

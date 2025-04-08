@@ -367,18 +367,68 @@ void NodeEditorUI::copySelectedNode()
 	std::unique_ptr<ed::NodeId[]> selectedNodes(new ed::NodeId[selectedObjectCount]);
 	ed::GetSelectedNodes(selectedNodes.get(), selectedObjectCount);
 
+	// Associate original node (used as key) with its copy (used as value)
+	std::unordered_map<unsigned int, unsigned int> nodeTable;
+
 	for (int i = 0; i < selectedObjectCount; i++)
 	{
 		const ed::NodeId& id = selectedNodes[i];
 		if (id.Get() == MASTER_NODE_ID) continue; // Do not copy master node
 
-		const std::shared_ptr<Node>& node = _nodeManager.findNodeById(id);
+		// Copy node
+		const std::shared_ptr<Node>& node = _nodeManager.findNodeById(id); assert(node.get());
 		const NodeInfo nodeInfo = _nodeManager.getNodeInfo(node.get());
 		Node* nodeCopy = nodeInfo.instantiateCopyFunction(node.get());
+
+		// Update node/pins ids
 		nodeCopy->id = _idManager.getID();
+		nodeCopy->audioComponentId = 0;
+		nodeCopy->initPinsId(_idManager);
+
+		nodeTable[node->id] = nodeCopy->id;
 		_nodeManager.addNode(nodeCopy);
-		// Apply original node data to node copy
+
+		// Check for pin linked to hidden nodes
+		for (int pinIndex = 0; pinIndex < nodeCopy->inputs.size(); pinIndex++)
+		{
+			Pin& pin = nodeCopy->inputs[pinIndex];
+
+			if (pin.mode == Pin::Mode::Slider)
+			{
+				// Create a hidden number node
+				std::shared_ptr<Node> hiddenNode = _nodeManager.addNode<NumberNode>(_idManager);
+				hiddenNode->hidden = true; // Node and link won't be displayed
+				_linkManager.addLink(_idManager, _nodeManager, pin.id, hiddenNode->outputs[0].id);
+
+				// Slider on the current node will control the new hidden number node
+				NumberNode* number = (NumberNode*)hiddenNode.get();
+				pin.sliderValue = &number->value;
+				number->value = *(_nodeManager.findNodeById(id)->inputs[pinIndex].sliderValue); // Copy slider value from original node
+			}
+		}
 	}
 
 	// Recreate links from original nodes
+	for (auto it = nodeTable.begin(); it != nodeTable.end(); it++)
+	{
+		std::list<LinkInfo> links = _linkManager.findNodeLinks(_nodeManager, it->first, 1);
+
+		for (const LinkInfo& link : links)
+		{
+			const std::shared_ptr<Node>& inputNode = _nodeManager.findNodeByPinId(link.InputId);
+			const std::shared_ptr<Node>& outputNode = _nodeManager.findNodeByPinId(link.OutputId);
+
+			auto inputNodeIt = nodeTable.find(inputNode->id);
+			auto outputNodeIt = nodeTable.find(outputNode->id);
+			if (inputNodeIt != nodeTable.end() && outputNodeIt != nodeTable.end()) // Link input/output must be in nodeTable
+			{
+				const std::shared_ptr<Node>& inputNodeCopy = _nodeManager.findNodeById(inputNodeIt->second);
+				const std::shared_ptr<Node>& outputNodeCopy = _nodeManager.findNodeById(outputNodeIt->second);
+
+				const int inputPinIndex = inputNode->getInputIndexFromPinId(link.InputId.Get()) - 1;
+
+				_linkManager.addLink(_idManager, _nodeManager, inputNodeCopy->inputs[inputPinIndex].id, outputNodeCopy->outputs[0].id);
+			}
+		}
+	}
 }
