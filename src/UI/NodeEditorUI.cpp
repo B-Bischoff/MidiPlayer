@@ -360,7 +360,7 @@ void NodeEditorUI::updateBackend(Master& master)
 	UIToBackendAdapter::updateBackend(master, managers);
 }
 
-void NodeEditorUI::copySelectedNode()
+void NodeEditorUI::copySelectedNode(const ImVec2& cursorPos)
 {
 	Logger::log("Node editor UI") << "COPYING | " << ed::GetSelectedObjectCount() << std::endl;
 	const unsigned int selectedObjectCount = ed::GetSelectedObjectCount();
@@ -430,5 +430,18 @@ void NodeEditorUI::copySelectedNode()
 				_linkManager.addLink(_idManager, _nodeManager, inputNodeCopy->inputs[inputPinIndex].id, outputNodeCopy->outputs[0].id);
 			}
 		}
+	}
+
+	// Restore nodes placement from cursor position
+	ImVec2 origin(0, 0);
+	for (auto it = nodeTable.begin(); it != nodeTable.end(); it++)
+	{
+		if (it == nodeTable.begin())
+			origin = ed::GetNodePosition(nodeTable.begin()->first);
+
+		const ImVec2 nodePosition = ed::GetNodePosition(it->first);
+		const ImVec2 delta = ImVec2(nodePosition.x - origin.x, nodePosition.y - origin.y);
+		const ImVec2 finalPos = ImVec2(ed::ScreenToCanvas({cursorPos.x, 0}).x + delta.x, ed::ScreenToCanvas({0, cursorPos.y}).y + delta.y);
+		ed::SetNodePosition(it->second, finalPos);
 	}
 }

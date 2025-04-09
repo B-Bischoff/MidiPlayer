@@ -118,6 +118,14 @@ struct InputManager
 	KeyData keys[GLFW_KEY_LAST] = {};
 	unsigned int octave = 4;
 	static constexpr unsigned int maxOctave = 8;
+
+	// Mouse
+	static constexpr int GLFW_MAX_MOUSE_BTN = 8;
+	KeyData mouseButtons[GLFW_MAX_MOUSE_BTN];
+	// [TODO] use glm?
+	ImVec2 cursorPos;
+	ImVec2 cursorDir;
+	// [TODO] add scroll
 };
 
 void rtAudioInit(AudioData& audio, int id);

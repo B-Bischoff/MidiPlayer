@@ -93,7 +93,7 @@ public:
 
 	void updateBackend(Master& master);
 
-	void copySelectedNode();
+	void copySelectedNode(const ImVec2& cursorPos);
 
 private:
 	void render(std::queue<Message>& messages);

@@ -59,6 +59,12 @@ void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int 
 
 void updateKeysState(GLFWwindow* window, const MidiPlayerSettings& settings, InputManager& inputManager, std::vector<MidiInfo>& keyPressed, double time)
 {
+	// Mouse
+	double xpos, ypos;
+	glfwGetCursorPos(window, &xpos, &ypos);
+	inputManager.cursorDir = ImVec2(xpos - inputManager.cursorPos.x, ypos - inputManager.cursorPos.y);
+	inputManager.cursorPos = ImVec2(xpos, ypos);
+
 	unsigned int KbToPianoIndex[12] = { GLFW_KEY_Z, GLFW_KEY_S, GLFW_KEY_X, GLFW_KEY_D, GLFW_KEY_C, GLFW_KEY_V, GLFW_KEY_G, GLFW_KEY_B, GLFW_KEY_H, GLFW_KEY_N, GLFW_KEY_J, GLFW_KEY_M };
 
 	// Get keyboard inputs
@@ -138,7 +144,7 @@ static void removeKeyPressed(std::vector<MidiInfo>& keyPressed, int keyIndex)
 void createKeysEvents(InputManager& inputManager, std::queue<Message>& messageQueue)
 {
 	if (inputManager.keys[GLFW_MOD_CONTROL].pressed && inputManager.keys[GLFW_KEY_C].down)
-		messageQueue.push(MESSAGE_COPY);
+		messageQueue.push(Message(MESSAGE_COPY, new ImVec2(inputManager.cursorPos)));
 	if (inputManager.keys[GLFW_MOD_CONTROL].pressed && inputManager.keys[GLFW_KEY_V].down)
 		messageQueue.push(MESSAGE_PASTE);
 	if (inputManager.keys[GLFW_MOD_CONTROL].pressed && inputManager.keys[GLFW_KEY_X].down)
