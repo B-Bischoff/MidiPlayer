@@ -224,11 +224,12 @@ void UI::processEventQueue(std::queue<Message>& messageQueue)
 				break;
 			}
 			case MESSAGE_CUT : {
-				Logger::log("CUT") << std::endl;
 				break;
 			}
 			case MESSAGE_PASTE : {
-				Logger::log("PASTE") << std::endl;
+				const ImVec2* cursorPos = (ImVec2*)message.data;
+				_nodeEditor.paste(*cursorPos);
+				delete cursorPos;
 				break;
 			}
 			default: {

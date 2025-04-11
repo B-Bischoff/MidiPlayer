@@ -367,16 +367,67 @@ void NodeEditorUI::copySelectedNode(const ImVec2& cursorPos)
 	std::unique_ptr<ed::NodeId[]> selectedNodes(new ed::NodeId[selectedObjectCount]);
 	ed::GetSelectedNodes(selectedNodes.get(), selectedObjectCount);
 
-	// Associate original node (used as key) with its copy (used as value)
-	std::unordered_map<unsigned int, unsigned int> nodeTable;
 
+	_copiedNodesInfo = {}; // Reset prevous copied data
+
+	// Copy
 	for (int i = 0; i < selectedObjectCount; i++)
 	{
 		const ed::NodeId& id = selectedNodes[i];
 		if (id.Get() == MASTER_NODE_ID) continue; // Do not copy master node
 
-		// Copy node
 		const std::shared_ptr<Node>& node = _nodeManager.findNodeById(id); assert(node.get());
+		const NodeInfo nodeInfo = _nodeManager.getNodeInfo(node.get());
+		_copiedNodesInfo.nodes.push_back(std::unique_ptr<Node>(nodeInfo.instantiateCopyFunction(node.get())));
+
+		_copiedNodesInfo.positions.push_back(ed::GetNodePosition(id));
+
+		const std::list<LinkInfo>& links = _linkManager.findNodeLinks(_nodeManager, id, 1);
+		std::list<SavedLinkInfo> savedLinksInfo;
+		for (const LinkInfo& link : links)
+		{
+			if (_nodeManager.findNodeByPinId(link.OutputId)->hidden)
+				continue; // Skip hidden nodes (optimization) as they will recreated anyway
+
+			SavedLinkInfo linkInfo;
+			linkInfo.outputNodeId = _nodeManager.findNodeByPinId(link.OutputId)->id;
+			linkInfo.inputNodeId = _nodeManager.findNodeByPinId(link.InputId)->id;
+			linkInfo.inputIndex = _nodeManager.findNodeByPinId(link.InputId)->getInputIndexFromPinId(link.InputId.Get()) - 1;
+			savedLinksInfo.push_back(linkInfo);
+		}
+
+		_copiedNodesInfo.links.push_back(savedLinksInfo);
+
+		for (int inputIndex = 0; inputIndex < node->inputs.size(); inputIndex++)
+		{
+			const Pin& pin = node->inputs[inputIndex];
+
+			if (pin.mode == Pin::Mode::Slider)
+			{
+				float value = *(_nodeManager.findNodeById(id)->inputs[inputIndex].sliderValue);
+				_copiedNodesInfo.hiddenNodes.push_back({id, inputIndex, value});
+				Logger::log("hidden node") << _copiedNodesInfo.hiddenNodes.back().nodeId.Get() << " " << _copiedNodesInfo.hiddenNodes.back().inputIndex << " " << _copiedNodesInfo.hiddenNodes.back().value << std::endl;
+			}
+		}
+	}
+}
+
+void NodeEditorUI::paste(const ImVec2& cursorPos)
+{
+	// Associate original node (used as key) with its copy (used as value)
+	std::unordered_map<unsigned int, unsigned int> nodeTable;
+	ImVec2 origin(0, 0);
+
+	for (int i = 0; i < _copiedNodesInfo.nodes.size(); i++)
+	{
+		if (i == 0)
+			origin = _copiedNodesInfo.positions[0];
+
+		const ed::NodeId& id = _copiedNodesInfo.nodes[i]->id;
+		if (id.Get() == MASTER_NODE_ID) continue; // Do not copy master node
+
+		// Copy node
+		const std::unique_ptr<Node>& node = _copiedNodesInfo.nodes[i];
 		const NodeInfo nodeInfo = _nodeManager.getNodeInfo(node.get());
 		Node* nodeCopy = nodeInfo.instantiateCopyFunction(node.get());
 
@@ -387,6 +438,12 @@ void NodeEditorUI::copySelectedNode(const ImVec2& cursorPos)
 
 		nodeTable[node->id] = nodeCopy->id;
 		_nodeManager.addNode(nodeCopy);
+
+		// Restore nodes placement from cursor position
+		const ImVec2 nodePosition = _copiedNodesInfo.positions[i];
+		const ImVec2 delta = ImVec2(nodePosition.x - origin.x, nodePosition.y - origin.y);
+		const ImVec2 finalPos = ImVec2(ed::ScreenToCanvas({cursorPos.x, 0}).x + delta.x, ed::ScreenToCanvas({0, cursorPos.y}).y + delta.y);
+		ed::SetNodePosition(nodeCopy->id, finalPos);
 
 		// Check for pin linked to hidden nodes
 		for (int pinIndex = 0; pinIndex < nodeCopy->inputs.size(); pinIndex++)
@@ -403,45 +460,35 @@ void NodeEditorUI::copySelectedNode(const ImVec2& cursorPos)
 				// Slider on the current node will control the new hidden number node
 				NumberNode* number = (NumberNode*)hiddenNode.get();
 				pin.sliderValue = &number->value;
-				number->value = *(_nodeManager.findNodeById(id)->inputs[pinIndex].sliderValue); // Copy slider value from original node
+
+				// Restore number value
+				for (const HiddenNodeInfo& hiddenNodeInfo : _copiedNodesInfo.hiddenNodes)
+				{
+					if (hiddenNodeInfo.nodeId != id || nodeCopy->getInputIndexFromPinId(pin.id) - 1 != hiddenNodeInfo.inputIndex)
+						continue;
+					number->value = hiddenNodeInfo.value;
+					break;
+				}
 			}
 		}
 	}
 
 	// Recreate links from original nodes
-	for (auto it = nodeTable.begin(); it != nodeTable.end(); it++)
+	for (int i = 0; i < _copiedNodesInfo.nodes.size(); i++)
 	{
-		std::list<LinkInfo> links = _linkManager.findNodeLinks(_nodeManager, it->first, 1);
+		const std::list<SavedLinkInfo>& links = _copiedNodesInfo.links[i];
 
-		for (const LinkInfo& link : links)
+		for (const SavedLinkInfo& link : links)
 		{
-			const std::shared_ptr<Node>& inputNode = _nodeManager.findNodeByPinId(link.InputId);
-			const std::shared_ptr<Node>& outputNode = _nodeManager.findNodeByPinId(link.OutputId);
+			auto inputNodeIt = nodeTable.find(link.inputNodeId.Get());
+			auto outputNodeIt = nodeTable.find(link.outputNodeId.Get());
 
-			auto inputNodeIt = nodeTable.find(inputNode->id);
-			auto outputNodeIt = nodeTable.find(outputNode->id);
 			if (inputNodeIt != nodeTable.end() && outputNodeIt != nodeTable.end()) // Link input/output must be in nodeTable
 			{
 				const std::shared_ptr<Node>& inputNodeCopy = _nodeManager.findNodeById(inputNodeIt->second);
 				const std::shared_ptr<Node>& outputNodeCopy = _nodeManager.findNodeById(outputNodeIt->second);
-
-				const int inputPinIndex = inputNode->getInputIndexFromPinId(link.InputId.Get()) - 1;
-
-				_linkManager.addLink(_idManager, _nodeManager, inputNodeCopy->inputs[inputPinIndex].id, outputNodeCopy->outputs[0].id);
+				_linkManager.addLink(_idManager, _nodeManager, inputNodeCopy->inputs[link.inputIndex].id, outputNodeCopy->outputs[0].id);
 			}
 		}
-	}
-
-	// Restore nodes placement from cursor position
-	ImVec2 origin(0, 0);
-	for (auto it = nodeTable.begin(); it != nodeTable.end(); it++)
-	{
-		if (it == nodeTable.begin())
-			origin = ed::GetNodePosition(nodeTable.begin()->first);
-
-		const ImVec2 nodePosition = ed::GetNodePosition(it->first);
-		const ImVec2 delta = ImVec2(nodePosition.x - origin.x, nodePosition.y - origin.y);
-		const ImVec2 finalPos = ImVec2(ed::ScreenToCanvas({cursorPos.x, 0}).x + delta.x, ed::ScreenToCanvas({0, cursorPos.y}).y + delta.y);
-		ed::SetNodePosition(it->second, finalPos);
 	}
 }

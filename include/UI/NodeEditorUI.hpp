@@ -80,6 +80,27 @@ private:
 	bool _UIModified;
 	bool _navigateToContent;
 
+	struct HiddenNodeInfo {
+		ed::NodeId nodeId;
+		int inputIndex;
+		float value;
+	};
+
+	struct SavedLinkInfo {
+		ed::NodeId outputNodeId;
+		ed::NodeId inputNodeId;
+		unsigned int inputIndex;
+	};
+
+	struct CopiedNodesInfo {
+		std::vector<std::unique_ptr<Node>> nodes;
+		std::vector<std::list<SavedLinkInfo>> links;
+		std::vector<ImVec2> positions;
+		std::vector<HiddenNodeInfo> hiddenNodes;
+		// node id - input id - value
+	};
+	CopiedNodesInfo _copiedNodesInfo;
+
 public:
 	NodeEditorUI();
 	~NodeEditorUI();
@@ -94,6 +115,13 @@ public:
 	void updateBackend(Master& master);
 
 	void copySelectedNode(const ImVec2& cursorPos);
+	void paste(const ImVec2& cursorPos);
+
+	/*
+	 * Selected Node (including hidden nodes)
+	 * Links
+	 * Node position
+	*/
 
 private:
 	void render(std::queue<Message>& messages);

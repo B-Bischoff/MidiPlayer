@@ -146,7 +146,7 @@ void createKeysEvents(InputManager& inputManager, std::queue<Message>& messageQu
 	if (inputManager.keys[GLFW_MOD_CONTROL].pressed && inputManager.keys[GLFW_KEY_C].down)
 		messageQueue.push(Message(MESSAGE_COPY, new ImVec2(inputManager.cursorPos)));
 	if (inputManager.keys[GLFW_MOD_CONTROL].pressed && inputManager.keys[GLFW_KEY_V].down)
-		messageQueue.push(MESSAGE_PASTE);
+		messageQueue.push(Message(MESSAGE_PASTE, new ImVec2(inputManager.cursorPos)));
 	if (inputManager.keys[GLFW_MOD_CONTROL].pressed && inputManager.keys[GLFW_KEY_X].down)
 		messageQueue.push(MESSAGE_CUT);
 }
