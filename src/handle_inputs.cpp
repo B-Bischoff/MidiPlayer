@@ -144,7 +144,7 @@ static void removeKeyPressed(std::vector<MidiInfo>& keyPressed, int keyIndex)
 void createKeysEvents(InputManager& inputManager, std::queue<Message>& messageQueue)
 {
 	if (inputManager.keys[GLFW_MOD_CONTROL].pressed && inputManager.keys[GLFW_KEY_C].down)
-		messageQueue.push(Message(MESSAGE_COPY, new ImVec2(inputManager.cursorPos)));
+		messageQueue.push(MESSAGE_COPY);
 	if (inputManager.keys[GLFW_MOD_CONTROL].pressed && inputManager.keys[GLFW_KEY_V].down)
 		messageQueue.push(Message(MESSAGE_PASTE, new ImVec2(inputManager.cursorPos)));
 	if (inputManager.keys[GLFW_MOD_CONTROL].pressed && inputManager.keys[GLFW_KEY_X].down)

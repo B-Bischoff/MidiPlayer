@@ -114,8 +114,9 @@ public:
 
 	void updateBackend(Master& master);
 
-	void copySelectedNode(const ImVec2& cursorPos);
+	void copySelectedNode();
 	void paste(const ImVec2& cursorPos);
+	void cut(std::queue<Message>& messages);
 
 private:
 	void render(std::queue<Message>& messages);
@@ -128,9 +129,7 @@ private:
 	void handleLinkDeletion(Master& master);
 	void handleNodeDeletion(std::queue<Message>& master);
 
-	void removeNodeAndDependencies(ed::NodeId nodeId);
-	std::vector<std::shared_ptr<Node>>::iterator removeNode(std::vector<std::shared_ptr<Node>>& nodes, Node& nodeToDelete);
-	void removeLinkContainingId(ImVector<LinkInfo>& links, std::vector<std::shared_ptr<Node>>& nodes, ed::NodeId id);
+	void deleteNode(const ed::NodeId& id, std::queue<Message>& messages);
 
 	void registerNodeIds(Node& node);
 };

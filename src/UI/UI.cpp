@@ -230,13 +230,13 @@ void UI::processEventQueue(std::queue<Message>& messageQueue)
 				break;
 			}
 			case MESSAGE_COPY : {
-				ImVec2* cursorPos = (ImVec2*)message.data;
 				if (_selectedInstrument)
-					_nodeEditor.copySelectedNode(*cursorPos);
-				delete cursorPos;
+					_nodeEditor.copySelectedNode();
 				break;
 			}
 			case MESSAGE_CUT : {
+				if (_selectedInstrument)
+					_nodeEditor.cut(messageQueue);
 				break;
 			}
 			case MESSAGE_PASTE : {

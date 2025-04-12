@@ -219,29 +219,32 @@ void NodeEditorUI::handleNodeDeletion(std::queue<Message>& messages)
 	while (ed::QueryDeletedNode(&nodeId))
 	{
 		if (ed::AcceptDeletedItem())
-		{
-			std::shared_ptr<Node>& node = _nodeManager.findNodeById(nodeId);
-			if (node->type != UI_NodeType::MasterUI)
-			{
-				// Delete hidden nodes linked to pin in Slider mode
-				for (Pin& pin : node->inputs)
-				{
-					if (pin.mode == Pin::Mode::Link) continue;
-
-					std::list<LinkInfo> links = _linkManager.findPinLinks(pin.id);
-					assert(links.size() == 1);
-					std::shared_ptr<Node>& hiddenNode = _nodeManager.findNodeByPinId(links.begin()->OutputId);
-					_nodeManager.removeNode(_idManager, hiddenNode);
-				}
-
-				_linkManager.removeLinksFromNodeId(_idManager, _nodeManager, nodeId);
-				_nodeManager.removeNode(_idManager, node);
-
-				messages.push(Message{UI_NODE_DELETED, new unsigned int(nodeId.Get())});
-			}
-			_UIModified = true;
-		}
+			deleteNode(nodeId, messages);
 	}
+}
+
+void NodeEditorUI::deleteNode(const ed::NodeId& id, std::queue<Message>& messages)
+{
+	std::shared_ptr<Node>& node = _nodeManager.findNodeById(id);
+	if (node->type != UI_NodeType::MasterUI)
+	{
+		// Delete hidden nodes linked to pin in Slider mode
+		for (Pin& pin : node->inputs)
+		{
+			if (pin.mode == Pin::Mode::Link) continue;
+
+			std::list<LinkInfo> links = _linkManager.findPinLinks(pin.id);
+			assert(links.size() == 1);
+			std::shared_ptr<Node>& hiddenNode = _nodeManager.findNodeByPinId(links.begin()->OutputId);
+			_nodeManager.removeNode(_idManager, hiddenNode);
+		}
+
+		_linkManager.removeLinksFromNodeId(_idManager, _nodeManager, id);
+		_nodeManager.removeNode(_idManager, node);
+
+		messages.push(Message{UI_NODE_DELETED, new unsigned int(id.Get())});
+	}
+	_UIModified = true;
 }
 
 void NodeEditorUI::handleLinkDeletion(Master& master)
@@ -360,13 +363,12 @@ void NodeEditorUI::updateBackend(Master& master)
 	UIToBackendAdapter::updateBackend(master, managers);
 }
 
-void NodeEditorUI::copySelectedNode(const ImVec2& cursorPos)
+void NodeEditorUI::copySelectedNode()
 {
 	const unsigned int selectedObjectCount = ed::GetSelectedObjectCount();
 	std::unique_ptr<ed::NodeId[]> selectedNodes(new ed::NodeId[selectedObjectCount]);
 	ed::GetSelectedNodes(selectedNodes.get(), selectedObjectCount);
 	unsigned int copiedNodeNumber = 0; // Used by notification
-
 
 	_copiedNodesInfo = {}; // Reset prevous copied data
 
@@ -496,4 +498,18 @@ void NodeEditorUI::paste(const ImVec2& cursorPos)
 			}
 		}
 	}
+}
+
+void NodeEditorUI::cut(std::queue<Message>& messages)
+{
+	copySelectedNode();
+
+	const unsigned int selectedObjectCount = ed::GetSelectedObjectCount();
+	std::unique_ptr<ed::NodeId[]> selectedNodes(new ed::NodeId[selectedObjectCount]);
+	ed::GetSelectedNodes(selectedNodes.get(), selectedObjectCount);
+
+	for (int i = 0; i < selectedObjectCount; i++)
+		deleteNode(selectedNodes[i], messages);
+
+	ed::ClearSelection();
 }
