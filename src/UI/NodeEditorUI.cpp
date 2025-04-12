@@ -362,10 +362,10 @@ void NodeEditorUI::updateBackend(Master& master)
 
 void NodeEditorUI::copySelectedNode(const ImVec2& cursorPos)
 {
-	Logger::log("Node editor UI") << "COPYING | " << ed::GetSelectedObjectCount() << std::endl;
 	const unsigned int selectedObjectCount = ed::GetSelectedObjectCount();
 	std::unique_ptr<ed::NodeId[]> selectedNodes(new ed::NodeId[selectedObjectCount]);
 	ed::GetSelectedNodes(selectedNodes.get(), selectedObjectCount);
+	unsigned int copiedNodeNumber = 0; // Used by notification
 
 
 	_copiedNodesInfo = {}; // Reset prevous copied data
@@ -374,13 +374,18 @@ void NodeEditorUI::copySelectedNode(const ImVec2& cursorPos)
 	for (int i = 0; i < selectedObjectCount; i++)
 	{
 		const ed::NodeId& id = selectedNodes[i];
-		if (id.Get() == MASTER_NODE_ID) continue; // Do not copy master node
+		if (id.Get() == MASTER_NODE_ID)
+		{
+			ImGui::InsertNotification({ImGuiToastType::Warning, 3000, "Master node cannot be copied"});
+			continue; // Do not copy master node
+		}
 
 		const std::shared_ptr<Node>& node = _nodeManager.findNodeById(id); assert(node.get());
 		const NodeInfo nodeInfo = _nodeManager.getNodeInfo(node.get());
 		_copiedNodesInfo.nodes.push_back(std::unique_ptr<Node>(nodeInfo.instantiateCopyFunction(node.get())));
 
 		_copiedNodesInfo.positions.push_back(ed::GetNodePosition(id));
+		copiedNodeNumber++;
 
 		const std::list<LinkInfo>& links = _linkManager.findNodeLinks(_nodeManager, id, 1);
 		std::list<SavedLinkInfo> savedLinksInfo;
@@ -406,10 +411,10 @@ void NodeEditorUI::copySelectedNode(const ImVec2& cursorPos)
 			{
 				float value = *(_nodeManager.findNodeById(id)->inputs[inputIndex].sliderValue);
 				_copiedNodesInfo.hiddenNodes.push_back({id, inputIndex, value});
-				Logger::log("hidden node") << _copiedNodesInfo.hiddenNodes.back().nodeId.Get() << " " << _copiedNodesInfo.hiddenNodes.back().inputIndex << " " << _copiedNodesInfo.hiddenNodes.back().value << std::endl;
 			}
 		}
 	}
+	ImGui::InsertNotification({ImGuiToastType::Info, 3000, "Copied %d nodes to clipboard", copiedNodeNumber});
 }
 
 void NodeEditorUI::paste(const ImVec2& cursorPos)

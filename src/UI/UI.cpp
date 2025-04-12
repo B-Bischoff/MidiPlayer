@@ -39,6 +39,19 @@ UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 	// Windows state init
 	_windowsState.showLog = false;
 	_windowsState.showSettings = false;
+
+	// Notification init
+	io.Fonts->AddFontDefault();
+
+	float baseFontSize = 16.0f;
+	float iconFontSize = baseFontSize * 2.0f / 3.0f; // FontAwesome fonts need to have their sizes reduced by 2.0f/3.0f in order to align correctly
+
+	static constexpr ImWchar iconsRanges[] = {ICON_MIN_FA, ICON_MAX_16_FA, 0};
+	ImFontConfig iconsConfig;
+	iconsConfig.MergeMode = true;
+	iconsConfig.PixelSnapH = true;
+	iconsConfig.GlyphMinAdvanceX = iconFontSize;
+	io.Fonts->AddFontFromMemoryCompressedTTF(fa_solid_900_compressed_data, fa_solid_900_compressed_size, iconFontSize, &iconsConfig, iconsRanges);
 }
 
 void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings, std::queue<Message>& messageQueue)
@@ -276,6 +289,16 @@ void UI::endUpdate()
 
 void UI::render()
 {
+	// Notifications style setup
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 5.0f); // Round borders
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.f); // Disable borders
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.10f, 0.10f, 0.10f, 1.00f)); // Background color
+
+	ImGui::RenderNotifications();
+
+	ImGui::PopStyleVar(2); // Argument MUST match the amount of ImGui::PushStyleVar() calls
+	ImGui::PopStyleColor(1); // Argument MUST match the amount of ImGui::PushStyleColor() calls
+
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }

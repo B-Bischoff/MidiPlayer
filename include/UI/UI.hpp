@@ -7,6 +7,8 @@
 #include "ImPlotUI.hpp"
 #include "NodeEditorUI.hpp"
 #include "AudioSpectrum.hpp"
+#include "ImGuiNotify.hpp"
+#include "fa-solid-900.h"
 
 #include "AudioBackend/Instrument.hpp"
 

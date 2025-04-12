@@ -13,6 +13,7 @@
 #include <cereal/types/memory.hpp>
 #include <imgui_node_editor.h>
 
+#include "ImGuiNotify.hpp"
 #include "audio_backend.hpp"
 #include "IDManager.hpp"
 #include "NodeManager.hpp"
@@ -97,7 +98,6 @@ private:
 		std::vector<std::list<SavedLinkInfo>> links;
 		std::vector<ImVec2> positions;
 		std::vector<HiddenNodeInfo> hiddenNodes;
-		// node id - input id - value
 	};
 	CopiedNodesInfo _copiedNodesInfo;
 
@@ -116,12 +116,6 @@ public:
 
 	void copySelectedNode(const ImVec2& cursorPos);
 	void paste(const ImVec2& cursorPos);
-
-	/*
-	 * Selected Node (including hidden nodes)
-	 * Links
-	 * Node position
-	*/
 
 private:
 	void render(std::queue<Message>& messages);
