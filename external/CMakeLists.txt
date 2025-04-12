@@ -86,3 +86,7 @@ set(KISSFFT_PKGCONFIG OFF CACHE BOOL "" FORCE)
 set(KISSFFT_TOOLS OFF CACHE BOOL "" FORCE)
 set(KISSFFT_STATIC ON CACHE BOOL "" FORCE)
 add_subdirectory(kissfft)
+
+# MINIMP3
+add_library(minimp3 INTERFACE)
+target_include_directories(minimp3 INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/minimp3)
