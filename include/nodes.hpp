@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <imgui.h>
+#include <imfilebrowser.h>
 #include "UI/IDManager.hpp"
 #include "inc.hpp"
 #include "UI/Message.hpp"
@@ -550,6 +551,9 @@ struct CombFilterNode : public Node {
 };
 
 struct FilePlayerNode : public Node {
+	::id fileId = 0;
+	bool wantsToLoadFile = false;
+
 	FilePlayerNode(IDManager* idManager = nullptr)
 	{
 		id = getId(idManager);
@@ -558,6 +562,43 @@ struct FilePlayerNode : public Node {
 
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
+
+	AudioComponent* convertNodeToAudioComponent() const override
+	{
+		AudioPlayer* audioComponent = new AudioPlayer;
+		audioComponent->fileId = fileId;
+		return audioComponent;
+	}
+
+	void assignToAudioComponent(AudioComponent* audioComponent) const override
+	{
+		AudioPlayer* audioPlayer = dynamic_cast<AudioPlayer*>(audioComponent); assert(audioPlayer);
+		audioPlayer->fileId = fileId;
+	}
+
+	bool operator==(const AudioComponent* component) override
+	{
+		const AudioPlayer* audioPlayer = dynamic_cast<const AudioPlayer*>(component); assert(audioPlayer);
+		return Node::operator==(component) && audioPlayer->fileId == fileId;
+	}
+
+	void render(std::queue<Message>& messages) override
+	{
+		Node::startRender();
+		Node::renderNameAndPins();
+
+
+		ImGui::PushID(appendId("Load file").c_str());
+		if (ImGui::Button("Load file"))
+		{
+			messages.push(Message(UI_SHOW_FILE_BROWSER));
+			wantsToLoadFile = true;
+		}
+		ImGui::PopID();
+		ImGui::Text("%d", fileId);
+		Node::endRender();
+	}
+
 };
 
 // Register every Node child classes

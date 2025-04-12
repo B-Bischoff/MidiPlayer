@@ -27,7 +27,7 @@ void generateAudio(AudioData& audio, std::vector<Instrument>& instruments, std::
 	}
 	TEST++;
 
-	static bool init = true;
+	static bool init = false;
 	static std::vector<int16_t> audio_buffer;
 	static int counter = 0;
 	if (init)

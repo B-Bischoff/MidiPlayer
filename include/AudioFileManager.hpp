@@ -10,8 +10,9 @@
 #include "Logger.hpp"
 #include "AudioFile.hpp"
 
+#include "UI/Message.hpp"
+
 // [TODO] Can this be used to improve UI node&link managers?
-using id = unsigned int;
 
 template<typename T>
 class IDManager_ {
@@ -88,5 +89,5 @@ public:
 	static void removeAudioFile(const id& id) {
 		// Free audio data
 	}
-	static id addAudioFile(const fs::path& filepath);
+	static id addAudioFile(const fs::path& filepath, std::queue<Message>& messages);
 };

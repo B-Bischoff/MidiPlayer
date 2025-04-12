@@ -386,6 +386,16 @@ void NodeEditorUI::loadFile(Master& master, std::stringstream& stream)
 	_navigateToContent = true;
 }
 
+void NodeEditorUI::setAudioPlayerNodeFileId(const id fileId)
+{
+	_nodeManager.setAudioPlayerNodeFileId(fileId);
+}
+
+void NodeEditorUI::resetAudioPlayerNodeFileLoad()
+{
+	_nodeManager.resetAudioPlayerNodeFileLoad();
+}
+
 void NodeEditorUI::updateBackend(Master& master)
 {
 	_UIModified = false;

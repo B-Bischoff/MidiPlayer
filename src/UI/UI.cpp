@@ -165,6 +165,7 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlay
 	_nodeEditor.update(_selectedInstrument->master, messageQueue, _selectedInstrument);
 	_imPlot.update(audio, messageQueue);
 	_audioSpectrum.update(audio);
+	_fileBrowser.update(messageQueue);
 
 	if (_windowsState.showLog)
 		_log.draw("Log", &_windowsState.showLog);
@@ -175,25 +176,6 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlay
 
 		ImGui::Checkbox("Use keyboard as MIDI input", &settings.useKeyboardAsInput);
 		ImGui::End();
-	}
-
-	// File browsing tests
-
-	static ImGui::FileBrowser fileDialog;
-	fileDialog.SetTitle("title");
-	fileDialog.SetTypeFilters({ ".mp3" });
-	static bool testinit = false;
-	if (testinit)
-	{
-		fileDialog.Open();
-		testinit = false;
-	}
-
-	fileDialog.Display();
-	if (fileDialog.HasSelected())
-	{
-		Logger::log("ImDisplay", Debug) << "Selected: " << fileDialog.GetSelected().string() << std::endl;
-		fileDialog.ClearSelected();
 	}
 
 	endUpdate();
@@ -309,6 +291,7 @@ void UI::updateLoadedInstruments(std::vector<Instrument>& instruments, int& sele
 	ImGui::End();
 }
 
+// [TODO] This should maybe external to this UI class
 void UI::processEventQueue(std::queue<Message>& messageQueue)
 {
 	while (!messageQueue.empty())
@@ -349,10 +332,30 @@ void UI::processEventQueue(std::queue<Message>& messageQueue)
 				delete cursorPos;
 				break;
 			}
-			default: {
-				assert(0 && "[UI] invalid message.");
+			case UI_SHOW_FILE_BROWSER : {
+				_fileBrowser.openFileBrowser();
+				break;
 			}
-
+			case LOAD_AUDIO_FILE : {
+				std::string* audioFile = (std::string*)message.data;
+				AudioFileManager::addAudioFile(*audioFile, messageQueue);
+				delete audioFile;
+				break;
+			}
+			case AUDIO_FILE_LOADED : {
+				id* fileId = (id*)message.data;
+				_nodeEditor.setAudioPlayerNodeFileId(*fileId);
+				delete fileId;
+				break;
+			}
+			case CANCEL_LOAD_AUDIO_FILE : {
+				_nodeEditor.resetAudioPlayerNodeFileLoad();
+				break;
+			}
+			default: {
+				Logger::log("UI", Error) << "Invalid message id received : " << message.id << std::endl;
+				exit(1);
+			}
 		}
 		messageQueue.pop();
 	}

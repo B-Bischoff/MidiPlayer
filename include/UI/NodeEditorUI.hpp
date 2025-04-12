@@ -113,6 +113,9 @@ public:
 	void loadFile(Master& master, const fs::path& path);
 	void loadFile(Master& master, std::stringstream& stream);
 
+	void setAudioPlayerNodeFileId(const id fileId);
+	void resetAudioPlayerNodeFileLoad();
+
 	void updateBackend(Master& master);
 
 	void copySelectedNode();

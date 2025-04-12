@@ -30,6 +30,7 @@
 // [TODO] This should not be in UI
 #include <UI/Message.hpp>
 
+typedef unsigned int id;
 typedef std::chrono::time_point<std::chrono::high_resolution_clock> time_point;
 
 struct AudioComponent;

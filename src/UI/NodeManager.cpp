@@ -119,6 +119,31 @@ void NodeManager::setNodePosition(std::shared_ptr<Node>& node, const ImVec2& pos
 	ed::SetNodePosition(node->id, pos);
 }
 
+void NodeManager::setAudioPlayerNodeFileId(const id fileId)
+{
+	for (std::shared_ptr<Node>& node : _nodes)
+	{
+		if (node->type == FilePlayerUI)
+		{
+			std::shared_ptr<FilePlayerNode> filePlayerNode =  std::static_pointer_cast<FilePlayerNode>(node);
+			if (std::static_pointer_cast<FilePlayerNode>(node)->wantsToLoadFile)
+			{
+				filePlayerNode->fileId = fileId;
+				filePlayerNode->wantsToLoadFile = false;
+			}
+		}
+	}
+}
+
+void NodeManager::resetAudioPlayerNodeFileLoad()
+{
+	for (std::shared_ptr<Node>& node : _nodes)
+	{
+		if (node->type == FilePlayerUI)
+			std::static_pointer_cast<FilePlayerNode>(node)->wantsToLoadFile = false;
+	}
+}
+
 void NodeManager::render(std::queue<Message>& messages)
 {
 	for (std::shared_ptr<Node>& node : _nodes)

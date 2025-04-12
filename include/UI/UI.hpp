@@ -11,8 +11,11 @@
 #include "fa-solid-900.h"
 
 #include "imfilebrowser.h"
+#include "FileBrowser.hpp"
 
 #include "AudioBackend/Instrument.hpp"
+
+#include "AudioFileManager.hpp"
 
 #include <map>
 
@@ -23,6 +26,7 @@
 #include "UI/Log.hpp"
 
 #include "UI/fonts/RobotoRegular.h"
+#include "AudioFileManager.hpp"
 
 struct WindowsState {
 	bool showLog;
@@ -35,6 +39,7 @@ private:
 	ImPlotUI _imPlot;
 	NodeEditorUI _nodeEditor;
 	AudioSpectrum _audioSpectrum;
+	FileBrowser _fileBrowser;
 	const ApplicationPath& _path;
 
 	ImFont* _font;

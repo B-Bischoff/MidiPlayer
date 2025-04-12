@@ -51,6 +51,9 @@ public:
 
 	void setNodePosition(std::shared_ptr<Node>& node, const ImVec2& pos);
 
+	void setAudioPlayerNodeFileId(const id fileId);
+	void resetAudioPlayerNodeFileLoad();
+
 	void render(std::queue<Message>& messages);
 
 	template <class Archive>

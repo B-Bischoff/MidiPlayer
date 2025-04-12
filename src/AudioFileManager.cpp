@@ -2,7 +2,7 @@
 
 IDManager_<AudioFile> AudioFileManager::_audioFiles;
 
-id AudioFileManager::addAudioFile(const fs::path& filepath)
+id AudioFileManager::addAudioFile(const fs::path& filepath, std::queue<Message>& messages)
 {
 	// Check if file is already opened
 	const std::list<id> usedIds = _audioFiles.getUsedIds();
@@ -11,6 +11,7 @@ id AudioFileManager::addAudioFile(const fs::path& filepath)
 		if (_audioFiles.get(id).path == filepath)
 		{
 			Logger::log("AudioFileManager", Debug) << "Already registered: " << filepath.string() << std::endl;
+			messages.push(Message(AUDIO_FILE_LOADED, new ::id(id)));
 			return id;
 		}
 	}
@@ -23,7 +24,7 @@ id AudioFileManager::addAudioFile(const fs::path& filepath)
 	}
 
 	AudioFile audioFile;
-	if (filepath.extension().string() == "mp3")
+	if (filepath.extension().string() == ".mp3")
 		audioFile = extractMP3AudioData(file, filepath.string());
 	else
 	{
@@ -35,6 +36,11 @@ id AudioFileManager::addAudioFile(const fs::path& filepath)
 
 	audioFile.path = filepath;
 	id id = _audioFiles.add(audioFile);
+	Logger::log("AudioFileManager", Debug) << "Successfully loaded: " << filepath.string() << std::endl;
+
+	// [TODO] handle case where file could not be loaded (send event to reset nodes)
+	messages.push(Message(AUDIO_FILE_LOADED, new ::id(id)));
+
 	return id;
 }
 
