@@ -163,8 +163,7 @@ void NodeEditorUI::handleNodeCreation()
 		if (pin.kind == PinKind::Input)
 		{
 			int type = pin.mode;
-			ImGui::Text("Input type : ");
-			ImGui::SameLine();
+			ImGui::Text("Input type : "); ImGui::SameLine();
 			ImGui::RadioButton("node link", &type, 0); ImGui::SameLine();
 			ImGui::RadioButton("slider", &type, 1);
 

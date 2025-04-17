@@ -74,14 +74,15 @@ struct Node
 	std::vector<Pin> inputs;
 	std::vector<Pin> outputs;
 	ImColor color;
-	UI_NodeType type;
+	UI_NodeType type; // [TODO] I think this can be removed
 	bool hidden;
 	unsigned int audioComponentId; // Used to identify audioComponent pointed by this node
+	AudioComponent* audioComponent;
 
 	static bool propertyChanged;
 
 	Node()
-		: id(0), name(""), inputs(), outputs(), color(ImColor(0)), type(NodeUI), hidden(false), audioComponentId(0)
+		: id(0), name(""), inputs(), outputs(), color(ImColor(0)), type(NodeUI), hidden(false), audioComponentId(0), audioComponent(nullptr)
 	{ }
 
 	virtual ~Node() {}
@@ -550,9 +551,34 @@ struct CombFilterNode : public Node {
 	AudioComponent* convertNodeToAudioComponent() const override { return new CombFilter; }
 };
 
+static std::string secondsToTimeFormat(unsigned int seconds)
+{
+	const int hours = seconds / 3600;
+	seconds -= 3600 * hours;
+
+	const int minutes = seconds / 60;
+	seconds -= 60 * minutes;
+
+	std::string result = "";
+	if (hours > 0) // Only print hours when it is relevant
+		result += std::to_string(hours) + ":";
+	if (minutes < 10) // Format minutes to 2 digits
+		result += "0";
+	result += std::to_string(minutes) + ":";
+	if (seconds < 10) // Format seconds to 2 digits
+		result += "0";
+	result += std::to_string(seconds);
+
+	return result;
+}
+
 struct FilePlayerNode : public Node {
 	::id fileId = 0;
 	bool wantsToLoadFile = false;
+
+	// Pause reading when modifying read cusor if it was playing
+	// This avoids getting weird nose on slider movements
+	bool wasPlayingBeforeChangingFrame = false;
 
 	FilePlayerNode(IDManager* idManager = nullptr)
 	{
@@ -587,7 +613,6 @@ struct FilePlayerNode : public Node {
 		Node::startRender();
 		Node::renderNameAndPins();
 
-
 		ImGui::PushID(appendId("Load file").c_str());
 		if (ImGui::Button("Load file"))
 		{
@@ -596,6 +621,48 @@ struct FilePlayerNode : public Node {
 		}
 		ImGui::PopID();
 		ImGui::Text("%d", fileId);
+
+		if (audioComponent && fileId != 0)
+		{
+			const AudioFile& audioFile = AudioFileManager::getAudioFile(fileId);
+			AudioPlayer* audioPlayer = dynamic_cast<AudioPlayer*>(audioComponent); assert(audioPlayer);
+
+			int readCursor = static_cast<int>(audioPlayer->readCursor); // In frames by default
+
+			// Pause / Resume state
+			const char* buttonLabel = audioPlayer->playing ? "Pause" : "Resume";
+			if (ImGui::Button(buttonLabel, ImVec2(50, 0)))
+				audioPlayer->playing = !audioPlayer->playing;
+			ImGui::SameLine();
+
+			ImGui::SetNextItemWidth(150);
+			ImGui::PushID(appendId("read cursor").c_str());
+
+			ImGuiIO& io = ImGui::GetIO();
+
+			if (ImGui::SliderInt("", &readCursor, 0, static_cast<int>(audioFile.dataLength), "%d", ImGuiSliderFlags_ClampOnInput))
+			{
+				if (audioPlayer->playing)
+					wasPlayingBeforeChangingFrame = true;
+				audioPlayer->readCursor = static_cast<unsigned int>(readCursor);
+				audioPlayer->playing = false;
+			}
+			else if (wasPlayingBeforeChangingFrame && !io.MouseDown[0]) // Check if left click is not pressed
+			{
+				wasPlayingBeforeChangingFrame = false;
+				audioPlayer->playing = true;
+			}
+
+			ImGui::PopID();
+
+			const unsigned int audioDurationInSeconds = (float)audioFile.dataLength / (float)audioFile.sampleRate / (float)audioFile.channels;
+			const unsigned int timeInSeconds = (float)readCursor / (float)audioFile.sampleRate / (float)audioFile.channels;
+			const std::string progressionText = secondsToTimeFormat(timeInSeconds) + " | " + secondsToTimeFormat(audioDurationInSeconds);
+
+			ImGui::SameLine();
+			ImGui::Text("%s", progressionText.c_str());
+		}
+
 		Node::endRender();
 	}
 

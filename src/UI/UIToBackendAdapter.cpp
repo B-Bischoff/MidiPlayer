@@ -200,6 +200,7 @@ void UIToBackendAdapter::addAudioComponent(Master& master, Node& masterUI, NodeU
 		// Allocate new AudioComponent and link UI node to it
 		newAudioComponent = node->convertNodeToAudioComponent(); assert(newAudioComponent);
 		node->audioComponentId = newAudioComponent->id;
+		node->audioComponent = newAudioComponent;
 	}
 
 	// Link new AudioComponent with its parent
