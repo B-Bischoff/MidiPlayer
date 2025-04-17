@@ -19,6 +19,7 @@ NodeEditorUI::NodeEditorUI()
 	_nodeManager.registerNode<CombFilterNode>("Comb Filter");
 
 	_nodeManager.addNode<MasterNode>(_idManager);
+
 }
 
 NodeEditorUI::~NodeEditorUI()
@@ -40,6 +41,11 @@ void NodeEditorUI::update(Master& master, std::queue<Message>& messages, Instrum
 
 	ed::SetCurrentEditor(_context);
 	ed::Begin("Node editor", ImVec2(0, 0));
+
+	// Style
+	ed::GetStyle().NodeBorderWidth = 1.0f;
+	ed::GetStyle().HoveredNodeBorderWidth = 2.0f;
+	ed::GetStyle().SelectedNodeBorderWidth = 2.0f;
 
 	render(messages);
 
