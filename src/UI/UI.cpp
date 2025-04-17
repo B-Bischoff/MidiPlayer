@@ -175,6 +175,7 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlay
 		ImGui::Begin("Settings", &_windowsState.showSettings);
 
 		ImGui::Checkbox("Use keyboard as MIDI input", &settings.useKeyboardAsInput);
+		ImGui::Checkbox("Freeze audio generation", &settings.freezeAudioGeneration);
 		ImGui::End();
 	}
 

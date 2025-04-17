@@ -93,6 +93,7 @@ struct AudioData {
 
 struct MidiPlayerSettings {
 	bool useKeyboardAsInput = true;
+	bool freezeAudioGeneration = false;
 };
 
 struct MidiInfo

@@ -58,7 +58,6 @@ void NodeEditorUI::initStyle()
 
 void NodeEditorUI::update(Master& master, std::queue<Message>& messages, Instrument* selectedInstrument)
 {
-	ImGuiWindowFlags f;
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 
 	// Do not open window when no instrument is selected

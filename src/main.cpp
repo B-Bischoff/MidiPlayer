@@ -166,7 +166,8 @@ int main(int argc, char* argv[])
 		updateKeysState(window, settings, inputManager, keyPressed, t);
 		createKeysEvents(inputManager, messageQueue);
 
-		generateAudio(audio, instruments, keyPressed, t);
+		if (!settings.freezeAudioGeneration)
+			generateAudio(audio, instruments, keyPressed, t);
 
 		/*
 		// Lag simulator
