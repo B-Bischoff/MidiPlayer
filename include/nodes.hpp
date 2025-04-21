@@ -11,6 +11,7 @@
 #include "AudioBackend/Components/Components.hpp"
 
 #include "cereal/types/polymorphic.hpp"
+#include "cereal/types/base_class.hpp"
 
 namespace ed = ax::NodeEditor;
 
@@ -370,8 +371,8 @@ struct OscNode : public Node
 	void serialize(Archive& archive)
 	{
 		archive(
-			cereal::make_nvp("base_node", cereal::base_class<Node>(this)),
-			cereal::make_nvp("oscillator_type", oscType)
+			cereal::base_class<Node>(this),
+			oscType
 		);
 	}
 

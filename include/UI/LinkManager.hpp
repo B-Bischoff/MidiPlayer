@@ -43,33 +43,57 @@ private:
 
 // Template method definition
 
+template<class Archive>
+void serialize(Archive& archive, Pin& pin)
+{
+	archive(
+		cereal::make_nvp("pin_id", pin.id),
+		cereal::make_nvp("node_id", pin.node->id),
+		cereal::make_nvp("pin_name", pin.name),
+		cereal::make_nvp("pin_kind", (int)pin.kind),
+		cereal::make_nvp("pin_input_id", pin.inputId),
+		cereal::make_nvp("pin_mode", (int)pin.mode)
+	);
+}
+
+struct LinkData {
+	int id;
+	int inputId;
+	int outputId;
+};
+
+template<class Archive>
+void serialize(Archive& archive, LinkData& link)
+{
+	archive(
+		cereal::make_nvp("link_id", link.id),
+		cereal::make_nvp("link_input_id", link.inputId),
+		cereal::make_nvp("link_output_id", link.outputId)
+		//CEREAL_NVP(link.Color)
+	);
+}
+
 template <class Archive>
 void LinkManager::serialize(Archive& archive) {
-	for (LinkInfo& link : _links)
-		archive(cereal::make_nvp("link", link));
+	std::vector<LinkData> linksData;
+	for (const LinkInfo& link : _links)
+	{
+		LinkData linkData = { (int)link.Id.Get(), (int)link.InputId.Get(), (int)link.OutputId.Get() };
+		linksData.push_back(linkData);
+	}
+	archive(cereal::make_nvp("links", linksData));
 }
 
 template <class Archive>
 void LinkManager::load(Archive& archive, IDManager& idManager) {
-	try{
-		int i = 0;
-		while (true)
-		{
-			archive.startNode();
-			int id, inputId, outputId;
-			archive(id, inputId, outputId);
-			archive.finishNode();
+	std::vector<LinkData> links;
+	archive(links);
 
-			LinkInfo link = {
-				id,
-				inputId,
-				outputId,
-			};
-			link.Id = idManager.getID(link.Id.Get());
-			assert(link.Id.Get() != INVALID_ID);
-			_links.push_back(link);
-		}
+	for (LinkData& link : links)
+	{
+		Logger::log("Link") << link.id << " " << link.inputId << " " << link.outputId << std::endl;
+
+		link.id = idManager.getID(link.id); assert(link.id != INVALID_ID);
+		_links.push_back( {link.id, link.inputId, link.outputId} );
 	}
-	catch (std::exception& e)
-	{ }
 }
