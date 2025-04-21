@@ -442,6 +442,7 @@ void NodeEditorUI::paste(const ImVec2& cursorPos)
 		nodeCopy->id = _idManager.getID();
 		nodeCopy->audioComponentId = 0;
 		nodeCopy->initPinsId(_idManager);
+		nodeCopy->updatePinsNodePointer();
 
 		nodeTable[node->id] = nodeCopy->id;
 		_nodeManager.addNode(nodeCopy);

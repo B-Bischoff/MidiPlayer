@@ -217,6 +217,14 @@ struct Node
 			pin.id = idManager.getID();
 	}
 
+	void updatePinsNodePointer()
+	{
+		for (Pin& pin : inputs)
+			pin.node = this;
+		for (Pin& pin : outputs)
+			pin.node = this;
+	}
+
 protected:
 	std::string appendId(const std::string& str)
 	{
