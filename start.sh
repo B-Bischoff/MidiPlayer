@@ -27,9 +27,9 @@ bear --version &> /dev/null
 if [ "$?" -eq 0 ] && [ ! -f "compile_commands.json" ]
 then
 	# Use bear to generate compile/linking informations used by clangd server
-	bear -- make -C $BUILD_DIRECTORY
+	bear -- make -C $BUILD_DIRECTORY -j $(nproc)
 else
-	make -C $BUILD_DIRECTORY
+	make -C $BUILD_DIRECTORY -j $(nproc)
 fi
 
 if [ "$?" == 0 ]

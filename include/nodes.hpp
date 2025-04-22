@@ -16,6 +16,8 @@ namespace ed = ax::NodeEditor;
 
 enum UI_NodeType { NodeUI, MasterUI, NumberUI, OscUI, ADSRUI, KbFreqUI, MultUI, LowPassUI, CombFilterUI};
 
+#define MASTER_NODE_ID 1
+
 struct LinkInfo
 {
 	ed::LinkId Id;
@@ -207,6 +209,22 @@ struct Node
 		return -1;
 	}
 
+	void initPinsId(IDManager& idManager)
+	{
+		for (Pin& pin : inputs)
+			pin.id = idManager.getID();
+		for (Pin& pin : outputs)
+			pin.id = idManager.getID();
+	}
+
+	void updatePinsNodePointer()
+	{
+		for (Pin& pin : inputs)
+			pin.node = this;
+		for (Pin& pin : outputs)
+			pin.node = this;
+	}
+
 protected:
 	std::string appendId(const std::string& str)
 	{
@@ -332,7 +350,7 @@ struct OscNode : public Node
 	AudioComponent* convertNodeToAudioComponent() const override
 	{
 		Oscillator* audioComponent = new Oscillator;
-		audioComponent->type = oscType;
+		assignToAudioComponent(audioComponent);
 		return audioComponent;
 	}
 

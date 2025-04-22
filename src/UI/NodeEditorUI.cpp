@@ -219,29 +219,32 @@ void NodeEditorUI::handleNodeDeletion(std::queue<Message>& messages)
 	while (ed::QueryDeletedNode(&nodeId))
 	{
 		if (ed::AcceptDeletedItem())
-		{
-			std::shared_ptr<Node>& node = _nodeManager.findNodeById(nodeId);
-			if (node->type != UI_NodeType::MasterUI)
-			{
-				// Delete hidden nodes linked to pin in Slider mode
-				for (Pin& pin : node->inputs)
-				{
-					if (pin.mode == Pin::Mode::Link) continue;
-
-					std::list<LinkInfo> links = _linkManager.findPinLinks(pin.id);
-					assert(links.size() == 1);
-					std::shared_ptr<Node>& hiddenNode = _nodeManager.findNodeByPinId(links.begin()->OutputId);
-					_nodeManager.removeNode(_idManager, hiddenNode);
-				}
-
-				_linkManager.removeLinksFromNodeId(_idManager, _nodeManager, nodeId);
-				_nodeManager.removeNode(_idManager, node);
-
-				messages.push(Message{UI_NODE_DELETED, new unsigned int(nodeId.Get())});
-			}
-			_UIModified = true;
-		}
+			deleteNode(nodeId, messages);
 	}
+}
+
+void NodeEditorUI::deleteNode(const ed::NodeId& id, std::queue<Message>& messages)
+{
+	std::shared_ptr<Node>& node = _nodeManager.findNodeById(id);
+	if (node->type != UI_NodeType::MasterUI)
+	{
+		// Delete hidden nodes linked to pin in Slider mode
+		for (Pin& pin : node->inputs)
+		{
+			if (pin.mode == Pin::Mode::Link) continue;
+
+			std::list<LinkInfo> links = _linkManager.findPinLinks(pin.id);
+			assert(links.size() == 1);
+			std::shared_ptr<Node>& hiddenNode = _nodeManager.findNodeByPinId(links.begin()->OutputId);
+			_nodeManager.removeNode(_idManager, hiddenNode);
+		}
+
+		_linkManager.removeLinksFromNodeId(_idManager, _nodeManager, id);
+		_nodeManager.removeNode(_idManager, node);
+
+		messages.push(Message{UI_NODE_DELETED, new unsigned int(id.Get())});
+	}
+	_UIModified = true;
 }
 
 void NodeEditorUI::handleLinkDeletion(Master& master)
@@ -358,4 +361,156 @@ void NodeEditorUI::updateBackend(Master& master)
 	Node::propertyChanged = false;
 	NodeUIManagers managers = {_nodeManager, _linkManager};
 	UIToBackendAdapter::updateBackend(master, managers);
+}
+
+void NodeEditorUI::copySelectedNode()
+{
+	const unsigned int selectedObjectCount = ed::GetSelectedObjectCount();
+	std::unique_ptr<ed::NodeId[]> selectedNodes(new ed::NodeId[selectedObjectCount]);
+	ed::GetSelectedNodes(selectedNodes.get(), selectedObjectCount);
+	unsigned int copiedNodeNumber = 0; // Used by notification
+
+	_copiedNodesInfo = {}; // Reset prevous copied data
+
+	// Copy
+	for (int i = 0; i < selectedObjectCount; i++)
+	{
+		const ed::NodeId& id = selectedNodes[i];
+		if (id.Get() == MASTER_NODE_ID)
+		{
+			ImGui::InsertNotification({ImGuiToastType::Warning, 3000, "Master node cannot be copied"});
+			continue; // Do not copy master node
+		}
+
+		const std::shared_ptr<Node>& node = _nodeManager.findNodeById(id); assert(node.get());
+		const NodeInfo nodeInfo = _nodeManager.getNodeInfo(node.get());
+		_copiedNodesInfo.nodes.push_back(std::unique_ptr<Node>(nodeInfo.instantiateCopyFunction(node.get())));
+
+		_copiedNodesInfo.positions.push_back(ed::GetNodePosition(id));
+		copiedNodeNumber++;
+
+		const std::list<LinkInfo>& links = _linkManager.findNodeLinks(_nodeManager, id, 1);
+		std::list<SavedLinkInfo> savedLinksInfo;
+		for (const LinkInfo& link : links)
+		{
+			if (_nodeManager.findNodeByPinId(link.OutputId)->hidden)
+				continue; // Skip hidden nodes (optimization) as they will recreated anyway
+
+			SavedLinkInfo linkInfo;
+			linkInfo.outputNodeId = _nodeManager.findNodeByPinId(link.OutputId)->id;
+			linkInfo.inputNodeId = _nodeManager.findNodeByPinId(link.InputId)->id;
+			linkInfo.inputIndex = _nodeManager.findNodeByPinId(link.InputId)->getInputIndexFromPinId(link.InputId.Get()) - 1;
+			savedLinksInfo.push_back(linkInfo);
+		}
+
+		_copiedNodesInfo.links.push_back(savedLinksInfo);
+
+		for (int inputIndex = 0; inputIndex < node->inputs.size(); inputIndex++)
+		{
+			const Pin& pin = node->inputs[inputIndex];
+
+			if (pin.mode == Pin::Mode::Slider)
+			{
+				float value = *(_nodeManager.findNodeById(id)->inputs[inputIndex].sliderValue);
+				_copiedNodesInfo.hiddenNodes.push_back({id, inputIndex, value});
+			}
+		}
+	}
+	ImGui::InsertNotification({ImGuiToastType::Info, 3000, "Copied %d nodes to clipboard", copiedNodeNumber});
+}
+
+void NodeEditorUI::paste(const ImVec2& cursorPos)
+{
+	// Associate original node (used as key) with its copy (used as value)
+	std::unordered_map<unsigned int, unsigned int> nodeTable;
+	ImVec2 origin(0, 0);
+
+	for (int i = 0; i < _copiedNodesInfo.nodes.size(); i++)
+	{
+		if (i == 0)
+			origin = _copiedNodesInfo.positions[0];
+
+		const ed::NodeId& id = _copiedNodesInfo.nodes[i]->id;
+		if (id.Get() == MASTER_NODE_ID) continue; // Do not copy master node
+
+		// Copy node
+		const std::unique_ptr<Node>& node = _copiedNodesInfo.nodes[i];
+		const NodeInfo nodeInfo = _nodeManager.getNodeInfo(node.get());
+		Node* nodeCopy = nodeInfo.instantiateCopyFunction(node.get());
+
+		// Update node/pins ids
+		nodeCopy->id = _idManager.getID();
+		nodeCopy->audioComponentId = 0;
+		nodeCopy->initPinsId(_idManager);
+		nodeCopy->updatePinsNodePointer();
+
+		nodeTable[node->id] = nodeCopy->id;
+		_nodeManager.addNode(nodeCopy);
+
+		// Restore nodes placement from cursor position
+		const ImVec2 nodePosition = _copiedNodesInfo.positions[i];
+		const ImVec2 delta = ImVec2(nodePosition.x - origin.x, nodePosition.y - origin.y);
+		const ImVec2 finalPos = ImVec2(ed::ScreenToCanvas({cursorPos.x, 0}).x + delta.x, ed::ScreenToCanvas({0, cursorPos.y}).y + delta.y);
+		ed::SetNodePosition(nodeCopy->id, finalPos);
+
+		// Check for pin linked to hidden nodes
+		for (int pinIndex = 0; pinIndex < nodeCopy->inputs.size(); pinIndex++)
+		{
+			Pin& pin = nodeCopy->inputs[pinIndex];
+
+			if (pin.mode == Pin::Mode::Slider)
+			{
+				// Create a hidden number node
+				std::shared_ptr<Node> hiddenNode = _nodeManager.addNode<NumberNode>(_idManager);
+				hiddenNode->hidden = true; // Node and link won't be displayed
+				_linkManager.addLink(_idManager, _nodeManager, pin.id, hiddenNode->outputs[0].id);
+
+				// Slider on the current node will control the new hidden number node
+				NumberNode* number = (NumberNode*)hiddenNode.get();
+				pin.sliderValue = &number->value;
+
+				// Restore number value
+				for (const HiddenNodeInfo& hiddenNodeInfo : _copiedNodesInfo.hiddenNodes)
+				{
+					if (hiddenNodeInfo.nodeId != id || nodeCopy->getInputIndexFromPinId(pin.id) - 1 != hiddenNodeInfo.inputIndex)
+						continue;
+					number->value = hiddenNodeInfo.value;
+					break;
+				}
+			}
+		}
+	}
+
+	// Recreate links from original nodes
+	for (int i = 0; i < _copiedNodesInfo.nodes.size(); i++)
+	{
+		const std::list<SavedLinkInfo>& links = _copiedNodesInfo.links[i];
+
+		for (const SavedLinkInfo& link : links)
+		{
+			auto inputNodeIt = nodeTable.find(link.inputNodeId.Get());
+			auto outputNodeIt = nodeTable.find(link.outputNodeId.Get());
+
+			if (inputNodeIt != nodeTable.end() && outputNodeIt != nodeTable.end()) // Link input/output must be in nodeTable
+			{
+				const std::shared_ptr<Node>& inputNodeCopy = _nodeManager.findNodeById(inputNodeIt->second);
+				const std::shared_ptr<Node>& outputNodeCopy = _nodeManager.findNodeById(outputNodeIt->second);
+				_linkManager.addLink(_idManager, _nodeManager, inputNodeCopy->inputs[link.inputIndex].id, outputNodeCopy->outputs[0].id);
+			}
+		}
+	}
+}
+
+void NodeEditorUI::cut(std::queue<Message>& messages)
+{
+	copySelectedNode();
+
+	const unsigned int selectedObjectCount = ed::GetSelectedObjectCount();
+	std::unique_ptr<ed::NodeId[]> selectedNodes(new ed::NodeId[selectedObjectCount]);
+	ed::GetSelectedNodes(selectedNodes.get(), selectedObjectCount);
+
+	for (int i = 0; i < selectedObjectCount; i++)
+		deleteNode(selectedNodes[i], messages);
+
+	ed::ClearSelection();
 }

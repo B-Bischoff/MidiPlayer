@@ -130,6 +130,11 @@ int main(int argc, char* argv[])
 	InputManager inputManager;
 	initInput(inputManager);
 
+	// Setup a callback to get mods (ctrl, shift, ...) key state
+	// Others key state are obtained using glfwGetKey()
+	glfwSetWindowUserPointer(window, (void*)&inputManager);
+	glfwSetKeyCallback(window, glfwKeyCallback);
+
 	std::this_thread::sleep_for(std::chrono::milliseconds(100)); // let rtaudio get more stable [TODO] check if that is necessary
 	audio.writeCursor = (audio.leftPhase + audio.getLatencyInFramesPerUpdate()) % audio.getBufferSize();
 	//std::cout << "L/R/W : " << audio.leftPhase << " " << audio.rightPhase << " " << audio.writeCursor << std::endl;
@@ -144,6 +149,8 @@ int main(int argc, char* argv[])
 
 	std::vector<MidiInfo> keyPressed;
 
+	std::queue<Message> messageQueue;
+
 	while (!glfwWindowShouldClose(window) && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
@@ -151,9 +158,10 @@ int main(int argc, char* argv[])
 
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glfwPollEvents();
 
-		handleInput(window, settings, inputManager, keyPressed, t);
+		glfwPollEvents();
+		updateKeysState(window, settings, inputManager, keyPressed, t);
+		createKeysEvents(inputManager, messageQueue);
 
 		generateAudio(audio, instruments, keyPressed, t);
 
@@ -166,7 +174,7 @@ int main(int argc, char* argv[])
 		}
 		*/
 
-		ui.update(audio, instruments, settings);
+		ui.update(audio, instruments, settings, messageQueue);
 		ui.render();
 
 		glfwSwapBuffers(window);

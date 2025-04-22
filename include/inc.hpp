@@ -18,11 +18,15 @@
 #include <thread>
 #include <cstring>
 #include <limits>
+#include <queue>
 
 #include <implot.h>
 #include <imgui_node_editor.h>
 
 #include <Logger.hpp>
+
+// [TODO] This should not be in UI
+#include <UI/Message.hpp>
 
 typedef std::chrono::time_point<std::chrono::high_resolution_clock> time_point;
 
@@ -113,12 +117,22 @@ struct InputManager
 	// Keyboard data
 	KeyData keys[GLFW_KEY_LAST] = {};
 	unsigned int octave = 4;
-	static const unsigned int maxOctave = 8;
+	static constexpr unsigned int maxOctave = 8;
+
+	// Mouse
+	static constexpr int GLFW_MAX_MOUSE_BTN = 8;
+	KeyData mouseButtons[GLFW_MAX_MOUSE_BTN];
+	// [TODO] use glm?
+	ImVec2 cursorPos;
+	ImVec2 cursorDir;
+	// [TODO] add scroll
 };
 
 void rtAudioInit(AudioData& audio, int id);
-int uploadBuffer( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
-void handleInput(GLFWwindow* window, const MidiPlayerSettings& settings, InputManager& inputManager, std::vector<MidiInfo>& keyPressed, double time);
+int uploadBuffer(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
+void updateKeysState(GLFWwindow* window, const MidiPlayerSettings& settings, InputManager& inputManager, std::vector<MidiInfo>& keyPressed, double time);
+void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void initInput(InputManager& inputManger);
 void generateAudio(AudioData& audio, std::vector<Instrument>& instruments, std::vector<MidiInfo>& keyPressed, double& time);
 int uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
+void createKeysEvents(InputManager& inputManager, std::queue<Message>& messageQueue);

@@ -39,14 +39,27 @@ UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 	// Windows state init
 	_windowsState.showLog = false;
 	_windowsState.showSettings = false;
+
+	// Notification init
+	io.Fonts->AddFontDefault();
+
+	float baseFontSize = 16.0f;
+	float iconFontSize = baseFontSize * 2.0f / 3.0f; // FontAwesome fonts need to have their sizes reduced by 2.0f/3.0f in order to align correctly
+
+	static constexpr ImWchar iconsRanges[] = {ICON_MIN_FA, ICON_MAX_16_FA, 0};
+	ImFontConfig iconsConfig;
+	iconsConfig.MergeMode = true;
+	iconsConfig.PixelSnapH = true;
+	iconsConfig.GlyphMinAdvanceX = iconFontSize;
+	io.Fonts->AddFontFromMemoryCompressedTTF(fa_solid_900_compressed_data, fa_solid_900_compressed_size, iconFontSize, &iconsConfig, iconsRanges);
 }
 
-void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings)
+void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings, std::queue<Message>& messageQueue)
 {
 	initUpdate(1920, 1080);
 
 	updateMenuBar();
-	processEventQueue();
+	processEventQueue(messageQueue);
 
 	static bool loadDefaultInstrument = false;
 	static int selectedInstrument = -1;
@@ -64,8 +77,8 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlay
 	updateSavedInstruments(instruments, selectedStoredInstrument);
 	updateLoadedInstruments(instruments, selectedInstrument, loadDefaultInstrument);
 
-	_nodeEditor.update(_selectedInstrument->master, _messages, _selectedInstrument);
-	_imPlot.update(audio, _messages);
+	_nodeEditor.update(_selectedInstrument->master, messageQueue, _selectedInstrument);
+	_imPlot.update(audio, messageQueue);
 	_audioSpectrum.update(audio);
 
 	if (_windowsState.showLog)
@@ -192,11 +205,11 @@ void UI::updateLoadedInstruments(std::vector<Instrument>& instruments, int& sele
 	ImGui::End();
 }
 
-void UI::processEventQueue()
+void UI::processEventQueue(std::queue<Message>& messageQueue)
 {
-	while (!_messages.empty())
+	while (!messageQueue.empty())
 	{
-		Message& message = _messages.front();
+		Message& message = messageQueue.front();
 		switch(message.id)
 		{
 			case UI_SHOW_ADSR_EDITOR : {
@@ -216,12 +229,28 @@ void UI::processEventQueue()
 				_nodeEditor.updateBackend(_selectedInstrument->master);
 				break;
 			}
+			case MESSAGE_COPY : {
+				if (_selectedInstrument)
+					_nodeEditor.copySelectedNode();
+				break;
+			}
+			case MESSAGE_CUT : {
+				if (_selectedInstrument)
+					_nodeEditor.cut(messageQueue);
+				break;
+			}
+			case MESSAGE_PASTE : {
+				const ImVec2* cursorPos = (ImVec2*)message.data;
+				_nodeEditor.paste(*cursorPos);
+				delete cursorPos;
+				break;
+			}
 			default: {
 				assert(0 && "[UI] invalid message.");
 			}
 
 		}
-		_messages.pop();
+		messageQueue.pop();
 	}
 }
 
@@ -260,6 +289,16 @@ void UI::endUpdate()
 
 void UI::render()
 {
+	// Notifications style setup
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 5.0f); // Round borders
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.f); // Disable borders
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.10f, 0.10f, 0.10f, 1.00f)); // Background color
+
+	ImGui::RenderNotifications();
+
+	ImGui::PopStyleVar(2); // Argument MUST match the amount of ImGui::PushStyleVar() calls
+	ImGui::PopStyleColor(1); // Argument MUST match the amount of ImGui::PushStyleColor() calls
+
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }

@@ -3,6 +3,7 @@
 #include <fstream>
 #include <memory>
 #include <sstream>
+#include <unordered_map>
 
 #include <cereal/archives/json.hpp>
 #include <cereal/archives/binary.hpp>
@@ -12,6 +13,7 @@
 #include <cereal/types/memory.hpp>
 #include <imgui_node_editor.h>
 
+#include "ImGuiNotify.hpp"
 #include "audio_backend.hpp"
 #include "IDManager.hpp"
 #include "NodeManager.hpp"
@@ -79,6 +81,26 @@ private:
 	bool _UIModified;
 	bool _navigateToContent;
 
+	struct HiddenNodeInfo {
+		ed::NodeId nodeId;
+		int inputIndex;
+		float value;
+	};
+
+	struct SavedLinkInfo {
+		ed::NodeId outputNodeId;
+		ed::NodeId inputNodeId;
+		unsigned int inputIndex;
+	};
+
+	struct CopiedNodesInfo {
+		std::vector<std::unique_ptr<Node>> nodes;
+		std::vector<std::list<SavedLinkInfo>> links;
+		std::vector<ImVec2> positions;
+		std::vector<HiddenNodeInfo> hiddenNodes;
+	};
+	CopiedNodesInfo _copiedNodesInfo;
+
 public:
 	NodeEditorUI();
 	~NodeEditorUI();
@@ -92,6 +114,10 @@ public:
 
 	void updateBackend(Master& master);
 
+	void copySelectedNode();
+	void paste(const ImVec2& cursorPos);
+	void cut(std::queue<Message>& messages);
+
 private:
 	void render(std::queue<Message>& messages);
 
@@ -103,9 +129,7 @@ private:
 	void handleLinkDeletion(Master& master);
 	void handleNodeDeletion(std::queue<Message>& master);
 
-	void removeNodeAndDependencies(ed::NodeId nodeId);
-	std::vector<std::shared_ptr<Node>>::iterator removeNode(std::vector<std::shared_ptr<Node>>& nodes, Node& nodeToDelete);
-	void removeLinkContainingId(ImVector<LinkInfo>& links, std::vector<std::shared_ptr<Node>>& nodes, ed::NodeId id);
+	void deleteNode(const ed::NodeId& id, std::queue<Message>& messages);
 
 	void registerNodeIds(Node& node);
 };

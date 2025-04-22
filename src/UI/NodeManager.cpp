@@ -148,3 +148,16 @@ void NodeManager::registerNodeIds(IDManager& idManager, std::shared_ptr<Node>& n
 		assert(pin.id != INVALID_ID && "Could not load node");
 	}
 }
+
+NodeInfo NodeManager::getNodeInfo(Node* node) const
+{
+	auto& dereferencedNode = *node;
+	const std::type_index typeIndex = std::type_index(typeid(dereferencedNode));
+	auto it = _nodesInfo.find(typeIndex);
+	if (it == _nodesInfo.end())
+	{
+		Logger::log("NodeManager", Error) << "Could not find node type " << typeid(dereferencedNode).name() << std::endl;
+		exit(1);
+	}
+	return it->second;
+}

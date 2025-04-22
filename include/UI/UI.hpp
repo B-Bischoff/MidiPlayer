@@ -7,6 +7,8 @@
 #include "ImPlotUI.hpp"
 #include "NodeEditorUI.hpp"
 #include "AudioSpectrum.hpp"
+#include "ImGuiNotify.hpp"
+#include "fa-solid-900.h"
 
 #include "AudioBackend/Instrument.hpp"
 
@@ -36,8 +38,6 @@ private:
 
 	std::map<std::string, fs::path> _instruments;
 
-	std::queue<Message> _messages;
-
 	// [TODO] key should not use instruments name as a single instrument can be loaded multiple times
 	std::map<std::string, std::stringstream> _loadedInstrumentCache;
 
@@ -45,7 +45,7 @@ private:
 
 public:
 	UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path);
-	void update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings);
+	void update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings, std::queue<Message>& messageQueue);
 	void render();
 
 private:
@@ -58,5 +58,5 @@ private:
 	void updateSavedInstruments(std::vector<Instrument>& instruments, std::string& selectedStoredInstrument);
 	void updateLoadedInstruments(std::vector<Instrument>& instruments, int& selectedInstrument, bool& loadDefaultInstrument);
 
-	void processEventQueue();
+	void processEventQueue(std::queue<Message>& messageQueue);
 };

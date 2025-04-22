@@ -14,6 +14,7 @@
 struct NodeInfo {
 	std::string name;
 	std::function<Node*(IDManager*)> instantiateFunction;
+	std::function<Node*(Node*)> instantiateCopyFunction;
 };
 
 // [TODO] give NodeManager and LinkManager their own IDManager ??
@@ -25,6 +26,7 @@ public:
 	template <typename T>
 	void registerNode(const std::string& nodeName);
 
+	// [TODO] This should not be public
 	std::unordered_map<std::type_index, NodeInfo> _nodesInfo;
 
 	template<typename T>
@@ -44,6 +46,8 @@ public:
 	Pin& findPinById(ed::PinId id);
 	std::shared_ptr<Node>& getMasterNode();
 	std::list<std::shared_ptr<Node>> getHiddenNodes();
+
+	NodeInfo getNodeInfo(Node* node) const;
 
 	void setNodePosition(std::shared_ptr<Node>& node, const ImVec2& pos);
 
@@ -85,6 +89,14 @@ void NodeManager::registerNode(const std::string& nodeName) {
 	info.instantiateFunction = [](IDManager* idManager) -> Node* {
 		return new T(idManager);
 	};
+
+	// Register instantion function based on an existing node
+	info.instantiateCopyFunction = [](const Node* node) -> Node* {
+		T* newNode = new T;
+		*newNode = *(dynamic_cast<const T*>(node));
+		return newNode;
+	};
+
 	info.name = nodeName;
 
 	_nodesInfo[typeIndex] = info;

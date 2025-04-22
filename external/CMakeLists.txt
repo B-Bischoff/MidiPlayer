@@ -38,6 +38,8 @@ target_include_directories(imgui PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/imgui
 	${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends
 	${CMAKE_CURRENT_SOURCE_DIR}/glfw
+	${CMAKE_CURRENT_SOURCE_DIR}/imgui-notify/unixExample/backends
+	${CMAKE_CURRENT_SOURCE_DIR}/imgui-notify/unixExample/fonts
 )
 target_link_libraries(imgui PUBLIC glfw)
 
