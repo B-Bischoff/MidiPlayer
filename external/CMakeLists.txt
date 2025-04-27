@@ -11,16 +11,11 @@ add_definitions(
 	-D_CRT_SECURE_NO_WARNINGS
 )
 
-include_directories(
-	glew-2.2.0/include
-)
-
 add_library(GLEW STATIC
 	glew-2.2.0/src/glew.c
 )
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/glew-2.2.0/include)
-target_include_directories(GLEW INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/glew-2.2.0/include)
+target_include_directories(GLEW PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/glew-2.2.0/include)
 
 # IMGUI
 set(IMGUI_SOURCES
@@ -71,7 +66,7 @@ target_link_libraries(imnodeeditor PUBLIC imgui)
 
 #CEREAL
 add_library(cereal INTERFACE)
-target_include_directories(cereal INTERFACE ./cereal/include)
+target_include_directories(cereal INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/cereal/include)
 
 # RTAUDIO
 # Conflicts with glfw uninstall target
@@ -80,6 +75,10 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/rtaudio)
 
 #PORTMIDI
 add_subdirectory(portmidi)
+target_include_directories(portmidi PUBLIC
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/portmidi/pm_common>
+	$<INSTALL_INTERFACE:include/portmidi/pm_common> # installation is not planned but this will avoid futur error
+)
 
 # KISSFFT
 set(KISSFFT_TEST OFF CACHE BOOL "" FORCE)

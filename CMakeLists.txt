@@ -7,7 +7,6 @@ set(CMAKE_CXX_STANDARD 17)
 add_subdirectory(external)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/portmidi/pm_common)
 
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
