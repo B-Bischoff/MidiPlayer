@@ -227,6 +227,12 @@ struct Node
 			pin.node = this;
 	}
 
+	void clearAudioComponentPointerAndId()
+	{
+		audioComponent = nullptr;
+		audioComponentId = INVALID_ID;
+	}
+
 protected:
 	std::string appendId(const std::string& str)
 	{

@@ -74,10 +74,10 @@ private:
 	static void processInstructions(Master& master, Node& UIMaster, NodeUIManagers& managers, std::vector<BackendInstruction*>& instructions);
 	static void addAudioComponent(Master& master, Node& masterUI, NodeUIManagers& managers, const AddNode& instruction);
 	static void updateAudioComponent(Master& master, NodeManager& nodeManager, const UpdateNode& instruction);
-	static void removeAudioComponent(Master& master, const RemoveNode& instruction);
+	static void removeAudioComponent(Master& master, NodeManager& nodeManager, const RemoveNode& instruction);
 
 	static Node* getNodeDirectChild(Node* node, NodeUIManagers& managers, const unsigned int id);
-	static void removeUnreachableComponentAndInputs(AudioComponent* master, AudioComponent* branchRoot, AudioComponent* component);
+	static void removeUnreachableComponentAndInputs(AudioComponent* master, AudioComponent* branchRoot, AudioComponent* component, NodeManager& nodeManager);
 
 	// Print tree helpers
 	static void printTreesDiff(AudioComponent* master, AudioComponent* component, Node* node, NodeUIManagers& managers, AudioComponent* parentNode = nullptr, PrintTreeControls print = {});

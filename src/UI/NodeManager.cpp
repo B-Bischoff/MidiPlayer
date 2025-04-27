@@ -55,8 +55,20 @@ std::shared_ptr<Node>& NodeManager::findNodeById(ed::NodeId id)
 		if (node->id == id.Get())
 			return node;
 	}
-	assert(0 && "[NodeManager]: findNodeById must not but be called on non-existing node-id.");
-	return _nodes[0];
+	Logger::log("NodeManager", Error) << "findNodeById must not but be called on non-existing node-id: " << id.Get() << std::endl;
+	exit(1);
+}
+
+std::shared_ptr<Node> NodeManager::findNodeByAudioComponentId(const unsigned int audioComponentId)
+{
+	for (std::shared_ptr<Node>& node : _nodes)
+	{
+		if (node->audioComponentId == audioComponentId)
+			return node;
+	}
+
+	// Do assert here, as this function might be called on non-existing node by UIToBackendAdapter
+	return nullptr;
 }
 
 std::shared_ptr<Node>& NodeManager::findNodeByPinId(ed::PinId id)
@@ -70,8 +82,8 @@ std::shared_ptr<Node>& NodeManager::findNodeByPinId(ed::PinId id)
 			if (pin.id == id.Get())
 				return node;
 	}
-	assert(0 && "[NodeManager]: findNodeByPinId must must not be called on non-existing pin-id.");
-	return _nodes[0];
+	Logger::log("NodeManager", Error) << "findNodeByPinId must not but be called on non-existing pin-id: " << id.Get() << std::endl;
+	exit(1);
 }
 
 Pin& NodeManager::findPinById(ed::PinId id)
@@ -85,8 +97,8 @@ Pin& NodeManager::findPinById(ed::PinId id)
 			if (pin.id == id.Get())
 				return pin;
 	}
-	assert(0 && "[NodeManager]: findPinById must must not be called on non-existing pin-id.");
-	return _nodes[0]->inputs[0];
+	Logger::log("NodeManager", Error) << "findPinById must not but be called on non-existing pin-id: " << id.Get() << std::endl;
+	exit(1);
 }
 
 std::shared_ptr<Node>& NodeManager::getMasterNode()
@@ -96,8 +108,8 @@ std::shared_ptr<Node>& NodeManager::getMasterNode()
 		if (node->type == UI_NodeType::MasterUI)
 			return node;
 	}
-	assert(0 && "[NodeManager] must have a master node");
-	return _nodes[0];
+	Logger::log("NodeManager", Error) << "Must have a master node" << std::endl;
+	exit(1);
 }
 
 std::list<std::shared_ptr<Node>> NodeManager::getHiddenNodes()

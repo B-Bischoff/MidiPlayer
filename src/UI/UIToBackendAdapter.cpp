@@ -19,7 +19,7 @@ void UIToBackendAdapter::processInstructions(Master& master, Node& UIMaster, Nod
 		if (dynamic_cast<const AddNode*>(instruction))
 			addAudioComponent(master, UIMaster, managers, *dynamic_cast<const AddNode*>(instruction));
 		else if (dynamic_cast<const RemoveNode*>(instruction))
-			removeAudioComponent(master, *dynamic_cast<const RemoveNode*>(instruction));
+			removeAudioComponent(master, managers.node, *dynamic_cast<const RemoveNode*>(instruction));
 		else if (dynamic_cast<const UpdateNode*>(instruction))
 			updateAudioComponent(master, managers.node, *dynamic_cast<const UpdateNode*>(instruction));
 		else
@@ -33,7 +33,7 @@ void UIToBackendAdapter::processInstructions(Master& master, Node& UIMaster, Nod
 }
 
 // From component parameter, deletes component AND component childs that cannot be reached from master
-void UIToBackendAdapter::removeUnreachableComponentAndInputs(AudioComponent* master, AudioComponent* branchRoot, AudioComponent* component)
+void UIToBackendAdapter::removeUnreachableComponentAndInputs(AudioComponent* master, AudioComponent* branchRoot, AudioComponent* component, NodeManager& nodeManager)
 {
 	Components inputs = component->getInputs();
 
@@ -42,7 +42,7 @@ void UIToBackendAdapter::removeUnreachableComponentAndInputs(AudioComponent* mas
 	{
 		if (master->idExists((*it)->id) == false) // Continue to delete branch as long as its connected to root
 		{
-			removeUnreachableComponentAndInputs(master, branchRoot, *it);
+			removeUnreachableComponentAndInputs(master, branchRoot, *it, nodeManager);
 			inputs = component->getInputs();
 			it = inputs.begin();
 			if (it == inputs.end())
@@ -51,6 +51,14 @@ void UIToBackendAdapter::removeUnreachableComponentAndInputs(AudioComponent* mas
 		else
 			it++;
 	}
+
+	// Update associated UI node to not point on this removed audio component.
+	// UI node might not exists if it was deleted (obviously causing this audio component to be deleted)
+	// Or it is not linked anymore but is still present in the node editor.
+	std::shared_ptr<Node> node = nodeManager.findNodeByAudioComponentId(component->id);
+	if (node)
+		node->clearAudioComponentPointerAndId();
+
 	master->removeComponentFromBranch(component, false);
 	branchRoot->removeComponentFromBranch(component, true);
 }
@@ -211,7 +219,7 @@ void UIToBackendAdapter::addAudioComponent(Master& master, Node& masterUI, NodeU
 		Logger::log("Add node instruction", Warning) << "Parent " << parentAudioComponent->id << " was already linked to child " << newAudioComponent->id << std::endl;
 }
 
-void UIToBackendAdapter::removeAudioComponent(Master& master, const RemoveNode& instruction)
+void UIToBackendAdapter::removeAudioComponent(Master& master, NodeManager& nodeManager, const RemoveNode& instruction)
 {
 	//Logger::log("Remove node", Error) << "parent: " << instruction.PARENT_COMPONENT_ID << " child: " << instruction.CHILD_COMPONENT_ID << std::endl;
 
@@ -228,7 +236,7 @@ void UIToBackendAdapter::removeAudioComponent(Master& master, const RemoveNode& 
 	if (master.idExists(childComponent->id) == false)
 	{
 		// Removed child cannot be found from root so clean its branch
-		removeUnreachableComponentAndInputs(&master, childComponent, childComponent);
+		removeUnreachableComponentAndInputs(&master, childComponent, childComponent, nodeManager);
 	}
 }
 
