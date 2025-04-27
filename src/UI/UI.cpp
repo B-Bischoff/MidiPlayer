@@ -40,19 +40,26 @@ UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 	_windowsState.showLog = false;
 	_windowsState.showSettings = false;
 
-	// Notification init
-	io.Fonts->AddFontDefault();
+	// Fonts init
+	constexpr float baseFontSize = 30.0f;
 
-	float baseFontSize = 16.0f;
-	float iconFontSize = baseFontSize * 2.0f / 3.0f; // FontAwesome fonts need to have their sizes reduced by 2.0f/3.0f in order to align correctly
+	ImFontConfig fontConfig;
+	fontConfig.FontDataOwnedByAtlas = false; // Prevent ImGui from freeing font memory as it has not been dynamically allocated
+	_font = io.Fonts->AddFontFromMemoryTTF(roboto_regular_ttf, roboto_regular_ttf_len, baseFontSize, &fontConfig);
+
+	// Font awesome icons init
+	constexpr float iconFontSize = baseFontSize * 2.0f / 3.0f; // FontAwesome fonts need to have their sizes reduced by 2.0f/3.0f in order to align correctly
 
 	static constexpr ImWchar iconsRanges[] = {ICON_MIN_FA, ICON_MAX_16_FA, 0};
 	ImFontConfig iconsConfig;
-	iconsConfig.MergeMode = true;
+	iconsConfig.MergeMode = true; // Merge with the previous loaded font
 	iconsConfig.PixelSnapH = true;
 	iconsConfig.GlyphMinAdvanceX = iconFontSize;
 	io.Fonts->AddFontFromMemoryCompressedTTF(fa_solid_900_compressed_data, fa_solid_900_compressed_size, iconFontSize, &iconsConfig, iconsRanges);
 
+	io.FontGlobalScale = 0.6f;
+
+	// Style init
 	ImGui::GetStyle().WindowRounding = 5.0f;
 	ImGui::GetStyle().WindowBorderSize = 0.0f;
 	ImGui::GetStyle().ChildRounding = 5.0f;
@@ -70,6 +77,62 @@ UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 	ImGui::GetStyle().TabBarBorderSize = 0.0f;
 	ImGui::GetStyle().TabBarOverlineSize = 0.0f;
 	ImGui::GetStyle().DockingSeparatorSize = 1.0f;
+
+
+	ImVec4 base      = ImVec4(0.60f, 0.44f, 0.84f, 1.0f); // #996fd6
+	ImVec4 mid       = ImVec4(0.54f, 0.36f, 0.82f, 1.0f); // #895cd1
+	ImVec4 light     = ImVec4(0.65f, 0.53f, 0.86f, 1.0f); // #a786db
+	ImVec4 lighter   = ImVec4(0.71f, 0.61f, 0.88f, 1.0f); // #b59ce0
+	ImVec4 highlight = ImVec4(0.76f, 0.70f, 0.90f, 1.0f); // #c2b3e5
+
+	//ImPlot::GetStyle().Colors[ImPlotCol_FrameBg] = ImVec4(0.176, 0.141, 0.239, 1.0);
+	ImPlot::GetStyle().Colors[ImPlotCol_FrameBg] = ImVec4(0.12, 0.10, 0.16, 1.00f);
+
+	ImGuiStyle& style = ImGui::GetStyle();
+	style.Colors[ImGuiCol_Text]                  = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
+	style.Colors[ImGuiCol_TextDisabled]          = lighter;
+	style.Colors[ImGuiCol_WindowBg]              = ImVec4(0.12, 0.10, 0.16, 1.00f);
+	style.Colors[ImGuiCol_ChildBg]               = ImVec4(0.16f, 0.13f, 0.20f, 1.00f);
+	style.Colors[ImGuiCol_PopupBg]               = ImVec4(0.14f, 0.12f, 0.18f, 1.00f);
+	style.Colors[ImGuiCol_Border]                = mid;
+	style.Colors[ImGuiCol_FrameBg]               = light;
+	style.Colors[ImGuiCol_FrameBgHovered]        = lighter;
+	style.Colors[ImGuiCol_FrameBgActive]         = highlight;
+	style.Colors[ImGuiCol_TitleBg]               = base;
+	style.Colors[ImGuiCol_TitleBgActive]         = mid;
+	style.Colors[ImGuiCol_TitleBgCollapsed]      = base;
+	style.Colors[ImGuiCol_MenuBarBg]             = ImVec4(0.16f, 0.13f, 0.20f, 1.00f);
+	style.Colors[ImGuiCol_ScrollbarBg]           = ImVec4(0.10f, 0.08f, 0.14f, 1.00f);
+	style.Colors[ImGuiCol_ScrollbarGrab]         = base;
+	style.Colors[ImGuiCol_ScrollbarGrabHovered]  = mid;
+	style.Colors[ImGuiCol_ScrollbarGrabActive]   = light;
+	style.Colors[ImGuiCol_CheckMark]             = base;
+	style.Colors[ImGuiCol_SliderGrab]            = mid;
+	style.Colors[ImGuiCol_SliderGrabActive]      = base;
+	style.Colors[ImGuiCol_Button]                = base;
+	style.Colors[ImGuiCol_ButtonHovered]         = mid;
+	style.Colors[ImGuiCol_ButtonActive]          = light;
+	style.Colors[ImGuiCol_Header]                = mid;
+	style.Colors[ImGuiCol_HeaderHovered]         = light;
+	style.Colors[ImGuiCol_HeaderActive]          = highlight;
+	style.Colors[ImGuiCol_Separator]             = mid;
+	style.Colors[ImGuiCol_SeparatorHovered]      = light;
+	style.Colors[ImGuiCol_SeparatorActive]       = highlight;
+	style.Colors[ImGuiCol_ResizeGrip]            = light;
+	style.Colors[ImGuiCol_ResizeGripHovered]     = lighter;
+	style.Colors[ImGuiCol_ResizeGripActive]      = highlight;
+	style.Colors[ImGuiCol_PlotLines]             = base;
+	style.Colors[ImGuiCol_PlotLinesHovered]      = mid;
+	style.Colors[ImGuiCol_PlotHistogram]         = light;
+	style.Colors[ImGuiCol_PlotHistogramHovered]  = lighter;
+	style.Colors[ImGuiCol_TextSelectedBg]        = highlight;
+	style.Colors[ImGuiCol_DragDropTarget]        = highlight;
+	style.Colors[ImGuiCol_NavHighlight]          = mid;
+	style.Colors[ImGuiCol_Tab]                   = base;
+	style.Colors[ImGuiCol_TabHovered]            = light;
+	style.Colors[ImGuiCol_TabActive]             = mid;
+	style.Colors[ImGuiCol_TabUnfocused]          = base;
+	style.Colors[ImGuiCol_TabUnfocusedActive]    = mid;
 }
 
 void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings, std::queue<Message>& messageQueue)
@@ -110,62 +173,7 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlay
 		ImGui::End();
 	}
 
-ImVec4 base      = ImVec4(0.60f, 0.44f, 0.84f, 1.0f); // #996fd6
-ImVec4 mid       = ImVec4(0.54f, 0.36f, 0.82f, 1.0f); // #895cd1
-ImVec4 light     = ImVec4(0.65f, 0.53f, 0.86f, 1.0f); // #a786db
-ImVec4 lighter   = ImVec4(0.71f, 0.61f, 0.88f, 1.0f); // #b59ce0
-ImVec4 highlight = ImVec4(0.76f, 0.70f, 0.90f, 1.0f); // #c2b3e5
-
-	//ImPlot::GetStyle().Colors[ImPlotCol_FrameBg] = ImVec4(0.176, 0.141, 0.239, 1.0);
-	ImPlot::GetStyle().Colors[ImPlotCol_FrameBg] = ImVec4(0.12, 0.10, 0.16, 1.00f);
-
-ImGuiStyle& style = ImGui::GetStyle();
-style.Colors[ImGuiCol_Text]                  = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
-style.Colors[ImGuiCol_TextDisabled]          = lighter;
-style.Colors[ImGuiCol_WindowBg]              = ImVec4(0.12, 0.10, 0.16, 1.00f);
-style.Colors[ImGuiCol_ChildBg]               = ImVec4(0.16f, 0.13f, 0.20f, 1.00f);
-style.Colors[ImGuiCol_PopupBg]               = ImVec4(0.14f, 0.12f, 0.18f, 1.00f);
-style.Colors[ImGuiCol_Border]                = mid;
-style.Colors[ImGuiCol_FrameBg]               = light;
-style.Colors[ImGuiCol_FrameBgHovered]        = lighter;
-style.Colors[ImGuiCol_FrameBgActive]         = highlight;
-style.Colors[ImGuiCol_TitleBg]               = base;
-style.Colors[ImGuiCol_TitleBgActive]         = mid;
-style.Colors[ImGuiCol_TitleBgCollapsed]      = base;
-style.Colors[ImGuiCol_MenuBarBg]             = ImVec4(0.16f, 0.13f, 0.20f, 1.00f);
-style.Colors[ImGuiCol_ScrollbarBg]           = ImVec4(0.10f, 0.08f, 0.14f, 1.00f);
-style.Colors[ImGuiCol_ScrollbarGrab]         = base;
-style.Colors[ImGuiCol_ScrollbarGrabHovered]  = mid;
-style.Colors[ImGuiCol_ScrollbarGrabActive]   = light;
-style.Colors[ImGuiCol_CheckMark]             = base;
-style.Colors[ImGuiCol_SliderGrab]            = mid;
-style.Colors[ImGuiCol_SliderGrabActive]      = base;
-style.Colors[ImGuiCol_Button]                = base;
-style.Colors[ImGuiCol_ButtonHovered]         = mid;
-style.Colors[ImGuiCol_ButtonActive]          = light;
-style.Colors[ImGuiCol_Header]                = mid;
-style.Colors[ImGuiCol_HeaderHovered]         = light;
-style.Colors[ImGuiCol_HeaderActive]          = highlight;
-style.Colors[ImGuiCol_Separator]             = mid;
-style.Colors[ImGuiCol_SeparatorHovered]      = light;
-style.Colors[ImGuiCol_SeparatorActive]       = highlight;
-style.Colors[ImGuiCol_ResizeGrip]            = light;
-style.Colors[ImGuiCol_ResizeGripHovered]     = lighter;
-style.Colors[ImGuiCol_ResizeGripActive]      = highlight;
-style.Colors[ImGuiCol_PlotLines]             = base;
-style.Colors[ImGuiCol_PlotLinesHovered]      = mid;
-style.Colors[ImGuiCol_PlotHistogram]         = light;
-style.Colors[ImGuiCol_PlotHistogramHovered]  = lighter;
-style.Colors[ImGuiCol_TextSelectedBg]        = highlight;
-style.Colors[ImGuiCol_DragDropTarget]        = highlight;
-style.Colors[ImGuiCol_NavHighlight]          = mid;
-style.Colors[ImGuiCol_Tab]                   = base;
-style.Colors[ImGuiCol_TabHovered]            = light;
-style.Colors[ImGuiCol_TabActive]             = mid;
-style.Colors[ImGuiCol_TabUnfocused]          = base;
-style.Colors[ImGuiCol_TabUnfocusedActive]    = mid;
-
-	ImPlot::GetStyle();
+	ImGui::PopFont();
 
 	endUpdate();
 }
@@ -348,6 +356,7 @@ void UI::initUpdate(const int& WIN_WIDTH, const int& WIN_HEIGHT)
 		ImGuiWindowFlags_MenuBar |
 		ImGuiWindowFlags_NoBackground;
 
+	ImGui::PushFont(_font);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 
 	ImGui::Begin("Main", NULL, windowFlags);

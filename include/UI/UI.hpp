@@ -19,6 +19,8 @@
 
 #include "UI/Log.hpp"
 
+#include "UI/fonts/RobotoRegular.h"
+
 struct WindowsState {
 	bool showLog;
 	bool showSettings;
@@ -31,6 +33,8 @@ private:
 	NodeEditorUI _nodeEditor;
 	AudioSpectrum _audioSpectrum;
 	const ApplicationPath& _path;
+
+	ImFont* _font;
 
 	Log _log;
 
