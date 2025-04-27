@@ -1,4 +1,5 @@
 #include "UI/NodeEditorUI.hpp"
+#include "imgui.h"
 #include "imgui_node_editor.h"
 
 bool Node::propertyChanged = false;
@@ -29,13 +30,21 @@ NodeEditorUI::~NodeEditorUI()
 
 void NodeEditorUI::update(Master& master, std::queue<Message>& messages, Instrument* selectedInstrument)
 {
+	ImGuiWindowFlags f;
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+
 	if (!ImGui::Begin("Node editor"))
+	{
+		ImGui::End();
+		ImGui::PopStyleVar(1);
 		return;
+	}
 
 	if (!selectedInstrument)
 	{
 		// [TODO] print a warning message ?
 		ImGui::End();
+		ImGui::PopStyleVar(1);
 		return;
 	}
 
@@ -46,6 +55,8 @@ void NodeEditorUI::update(Master& master, std::queue<Message>& messages, Instrum
 	ed::GetStyle().NodeBorderWidth = 1.0f;
 	ed::GetStyle().HoveredNodeBorderWidth = 2.0f;
 	ed::GetStyle().SelectedNodeBorderWidth = 2.0f;
+	ed::GetStyle().Colors[ax::NodeEditor::StyleColor_Grid] = ImColor(0);
+	ed::GetStyle().Colors[ax::NodeEditor::StyleColor_NodeBg] = ImVec4(0.16f, 0.13f, 0.20f, 1.00f);
 
 	render(messages);
 
@@ -64,6 +75,7 @@ void NodeEditorUI::update(Master& master, std::queue<Message>& messages, Instrum
 	}
 
 	ImGui::End();
+	ImGui::PopStyleVar(1);
 }
 
 void NodeEditorUI::render(std::queue<Message>& messages)

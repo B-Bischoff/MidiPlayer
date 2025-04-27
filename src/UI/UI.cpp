@@ -54,7 +54,7 @@ UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 	io.Fonts->AddFontFromMemoryCompressedTTF(fa_solid_900_compressed_data, fa_solid_900_compressed_size, iconFontSize, &iconsConfig, iconsRanges);
 
 	ImGui::GetStyle().WindowRounding = 5.0f;
-	ImGui::GetStyle().WindowBorderSize = 1.0f;
+	ImGui::GetStyle().WindowBorderSize = 0.0f;
 	ImGui::GetStyle().ChildRounding = 5.0f;
 	ImGui::GetStyle().ChildBorderSize = 0.0f;
 	ImGui::GetStyle().PopupRounding = 5.0f;
@@ -116,10 +116,13 @@ ImVec4 light     = ImVec4(0.65f, 0.53f, 0.86f, 1.0f); // #a786db
 ImVec4 lighter   = ImVec4(0.71f, 0.61f, 0.88f, 1.0f); // #b59ce0
 ImVec4 highlight = ImVec4(0.76f, 0.70f, 0.90f, 1.0f); // #c2b3e5
 
+	//ImPlot::GetStyle().Colors[ImPlotCol_FrameBg] = ImVec4(0.176, 0.141, 0.239, 1.0);
+	ImPlot::GetStyle().Colors[ImPlotCol_FrameBg] = ImVec4(0.12, 0.10, 0.16, 1.00f);
+
 ImGuiStyle& style = ImGui::GetStyle();
 style.Colors[ImGuiCol_Text]                  = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
 style.Colors[ImGuiCol_TextDisabled]          = lighter;
-style.Colors[ImGuiCol_WindowBg]              = ImVec4(0.12f, 0.10f, 0.16f, 1.00f);
+style.Colors[ImGuiCol_WindowBg]              = ImVec4(0.12, 0.10, 0.16, 1.00f);
 style.Colors[ImGuiCol_ChildBg]               = ImVec4(0.16f, 0.13f, 0.20f, 1.00f);
 style.Colors[ImGuiCol_PopupBg]               = ImVec4(0.14f, 0.12f, 0.18f, 1.00f);
 style.Colors[ImGuiCol_Border]                = mid;
@@ -161,6 +164,8 @@ style.Colors[ImGuiCol_TabHovered]            = light;
 style.Colors[ImGuiCol_TabActive]             = mid;
 style.Colors[ImGuiCol_TabUnfocused]          = base;
 style.Colors[ImGuiCol_TabUnfocusedActive]    = mid;
+
+	ImPlot::GetStyle();
 
 	endUpdate();
 }

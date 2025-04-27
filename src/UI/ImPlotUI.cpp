@@ -22,7 +22,11 @@ ImPlotUI::~ImPlotUI()
 
 void ImPlotUI::update(AudioData& audio, std::queue<Message>& messages)
 {
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0);
+
 	ImGui::Begin("Audio buffer");
+
 	ImPlotFlags f;
 	if (ImPlot::BeginPlot("Plot", ImVec2(ImGui::GetContentRegionAvail())))
 	{
@@ -43,6 +47,7 @@ void ImPlotUI::update(AudioData& audio, std::queue<Message>& messages)
 		printEnvelopeEditor(messages);
 
 	ImGui::End();
+	ImGui::PopStyleVar(2);
 }
 
 void ImPlotUI::handleControlPoints(std::queue<Message>& messages)
