@@ -28,7 +28,7 @@ void rtAudioInit(AudioData& audio, int id = -1)
 	parameters.firstChannel = 0;
 	unsigned int sampleRate = audio.sampleRate;
 
-#ifdef PLATFORM_WINDOWS___
+#ifdef PLATFORM_WINDOWS
 	// 0 is used to get the smallest frame number possible.
 	// It seems to be a valid frame size on Windows (?)
 	// Causing the uploadBuffer function to be called with nBufferFrames = 0

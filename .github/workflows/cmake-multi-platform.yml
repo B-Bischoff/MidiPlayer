@@ -77,7 +77,7 @@ jobs:
     - name: "Compile project ${{ github.repository }} for x86_64 Windows"
       run: |
         . ./ci-env
-        docker exec docker-runner cmake -S . -B build_x86_64_windows -DCMAKE_TOOLCHAIN_FILE=./cmake/x86_64_Windows_toolchain.cmake
+        docker exec docker-runner cmake -S . -B build_x86_64_windows -DCMAKE_TOOLCHAIN_FILE=./cmake/x86_64_Windows_toolchain.cmake -DCMAKE_CXX_FLAGS="-DPLATFORM_WINDOWS=1"
         docker exec docker-runner make -C build_x86_64_windows -j $(nproc)
         mkdir -p $ARTIFACTS/builds && docker cp "$DOCKER_NAME:$REPO_NAME/build_x86_64_windows" $ARTIFACTS/builds
 
