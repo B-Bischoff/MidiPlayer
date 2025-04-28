@@ -127,7 +127,7 @@ int main(int argc, char* argv[])
 	audio.startTime = std::chrono::high_resolution_clock::now();
 	rtAudioInit(audio, argc > 1 ? std::atoi(argv[1]) : -1);
 
-	InputManager inputManager;
+	InputManager inputManager = {};
 	initInput(inputManager);
 
 	// Setup a callback to get mods (ctrl, shift, ...) key state
