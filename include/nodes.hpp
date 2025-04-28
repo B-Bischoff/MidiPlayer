@@ -398,8 +398,6 @@ struct OscNode : public Node
 
 		if (ImGui::BeginPopup(appendId("OscTypePopup").c_str()))
 		{
-			ImGui::BeginChild("popup_scroller", ImVec2(100, 100), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
-
 			for (int i = 0; i < oscTypeNumber; i++)
 			{
 				if (ImGui::Button(popupText[i].c_str()))
@@ -410,7 +408,6 @@ struct OscNode : public Node
 				}
 			}
 
-			ImGui::EndChild();
 			ImGui::EndPopup(); // Note this does not do anything to the popup open/close state. It just terminates the content declaration.
 		}
 		ed::Resume();

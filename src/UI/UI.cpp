@@ -1,5 +1,4 @@
 #include "UI/UI.hpp"
-#include "imgui.h"
 
 UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 	: _imPlot(audio), _audioSpectrum(audio.getFramesPerUpdate(), 4096), _path(path), _selectedInstrument(nullptr)
@@ -78,7 +77,6 @@ UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 	ImGui::GetStyle().TabBarOverlineSize = 0.0f;
 	ImGui::GetStyle().DockingSeparatorSize = 1.0f;
 
-
 	ImVec4 base      = ImVec4(0.60f, 0.44f, 0.84f, 1.0f); // #996fd6
 	ImVec4 mid       = ImVec4(0.54f, 0.36f, 0.82f, 1.0f); // #895cd1
 	ImVec4 light     = ImVec4(0.65f, 0.53f, 0.86f, 1.0f); // #a786db
@@ -87,6 +85,24 @@ UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 
 	//ImPlot::GetStyle().Colors[ImPlotCol_FrameBg] = ImVec4(0.176, 0.141, 0.239, 1.0);
 	ImPlot::GetStyle().Colors[ImPlotCol_FrameBg] = ImVec4(0.12, 0.10, 0.16, 1.00f);
+
+	// Copy the color of the available pastel colormap but add a bit of value to all colors
+	const int size = ImPlot::GetColormapSize(ImPlotColormap_Pastel);
+	_colormapColors = std::make_unique<ImVec4[]>(size);
+
+	constexpr double saturationOffset = 0.15;
+	for (int i = 0; i < size; i++)
+	{
+		ImVec4 color = ImPlot::GetColormapColor(i, ImPlotColormap_Pastel);
+		float h, s, v;
+		ImGui::ColorConvertRGBtoHSV(color.x, color.y, color.z, h, s, v);
+		ImVec4 saturatedColor;
+		ImGui::ColorConvertHSVtoRGB(h, s + saturationOffset, v, saturatedColor.x, saturatedColor.y, saturatedColor.z);
+		saturatedColor.w = color.w; // Keep original alpha
+		_colormapColors[i] = saturatedColor;
+	}
+	ImPlotColormap customColormap = ImPlot::AddColormap("CustomColormap", _colormapColors.get(), size);
+	ImPlot::GetStyle().Colormap = customColormap;
 
 	ImGuiStyle& style = ImGui::GetStyle();
 	style.Colors[ImGuiCol_Text]                  = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
@@ -98,7 +114,7 @@ UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 	style.Colors[ImGuiCol_FrameBg]               = light;
 	style.Colors[ImGuiCol_FrameBgHovered]        = lighter;
 	style.Colors[ImGuiCol_FrameBgActive]         = highlight;
-	style.Colors[ImGuiCol_TitleBg]               = base;
+	style.Colors[ImGuiCol_TitleBg]               = ImVec4(0.20f, 0.16f, 0.26f, 1.00f); // Light than node bckg (custom)
 	style.Colors[ImGuiCol_TitleBgActive]         = mid;
 	style.Colors[ImGuiCol_TitleBgCollapsed]      = base;
 	style.Colors[ImGuiCol_MenuBarBg]             = ImVec4(0.16f, 0.13f, 0.20f, 1.00f);
@@ -106,7 +122,7 @@ UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 	style.Colors[ImGuiCol_ScrollbarGrab]         = base;
 	style.Colors[ImGuiCol_ScrollbarGrabHovered]  = mid;
 	style.Colors[ImGuiCol_ScrollbarGrabActive]   = light;
-	style.Colors[ImGuiCol_CheckMark]             = base;
+	style.Colors[ImGuiCol_CheckMark]             = ImVec4(0.16f, 0.13f, 0.20f, 0.75f); // node bckg
 	style.Colors[ImGuiCol_SliderGrab]            = mid;
 	style.Colors[ImGuiCol_SliderGrabActive]      = base;
 	style.Colors[ImGuiCol_Button]                = base;
@@ -129,10 +145,11 @@ UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 	style.Colors[ImGuiCol_DragDropTarget]        = highlight;
 	style.Colors[ImGuiCol_NavHighlight]          = mid;
 	style.Colors[ImGuiCol_Tab]                   = base;
-	style.Colors[ImGuiCol_TabHovered]            = light;
-	style.Colors[ImGuiCol_TabActive]             = mid;
-	style.Colors[ImGuiCol_TabUnfocused]          = base;
-	style.Colors[ImGuiCol_TabUnfocusedActive]    = mid;
+	style.Colors[ImGuiCol_TabHovered]            = lighter;
+	style.Colors[ImGuiCol_TabActive]             = light;
+	style.Colors[ImGuiCol_TabUnfocused]          = mid;
+	style.Colors[ImGuiCol_TabUnfocusedActive]    = base;
+	style.Colors[ImGuiCol_DockingPreview]        = lighter;
 }
 
 void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings, std::queue<Message>& messageQueue)

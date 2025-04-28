@@ -21,6 +21,19 @@ NodeEditorUI::NodeEditorUI()
 
 	_nodeManager.addNode<MasterNode>(_idManager);
 
+	// Style
+	ed::SetCurrentEditor(_context);
+
+	ed::GetStyle().NodeBorderWidth = 1.0f;
+	ed::GetStyle().HoveredNodeBorderWidth = 3.0f;
+	ed::GetStyle().SelectedNodeBorderWidth = 5.0f;
+	ed::GetStyle().Colors[ax::NodeEditor::StyleColor_Grid] = ImColor(0);
+	ed::GetStyle().Colors[ax::NodeEditor::StyleColor_NodeBg] = ImVec4(0.16f, 0.13f, 0.20f, 0.75f);
+	ed::GetStyle().Colors[ax::NodeEditor::StyleColor_PinRect] = ImVec4(0.60f, 0.44f, 0.84f, 1.0f); // Base color
+	ed::GetStyle().Colors[ax::NodeEditor::StyleColor_HovNodeBorder] = ImVec4(0.60f, 0.44f, 0.84f, 1.0f); // Base color
+	ed::GetStyle().Colors[ax::NodeEditor::StyleColor_SelNodeBorder] = ImVec4(0.76f, 0.70f, 0.90f, 1.0f); // Highlight color
+	ed::GetStyle().Colors[ax::NodeEditor::StyleColor_HovLinkBorder] = ImVec4(0.60f, 0.44f, 0.84f, 1.0f); // Base color
+	ed::GetStyle().Colors[ax::NodeEditor::StyleColor_SelLinkBorder] = ImVec4(0.76f, 0.70f, 0.90f, 1.0f); // Highlight color
 }
 
 NodeEditorUI::~NodeEditorUI()
@@ -33,30 +46,18 @@ void NodeEditorUI::update(Master& master, std::queue<Message>& messages, Instrum
 	ImGuiWindowFlags f;
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 
-	if (!ImGui::Begin("Node editor"))
+	if (!ImGui::Begin("Node editor") || !selectedInstrument)
 	{
 		ImGui::End();
 		ImGui::PopStyleVar(1);
 		return;
 	}
 
-	if (!selectedInstrument)
-	{
-		// [TODO] print a warning message ?
-		ImGui::End();
-		ImGui::PopStyleVar(1);
-		return;
-	}
+	ImGui::PopStyleVar(1); // Pop padding
 
 	ed::SetCurrentEditor(_context);
 	ed::Begin("Node editor", ImVec2(0, 0));
 
-	// Style
-	ed::GetStyle().NodeBorderWidth = 1.0f;
-	ed::GetStyle().HoveredNodeBorderWidth = 2.0f;
-	ed::GetStyle().SelectedNodeBorderWidth = 2.0f;
-	ed::GetStyle().Colors[ax::NodeEditor::StyleColor_Grid] = ImColor(0);
-	ed::GetStyle().Colors[ax::NodeEditor::StyleColor_NodeBg] = ImVec4(0.16f, 0.13f, 0.20f, 1.00f);
 
 	render(messages);
 
@@ -75,7 +76,6 @@ void NodeEditorUI::update(Master& master, std::queue<Message>& messages, Instrum
 	}
 
 	ImGui::End();
-	ImGui::PopStyleVar(1);
 }
 
 void NodeEditorUI::render(std::queue<Message>& messages)

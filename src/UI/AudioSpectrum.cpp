@@ -75,10 +75,10 @@ double AudioSpectrum::hannWindowing(double v, unsigned int index)
 void AudioSpectrum::plot(const double* xAxis, const double* yAxis, const unsigned int& xMax)
 {
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0);
 
 	if (ImGui::Begin("Audio Spectrum"))
 	{
+		ImGui::PopStyleVar(1);
 		if (ImPlot::BeginPlot("Plot", ImVec2(ImGui::GetContentRegionAvail())))
 		{
 			ImPlot::SetupAxisScale(ImAxis_X1, ImPlotScale_Log10);
@@ -88,6 +88,7 @@ void AudioSpectrum::plot(const double* xAxis, const double* yAxis, const unsigne
 			ImPlot::EndPlot();
 		}
 	}
+	else
+		ImGui::PopStyleVar(1);
 	ImGui::End();
-	ImGui::PopStyleVar(2);
 }

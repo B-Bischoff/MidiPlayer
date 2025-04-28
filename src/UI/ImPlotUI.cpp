@@ -23,13 +23,13 @@ ImPlotUI::~ImPlotUI()
 void ImPlotUI::update(AudioData& audio, std::queue<Message>& messages)
 {
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0);
 
 	ImGui::Begin("Audio buffer");
 
 	ImPlotFlags f;
 	if (ImPlot::BeginPlot("Plot", ImVec2(ImGui::GetContentRegionAvail())))
 	{
+		ImGui::PopStyleVar(1);
 		ImPlot::SetupAxisLimits(ImAxis_Y1, -1.0, 1.0); // Set Y axis go from -1 to +1
 		ImPlot::PlotLine("line", _timeArray, audio.buffer, audio.getBufferSize());
 		double writeCursorX = audio.writeCursor / (double)audio.sampleRate;
@@ -42,12 +42,13 @@ void ImPlotUI::update(AudioData& audio, std::queue<Message>& messages)
 
 		ImPlot::EndPlot();
 	}
+	else
+		ImGui::PopStyleVar(1);
 
 	if (_printEnvelopeEditor)
 		printEnvelopeEditor(messages);
 
 	ImGui::End();
-	ImGui::PopStyleVar(2);
 }
 
 void ImPlotUI::handleControlPoints(std::queue<Message>& messages)
@@ -55,8 +56,8 @@ void ImPlotUI::handleControlPoints(std::queue<Message>& messages)
 	// 0 : static | 1 : ctrl | 2 : hovered
 	unsigned short lookup[8] = { 0, 1, 0, 1, 0, 0, 1, 0};
 	const ImVec4 pointsColor[3] = {
-		{1, 0, 0, 1},
-		{0, 1, 0, 1},
+		ImPlot::GetColormapColor(0),
+		ImPlot::GetColormapColor(2),
 		{1, 1, 1, 1},
 	};
 
@@ -106,11 +107,10 @@ void ImPlotUI::printEnvelopeEditor(std::queue<Message>& messages)
 	bool windowOpen = true;
 	if (ImGui::Begin("ADSR Envelope Editor", &windowOpen))
 	{
-		if (ImPlot::BeginPlot("##ADSRPlot", ImVec2(-1, 0)))
+		if (ImPlot::BeginPlot("##ADSRPlot", ImVec2(ImGui::GetContentRegionAvail())))
 		{
 			handleControlPoints(messages);
 			printEnvelopeEditorPoints();
-			ImPlot::EndPlot();
 		}
 	}
 	if (!windowOpen)
@@ -149,6 +149,7 @@ void ImPlotUI::printEnvelopeEditorPoints()
 	}
 
 	ImPlot::PlotLine("ADSR", X, Y, numPoints);
+	ImPlot::EndPlot();
 }
 
 void ImPlotUI::setPrintEnvelopeEditor(bool value, Vec2* controlPoints, unsigned int nodeId)
