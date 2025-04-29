@@ -442,9 +442,20 @@ struct ADSR_Node : public Node {
 	AudioComponent* convertNodeToAudioComponent() const override
 	{
 		ADSR* audioComponent = new ADSR;
-		for (int i = 0; i < 8; i++)
-			audioComponent->reference.controlPoints[i] = controlPoints[i];
+		assignToAudioComponent(audioComponent);
 		return audioComponent;
+	}
+
+	void assignToAudioComponent(AudioComponent* audioComponent) const override
+	{
+		ADSR* adsr = dynamic_cast<ADSR*>(audioComponent); assert(adsr);
+		for (int i = 0; i < 8; i++)
+			adsr->reference.controlPoints[i] = controlPoints[i];
+		for (auto& envelope : adsr->envelopes)
+		{
+			for (int i = 0; i < 8; i++)
+				envelope.envelope.controlPoints[i] = controlPoints[i];
+		}
 	}
 
 	void render(std::queue<Message>& messages) override
@@ -457,6 +468,16 @@ struct ADSR_Node : public Node {
 			messages.push(Message(UI_SHOW_ADSR_EDITOR, new MessageNodeIdAndControlPoints{controlPoints, id}));
 		ImGui::PopID();
 		Node::endRender();
+	}
+
+	bool operator==(const AudioComponent* component) override
+	{
+		const ADSR* adsr = dynamic_cast<const ADSR*>(component); assert(adsr);
+		bool controlPointsMatch = true;
+		for (int i = 0; i < 8; i++)
+			if (controlPoints[i] != adsr->reference.controlPoints[i])
+				controlPointsMatch = false;
+		return Node::operator==(component) && controlPointsMatch;
 	}
 
 	template<class Archive>
