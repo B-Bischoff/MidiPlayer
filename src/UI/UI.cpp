@@ -39,8 +39,15 @@ UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 	_windowsState.showLog = false;
 	_windowsState.showSettings = false;
 
-	// Fonts init
+	initFonts();
+	initStyle();
+	initColors();
+}
+
+void UI::initFonts()
+{
 	constexpr float baseFontSize = 30.0f;
+	ImGuiIO& io = ImGui::GetIO();
 
 	ImFontConfig fontConfig;
 	fontConfig.FontDataOwnedByAtlas = false; // Prevent ImGui from freeing font memory as it has not been dynamically allocated
@@ -55,54 +62,18 @@ UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 	iconsConfig.PixelSnapH = true;
 	iconsConfig.GlyphMinAdvanceX = iconFontSize;
 	io.Fonts->AddFontFromMemoryCompressedTTF(fa_solid_900_compressed_data, fa_solid_900_compressed_size, iconFontSize, &iconsConfig, iconsRanges);
-
 	io.FontGlobalScale = 0.6f;
 
-	// Style init
-	ImGui::GetStyle().WindowRounding = 5.0f;
-	ImGui::GetStyle().WindowBorderSize = 0.0f;
-	ImGui::GetStyle().ChildRounding = 5.0f;
-	ImGui::GetStyle().ChildBorderSize = 0.0f;
-	ImGui::GetStyle().PopupRounding = 5.0f;
-	ImGui::GetStyle().PopupBorderSize = 0.0f;
-	ImGui::GetStyle().FrameRounding = 5.0f;
-	ImGui::GetStyle().FrameBorderSize = 0.0f;
-	ImGui::GetStyle().GrabRounding = 5.0f;
-	ImGui::GetStyle().ScrollbarSize = 10.0f;
-	ImGui::GetStyle().ScrollbarRounding = 5.0f;
-	ImGui::GetStyle().TabRounding = 4.0f;
-	ImGui::GetStyle().TabBorderSize = 0.0f;
-	ImGui::GetStyle().TabBarBorderSize = 1.0f;
-	ImGui::GetStyle().TabBarBorderSize = 0.0f;
-	ImGui::GetStyle().TabBarOverlineSize = 0.0f;
-	ImGui::GetStyle().DockingSeparatorSize = 1.0f;
+	io.FontDefault = _font;
+}
 
-	ImVec4 base      = ImVec4(0.60f, 0.44f, 0.84f, 1.0f); // #996fd6
-	ImVec4 mid       = ImVec4(0.54f, 0.36f, 0.82f, 1.0f); // #895cd1
-	ImVec4 light     = ImVec4(0.65f, 0.53f, 0.86f, 1.0f); // #a786db
-	ImVec4 lighter   = ImVec4(0.71f, 0.61f, 0.88f, 1.0f); // #b59ce0
-	ImVec4 highlight = ImVec4(0.76f, 0.70f, 0.90f, 1.0f); // #c2b3e5
-
-	//ImPlot::GetStyle().Colors[ImPlotCol_FrameBg] = ImVec4(0.176, 0.141, 0.239, 1.0);
-	ImPlot::GetStyle().Colors[ImPlotCol_FrameBg] = ImVec4(0.12, 0.10, 0.16, 1.00f);
-
-	// Copy the color of the available pastel colormap but add a bit of value to all colors
-	const int size = ImPlot::GetColormapSize(ImPlotColormap_Pastel);
-	_colormapColors = std::make_unique<ImVec4[]>(size);
-
-	constexpr double saturationOffset = 0.15;
-	for (int i = 0; i < size; i++)
-	{
-		ImVec4 color = ImPlot::GetColormapColor(i, ImPlotColormap_Pastel);
-		float h, s, v;
-		ImGui::ColorConvertRGBtoHSV(color.x, color.y, color.z, h, s, v);
-		ImVec4 saturatedColor;
-		ImGui::ColorConvertHSVtoRGB(h, s + saturationOffset, v, saturatedColor.x, saturatedColor.y, saturatedColor.z);
-		saturatedColor.w = color.w; // Keep original alpha
-		_colormapColors[i] = saturatedColor;
-	}
-	ImPlotColormap customColormap = ImPlot::AddColormap("CustomColormap", _colormapColors.get(), size);
-	ImPlot::GetStyle().Colormap = customColormap;
+void UI::initColors()
+{
+	const ImVec4 base      = ImVec4(0.60f, 0.44f, 0.84f, 1.0f); // #996fd6
+	const ImVec4 mid       = ImVec4(0.54f, 0.36f, 0.82f, 1.0f); // #895cd1
+	const ImVec4 light     = ImVec4(0.65f, 0.53f, 0.86f, 1.0f); // #a786db
+	const ImVec4 lighter   = ImVec4(0.71f, 0.61f, 0.88f, 1.0f); // #b59ce0
+	const ImVec4 highlight = ImVec4(0.76f, 0.70f, 0.90f, 1.0f); // #c2b3e5
 
 	ImGuiStyle& style = ImGui::GetStyle();
 	style.Colors[ImGuiCol_Text]                  = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
@@ -152,6 +123,28 @@ UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 	style.Colors[ImGuiCol_DockingPreview]        = lighter;
 }
 
+void UI::initStyle()
+{
+	ImGuiStyle& style = ImGui::GetStyle();
+	style.WindowRounding = 5.0f;
+	style.WindowBorderSize = 0.0f;
+	style.ChildRounding = 5.0f;
+	style.ChildBorderSize = 0.0f;
+	style.PopupRounding = 5.0f;
+	style.PopupBorderSize = 0.0f;
+	style.FrameRounding = 5.0f;
+	style.FrameBorderSize = 0.0f;
+	style.GrabRounding = 5.0f;
+	style.ScrollbarSize = 10.0f;
+	style.ScrollbarRounding = 5.0f;
+	style.TabRounding = 4.0f;
+	style.TabBorderSize = 0.0f;
+	style.TabBarBorderSize = 1.0f;
+	style.TabBarBorderSize = 0.0f;
+	style.TabBarOverlineSize = 0.0f;
+	style.DockingSeparatorSize = 1.0f;
+}
+
 void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings, std::queue<Message>& messageQueue)
 {
 	initUpdate(1920, 1080);
@@ -189,8 +182,6 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlay
 		ImGui::Checkbox("Use keyboard as MIDI input", &settings.useKeyboardAsInput);
 		ImGui::End();
 	}
-
-	ImGui::PopFont();
 
 	endUpdate();
 }
@@ -373,7 +364,6 @@ void UI::initUpdate(const int& WIN_WIDTH, const int& WIN_HEIGHT)
 		ImGuiWindowFlags_MenuBar |
 		ImGuiWindowFlags_NoBackground;
 
-	ImGui::PushFont(_font);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 
 	ImGui::Begin("Main", NULL, windowFlags);

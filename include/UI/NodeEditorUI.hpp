@@ -119,6 +119,8 @@ public:
 	void cut(std::queue<Message>& messages);
 
 private:
+	void initStyle();
+
 	void render(std::queue<Message>& messages);
 
 	void handleCreation(Master& master);

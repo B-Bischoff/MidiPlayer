@@ -1,6 +1,4 @@
 #include "UI/NodeEditorUI.hpp"
-#include "imgui.h"
-#include "imgui_node_editor.h"
 
 bool Node::propertyChanged = false;
 
@@ -21,24 +19,7 @@ NodeEditorUI::NodeEditorUI()
 
 	_nodeManager.addNode<MasterNode>(_idManager);
 
-	// Style
-	ed::SetCurrentEditor(_context);
-
-	ed::GetStyle().NodeBorderWidth = 1.0f;
-	ed::GetStyle().HoveredNodeBorderWidth = 3.0f;
-	ed::GetStyle().SelectedNodeBorderWidth = 5.0f;
-	ed::GetStyle().Colors[ax::NodeEditor::StyleColor_Grid] = ImColor(0);
-	ed::GetStyle().Colors[ax::NodeEditor::StyleColor_NodeBg] = ImVec4(0.16f, 0.13f, 0.20f, 0.75f);
-	ed::GetStyle().Colors[ax::NodeEditor::StyleColor_PinRect] = ImVec4(0.60f, 0.44f, 0.84f, 1.0f); // Base color
-	ed::GetStyle().Colors[ax::NodeEditor::StyleColor_HovNodeBorder] = ImVec4(0.60f, 0.44f, 0.84f, 1.0f); // Base color
-	ed::GetStyle().Colors[ax::NodeEditor::StyleColor_SelNodeBorder] = ImVec4(0.76f, 0.70f, 0.90f, 1.0f); // Highlight color
-	ed::GetStyle().Colors[ax::NodeEditor::StyleColor_HovLinkBorder] = ImVec4(0.60f, 0.44f, 0.84f, 1.0f); // Base color
-	ed::GetStyle().Colors[ax::NodeEditor::StyleColor_SelLinkBorder] = ImVec4(0.76f, 0.70f, 0.90f, 1.0f); // Highlight color
-
-	ImVec4 base      = ImVec4(0.60f, 0.44f, 0.84f, 1.0f); // #996fd6
-	ImVec4 light     = ImVec4(0.65f, 0.53f, 0.86f, 1.0f); // #a786db
-	ed::GetStyle().Colors[ax::NodeEditor::StyleColor_NodeSelRect] = light;
-	ed::GetStyle().Colors[ax::NodeEditor::StyleColor_NodeSelRectBorder] = base;
+	initStyle();
 }
 
 NodeEditorUI::~NodeEditorUI()
@@ -46,40 +27,56 @@ NodeEditorUI::~NodeEditorUI()
 	ed::DestroyEditor(_context);
 }
 
+void NodeEditorUI::initStyle()
+{
+	ed::SetCurrentEditor(_context);
+	ed::Style& style = ed::GetStyle();
+
+	style.NodeBorderWidth = 1.0f;
+	style.HoveredNodeBorderWidth = 3.0f;
+	style.SelectedNodeBorderWidth = 5.0f;
+	style.Colors[ax::NodeEditor::StyleColor_Grid] = ImColor(0);
+	style.Colors[ax::NodeEditor::StyleColor_NodeBg] = ImVec4(0.16f, 0.13f, 0.20f, 0.75f);
+	style.Colors[ax::NodeEditor::StyleColor_PinRect] = ImVec4(0.60f, 0.44f, 0.84f, 1.0f); // Base color
+	style.Colors[ax::NodeEditor::StyleColor_HovNodeBorder] = ImVec4(0.60f, 0.44f, 0.84f, 1.0f); // Base color
+	style.Colors[ax::NodeEditor::StyleColor_SelNodeBorder] = ImVec4(0.76f, 0.70f, 0.90f, 1.0f); // Highlight color
+	style.Colors[ax::NodeEditor::StyleColor_HovLinkBorder] = ImVec4(0.60f, 0.44f, 0.84f, 1.0f); // Base color
+	style.Colors[ax::NodeEditor::StyleColor_SelLinkBorder] = ImVec4(0.76f, 0.70f, 0.90f, 1.0f); // Highlight color
+	ImVec4 base      = ImVec4(0.60f, 0.44f, 0.84f, 1.0f); // #996fd6
+	ImVec4 light     = ImVec4(0.65f, 0.53f, 0.86f, 1.0f); // #a786db
+	style.Colors[ax::NodeEditor::StyleColor_NodeSelRect] = light;
+	style.Colors[ax::NodeEditor::StyleColor_NodeSelRectBorder] = base;
+}
+
 void NodeEditorUI::update(Master& master, std::queue<Message>& messages, Instrument* selectedInstrument)
 {
 	ImGuiWindowFlags f;
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 
-	if (!ImGui::Begin("Node editor") || !selectedInstrument)
+	// Do not open window when no instrument is selected
+	const bool windowOpened = ImGui::Begin("Node editor") && (selectedInstrument != nullptr);
+	ImGui::PopStyleVar(1);
+	if (windowOpened)
 	{
-		ImGui::End();
-		ImGui::PopStyleVar(1);
-		return;
+		ed::SetCurrentEditor(_context);
+		ed::Begin("Node editor", ImVec2(0, 0));
+
+		render(messages);
+
+		handleCreation(master);
+		handleDeletion(master, messages);
+
+		ed::End();
+
+		if (_UIModified || Node::propertyChanged)
+			updateBackend(master);
+
+		if (_navigateToContent)
+		{
+			_navigateToContent = false;
+			ed::NavigateToContent();
+		}
 	}
-
-	ImGui::PopStyleVar(1); // Pop padding
-
-	ed::SetCurrentEditor(_context);
-	ed::Begin("Node editor", ImVec2(0, 0));
-
-
-	render(messages);
-
-	handleCreation(master);
-	handleDeletion(master, messages);
-
-	ed::End();
-
-	if (_UIModified || Node::propertyChanged)
-		updateBackend(master);
-
-	if (_navigateToContent)
-	{
-		_navigateToContent = false;
-		ed::NavigateToContent();
-	}
-
 	ImGui::End();
 }
 

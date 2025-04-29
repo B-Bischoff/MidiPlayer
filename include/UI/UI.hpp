@@ -47,14 +47,16 @@ private:
 
 	Instrument* _selectedInstrument;
 
-	std::unique_ptr<ImVec4[]> _colormapColors; // Implot colormap colors
-
 public:
 	UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path);
 	void update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings, std::queue<Message>& messageQueue);
 	void render();
 
 private:
+	void initStyle();
+	void initColors();
+	void initFonts();
+
 	void initUpdate(const int& WIN_WIDTH, const int& WIN_HEIGHT);
 	void endUpdate();
 
