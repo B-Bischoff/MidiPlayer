@@ -3,6 +3,7 @@
 #include <implot.h>
 #include "inc.hpp"
 
+#include "UI/Colors.hpp"
 #include "Message.hpp"
 #include "MidiMath.hpp"
 

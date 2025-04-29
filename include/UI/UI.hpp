@@ -17,6 +17,7 @@
 #include "path.hpp"
 #include "Message.hpp"
 
+#include "UI/Colors.hpp"
 #include "UI/Log.hpp"
 
 #include "UI/fonts/RobotoRegular.h"

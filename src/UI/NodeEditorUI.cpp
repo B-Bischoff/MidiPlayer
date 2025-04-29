@@ -35,17 +35,16 @@ void NodeEditorUI::initStyle()
 	style.NodeBorderWidth = 1.0f;
 	style.HoveredNodeBorderWidth = 3.0f;
 	style.SelectedNodeBorderWidth = 5.0f;
-	style.Colors[ax::NodeEditor::StyleColor_Grid] = ImColor(0);
-	style.Colors[ax::NodeEditor::StyleColor_NodeBg] = ImVec4(0.16f, 0.13f, 0.20f, 0.75f);
-	style.Colors[ax::NodeEditor::StyleColor_PinRect] = ImVec4(0.60f, 0.44f, 0.84f, 1.0f); // Base color
-	style.Colors[ax::NodeEditor::StyleColor_HovNodeBorder] = ImVec4(0.60f, 0.44f, 0.84f, 1.0f); // Base color
-	style.Colors[ax::NodeEditor::StyleColor_SelNodeBorder] = ImVec4(0.76f, 0.70f, 0.90f, 1.0f); // Highlight color
-	style.Colors[ax::NodeEditor::StyleColor_HovLinkBorder] = ImVec4(0.60f, 0.44f, 0.84f, 1.0f); // Base color
-	style.Colors[ax::NodeEditor::StyleColor_SelLinkBorder] = ImVec4(0.76f, 0.70f, 0.90f, 1.0f); // Highlight color
-	ImVec4 base      = ImVec4(0.60f, 0.44f, 0.84f, 1.0f); // #996fd6
-	ImVec4 light     = ImVec4(0.65f, 0.53f, 0.86f, 1.0f); // #a786db
-	style.Colors[ax::NodeEditor::StyleColor_NodeSelRect] = light;
-	style.Colors[ax::NodeEditor::StyleColor_NodeSelRectBorder] = base;
+
+	style.Colors[ax::NodeEditor::StyleColor_Grid]              = ImColor(0);
+	style.Colors[ax::NodeEditor::StyleColor_NodeBg]            = UI_Colors::background_light;
+	style.Colors[ax::NodeEditor::StyleColor_PinRect]           = UI_Colors::base;
+	style.Colors[ax::NodeEditor::StyleColor_HovNodeBorder]     = UI_Colors::base;
+	style.Colors[ax::NodeEditor::StyleColor_SelNodeBorder]     = UI_Colors::highlight;
+	style.Colors[ax::NodeEditor::StyleColor_HovLinkBorder]     = UI_Colors::base;
+	style.Colors[ax::NodeEditor::StyleColor_SelLinkBorder]     = UI_Colors::highlight;
+	style.Colors[ax::NodeEditor::StyleColor_NodeSelRect]       = UI_Colors::light;
+	style.Colors[ax::NodeEditor::StyleColor_NodeSelRectBorder] = UI_Colors::base;
 }
 
 void NodeEditorUI::update(Master& master, std::queue<Message>& messages, Instrument* selectedInstrument)

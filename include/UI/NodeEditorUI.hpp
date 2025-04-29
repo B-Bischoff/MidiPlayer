@@ -19,6 +19,7 @@
 #include "NodeManager.hpp"
 #include "LinkManager.hpp"
 #include "UIToBackendAdapter.hpp"
+#include "UI/Colors.hpp"
 #include "inc.hpp"
 #include "Message.hpp"
 #include "audio_backend.hpp"

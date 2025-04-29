@@ -19,7 +19,7 @@ ImPlotUI::ImPlotUI(AudioData& audio)
 void ImPlotUI::initStyle()
 {
 	// Colors
-	ImPlot::GetStyle().Colors[ImPlotCol_FrameBg] = ImVec4(0.12, 0.10, 0.16, 1.00f);
+	ImPlot::GetStyle().Colors[ImPlotCol_FrameBg] = UI_Colors::background_mid;
 
 	// Colormap creation
 	// Copy the color of the available pastel colormap but add a bit of value to all colors
