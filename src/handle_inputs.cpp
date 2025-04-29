@@ -12,8 +12,8 @@ void initInput(InputManager& inputManger) // [TODO] Should this be in a construc
 	int numDevices = Pm_CountDevices();
 	if (numDevices <= 0)
 	{
-		Logger::log("PortMidi", Error) << "No MIDI devices found." << std::endl;
-		exit(1);
+		Logger::log("PortMidi", Warning) << "No MIDI devices found." << std::endl;
+		return;
 	}
 
 	for (int i = 0; i < numDevices; i++)
@@ -96,7 +96,7 @@ void updateKeysState(GLFWwindow* window, const MidiPlayerSettings& settings, Inp
 				removeKeyPressed(keyPressed, keyIndex);
 		}
 	}
-	else
+	else if (inputManager.midiStream != nullptr)
 	{
 		int numEvents = Pm_Read(inputManager.midiStream, inputManager.buffer, 32);
 		for (int i = 0; i < numEvents; i++)

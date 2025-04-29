@@ -111,7 +111,7 @@ struct KeyData
 struct InputManager
 {
 	// Midi events (PortMidi specifics)
-	PmStream* midiStream;
+	PmStream* midiStream = nullptr;
 	PmEvent buffer[32];
 
 	// Keyboard data
