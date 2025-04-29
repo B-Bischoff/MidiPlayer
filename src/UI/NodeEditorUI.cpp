@@ -34,6 +34,11 @@ NodeEditorUI::NodeEditorUI()
 	ed::GetStyle().Colors[ax::NodeEditor::StyleColor_SelNodeBorder] = ImVec4(0.76f, 0.70f, 0.90f, 1.0f); // Highlight color
 	ed::GetStyle().Colors[ax::NodeEditor::StyleColor_HovLinkBorder] = ImVec4(0.60f, 0.44f, 0.84f, 1.0f); // Base color
 	ed::GetStyle().Colors[ax::NodeEditor::StyleColor_SelLinkBorder] = ImVec4(0.76f, 0.70f, 0.90f, 1.0f); // Highlight color
+
+	ImVec4 base      = ImVec4(0.60f, 0.44f, 0.84f, 1.0f); // #996fd6
+	ImVec4 light     = ImVec4(0.65f, 0.53f, 0.86f, 1.0f); // #a786db
+	ed::GetStyle().Colors[ax::NodeEditor::StyleColor_NodeSelRect] = light;
+	ed::GetStyle().Colors[ax::NodeEditor::StyleColor_NodeSelRectBorder] = base;
 }
 
 NodeEditorUI::~NodeEditorUI()
