@@ -17,7 +17,10 @@
 #include "path.hpp"
 #include "Message.hpp"
 
+#include "UI/Colors.hpp"
 #include "UI/Log.hpp"
+
+#include "UI/fonts/RobotoRegular.h"
 
 struct WindowsState {
 	bool showLog;
@@ -31,6 +34,8 @@ private:
 	NodeEditorUI _nodeEditor;
 	AudioSpectrum _audioSpectrum;
 	const ApplicationPath& _path;
+
+	ImFont* _font;
 
 	Log _log;
 
@@ -49,6 +54,10 @@ public:
 	void render();
 
 private:
+	void initStyle();
+	void initColors();
+	void initFonts();
+
 	void initUpdate(const int& WIN_WIDTH, const int& WIN_HEIGHT);
 	void endUpdate();
 

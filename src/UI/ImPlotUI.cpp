@@ -12,6 +12,33 @@ ImPlotUI::ImPlotUI(AudioData& audio)
 	ImPlotInputMap& map = ImPlot::GetInputMap();
 	map.Pan = ImGuiMouseButton_Right;
 	map.Select = ImGuiMouseButton_Middle;
+
+	initStyle();
+}
+
+void ImPlotUI::initStyle()
+{
+	// Colors
+	ImPlot::GetStyle().Colors[ImPlotCol_FrameBg] = UI_Colors::background_mid;
+
+	// Colormap creation
+	// Copy the color of the available pastel colormap but add a bit of value to all colors
+	const int size = ImPlot::GetColormapSize(ImPlotColormap_Pastel);
+	_colormapColors = std::make_unique<ImVec4[]>(size);
+
+	constexpr double saturationOffset = 0.15;
+	for (int i = 0; i < size; i++)
+	{
+		ImVec4 color = ImPlot::GetColormapColor(i, ImPlotColormap_Pastel);
+		float h, s, v;
+		ImGui::ColorConvertRGBtoHSV(color.x, color.y, color.z, h, s, v);
+		ImVec4 saturatedColor;
+		ImGui::ColorConvertHSVtoRGB(h, s + saturationOffset, v, saturatedColor.x, saturatedColor.y, saturatedColor.z);
+		saturatedColor.w = color.w; // Keep original alpha
+		_colormapColors[i] = saturatedColor;
+	}
+	_colormap = ImPlot::AddColormap("CustomColormap", _colormapColors.get(), size);
+	ImPlot::GetStyle().Colormap = _colormap;
 }
 
 ImPlotUI::~ImPlotUI()
@@ -22,9 +49,12 @@ ImPlotUI::~ImPlotUI()
 
 void ImPlotUI::update(AudioData& audio, std::queue<Message>& messages)
 {
-	ImGui::Begin("Audio buffer");
-	ImPlotFlags f;
-	if (ImPlot::BeginPlot("Plot", ImVec2(ImGui::GetContentRegionAvail())))
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+
+	const bool windowOpened = ImGui::Begin("Audio buffer");
+	ImGui::PopStyleVar(1);
+
+	if (windowOpened && ImPlot::BeginPlot("Plot", ImVec2(ImGui::GetContentRegionAvail())))
 	{
 		ImPlot::SetupAxisLimits(ImAxis_Y1, -1.0, 1.0); // Set Y axis go from -1 to +1
 		ImPlot::PlotLine("line", _timeArray, audio.buffer, audio.getBufferSize());
@@ -50,8 +80,8 @@ void ImPlotUI::handleControlPoints(std::queue<Message>& messages)
 	// 0 : static | 1 : ctrl | 2 : hovered
 	unsigned short lookup[8] = { 0, 1, 0, 1, 0, 0, 1, 0};
 	const ImVec4 pointsColor[3] = {
-		{1, 0, 0, 1},
-		{0, 1, 0, 1},
+		ImPlot::GetColormapColor(0),
+		ImPlot::GetColormapColor(2),
 		{1, 1, 1, 1},
 	};
 
@@ -101,7 +131,7 @@ void ImPlotUI::printEnvelopeEditor(std::queue<Message>& messages)
 	bool windowOpen = true;
 	if (ImGui::Begin("ADSR Envelope Editor", &windowOpen))
 	{
-		if (ImPlot::BeginPlot("##ADSRPlot", ImVec2(-1, 0)))
+		if (ImPlot::BeginPlot("##ADSRPlot", ImVec2(ImGui::GetContentRegionAvail())))
 		{
 			handleControlPoints(messages);
 			printEnvelopeEditorPoints();

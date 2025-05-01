@@ -19,6 +19,7 @@
 #include "NodeManager.hpp"
 #include "LinkManager.hpp"
 #include "UIToBackendAdapter.hpp"
+#include "UI/Colors.hpp"
 #include "inc.hpp"
 #include "Message.hpp"
 #include "audio_backend.hpp"
@@ -119,6 +120,8 @@ public:
 	void cut(std::queue<Message>& messages);
 
 private:
+	void initStyle();
+
 	void render(std::queue<Message>& messages);
 
 	void handleCreation(Master& master);

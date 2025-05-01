@@ -1,5 +1,4 @@
 #include "UI/NodeEditorUI.hpp"
-#include "imgui_node_editor.h"
 
 bool Node::propertyChanged = false;
 
@@ -19,6 +18,8 @@ NodeEditorUI::NodeEditorUI()
 	_nodeManager.registerNode<CombFilterNode>("Comb Filter");
 
 	_nodeManager.addNode<MasterNode>(_idManager);
+
+	initStyle();
 }
 
 NodeEditorUI::~NodeEditorUI()
@@ -26,37 +27,55 @@ NodeEditorUI::~NodeEditorUI()
 	ed::DestroyEditor(_context);
 }
 
+void NodeEditorUI::initStyle()
+{
+	ed::SetCurrentEditor(_context);
+	ed::Style& style = ed::GetStyle();
+
+	style.NodeBorderWidth = 1.0f;
+	style.HoveredNodeBorderWidth = 3.0f;
+	style.SelectedNodeBorderWidth = 5.0f;
+
+	style.Colors[ax::NodeEditor::StyleColor_Grid]              = ImColor(0);
+	style.Colors[ax::NodeEditor::StyleColor_NodeBg]            = UI_Colors::background_light;
+	style.Colors[ax::NodeEditor::StyleColor_PinRect]           = UI_Colors::base;
+	style.Colors[ax::NodeEditor::StyleColor_HovNodeBorder]     = UI_Colors::base;
+	style.Colors[ax::NodeEditor::StyleColor_SelNodeBorder]     = UI_Colors::highlight;
+	style.Colors[ax::NodeEditor::StyleColor_HovLinkBorder]     = UI_Colors::base;
+	style.Colors[ax::NodeEditor::StyleColor_SelLinkBorder]     = UI_Colors::highlight;
+	style.Colors[ax::NodeEditor::StyleColor_NodeSelRect]       = UI_Colors::light;
+	style.Colors[ax::NodeEditor::StyleColor_NodeSelRectBorder] = UI_Colors::base;
+}
+
 void NodeEditorUI::update(Master& master, std::queue<Message>& messages, Instrument* selectedInstrument)
 {
-	if (!ImGui::Begin("Node editor"))
-		return;
+	ImGuiWindowFlags f;
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 
-	if (!selectedInstrument)
+	// Do not open window when no instrument is selected
+	const bool windowOpened = ImGui::Begin("Node editor") && (selectedInstrument != nullptr);
+	ImGui::PopStyleVar(1);
+	if (windowOpened)
 	{
-		// [TODO] print a warning message ?
-		ImGui::End();
-		return;
+		ed::SetCurrentEditor(_context);
+		ed::Begin("Node editor", ImVec2(0, 0));
+
+		render(messages);
+
+		handleCreation(master);
+		handleDeletion(master, messages);
+
+		ed::End();
+
+		if (_UIModified || Node::propertyChanged)
+			updateBackend(master);
+
+		if (_navigateToContent)
+		{
+			_navigateToContent = false;
+			ed::NavigateToContent();
+		}
 	}
-
-	ed::SetCurrentEditor(_context);
-	ed::Begin("Node editor", ImVec2(0, 0));
-
-	render(messages);
-
-	handleCreation(master);
-	handleDeletion(master, messages);
-
-	ed::End();
-
-	if (_UIModified || Node::propertyChanged)
-		updateBackend(master);
-
-	if (_navigateToContent)
-	{
-		_navigateToContent = false;
-		ed::NavigateToContent();
-	}
-
 	ImGui::End();
 }
 
@@ -92,6 +111,9 @@ void NodeEditorUI::handleNodeCreation()
 
 	if (ImGui::BeginPopup("Create New Node"))
 	{
+		ImGui::Text("Create new node");
+		ImGui::Separator();
+
 		std::shared_ptr<Node> node = nullptr;
 
 		// Loop over all the registered node and print their name to the menu item

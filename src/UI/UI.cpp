@@ -1,5 +1,4 @@
 #include "UI/UI.hpp"
-#include "imgui.h"
 
 UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 	: _imPlot(audio), _audioSpectrum(audio.getFramesPerUpdate(), 4096), _path(path), _selectedInstrument(nullptr)
@@ -40,18 +39,104 @@ UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 	_windowsState.showLog = false;
 	_windowsState.showSettings = false;
 
-	// Notification init
-	io.Fonts->AddFontDefault();
+	initFonts();
+	initStyle();
+	initColors();
+}
 
-	float baseFontSize = 16.0f;
-	float iconFontSize = baseFontSize * 2.0f / 3.0f; // FontAwesome fonts need to have their sizes reduced by 2.0f/3.0f in order to align correctly
+void UI::initFonts()
+{
+	constexpr float baseFontSize = 30.0f;
+	ImGuiIO& io = ImGui::GetIO();
+
+	ImFontConfig fontConfig;
+	fontConfig.FontDataOwnedByAtlas = false; // Prevent ImGui from freeing font memory as it has not been dynamically allocated
+	_font = io.Fonts->AddFontFromMemoryTTF(roboto_regular_ttf, roboto_regular_ttf_len, baseFontSize, &fontConfig);
+
+	// Font awesome icons init
+	constexpr float iconFontSize = baseFontSize * 2.0f / 3.0f; // FontAwesome fonts need to have their sizes reduced by 2.0f/3.0f in order to align correctly
 
 	static constexpr ImWchar iconsRanges[] = {ICON_MIN_FA, ICON_MAX_16_FA, 0};
 	ImFontConfig iconsConfig;
-	iconsConfig.MergeMode = true;
+	iconsConfig.MergeMode = true; // Merge with the previous loaded font
 	iconsConfig.PixelSnapH = true;
 	iconsConfig.GlyphMinAdvanceX = iconFontSize;
 	io.Fonts->AddFontFromMemoryCompressedTTF(fa_solid_900_compressed_data, fa_solid_900_compressed_size, iconFontSize, &iconsConfig, iconsRanges);
+	io.FontGlobalScale = 0.6f;
+
+	io.FontDefault = _font;
+}
+
+void UI::initColors()
+{
+	ImGuiStyle& style = ImGui::GetStyle();
+	style.Colors[ImGuiCol_Text]                  = UI_Colors::white;
+	style.Colors[ImGuiCol_TextDisabled]          = UI_Colors::lighter;
+	style.Colors[ImGuiCol_WindowBg]              = UI_Colors::background_mid;
+	style.Colors[ImGuiCol_ChildBg]               = UI_Colors::background_light;
+	style.Colors[ImGuiCol_PopupBg]               = UI_Colors::background_mid;
+	style.Colors[ImGuiCol_Border]                = UI_Colors::mid;
+	style.Colors[ImGuiCol_FrameBg]               = UI_Colors::light;
+	style.Colors[ImGuiCol_FrameBgHovered]        = UI_Colors::lighter;
+	style.Colors[ImGuiCol_FrameBgActive]         = UI_Colors::highlight;
+	style.Colors[ImGuiCol_TitleBg]               = UI_Colors::background_lighter;
+	style.Colors[ImGuiCol_TitleBgActive]         = UI_Colors::mid;
+	style.Colors[ImGuiCol_TitleBgCollapsed]      = UI_Colors::base;
+	style.Colors[ImGuiCol_MenuBarBg]             = UI_Colors::background_light;
+	style.Colors[ImGuiCol_ScrollbarBg]           = UI_Colors::background_dark;
+	style.Colors[ImGuiCol_ScrollbarGrab]         = UI_Colors::base;
+	style.Colors[ImGuiCol_ScrollbarGrabHovered]  = UI_Colors::mid;
+	style.Colors[ImGuiCol_ScrollbarGrabActive]   = UI_Colors::light;
+	style.Colors[ImGuiCol_CheckMark]             = UI_Colors::background_lighter;
+	style.Colors[ImGuiCol_SliderGrab]            = UI_Colors::mid;
+	style.Colors[ImGuiCol_SliderGrabActive]      = UI_Colors::base;
+	style.Colors[ImGuiCol_Button]                = UI_Colors::base;
+	style.Colors[ImGuiCol_ButtonHovered]         = UI_Colors::mid;
+	style.Colors[ImGuiCol_ButtonActive]          = UI_Colors::light;
+	style.Colors[ImGuiCol_Header]                = UI_Colors::mid;
+	style.Colors[ImGuiCol_HeaderHovered]         = UI_Colors::light;
+	style.Colors[ImGuiCol_HeaderActive]          = UI_Colors::highlight;
+	style.Colors[ImGuiCol_Separator]             = UI_Colors::mid;
+	style.Colors[ImGuiCol_SeparatorHovered]      = UI_Colors::light;
+	style.Colors[ImGuiCol_SeparatorActive]       = UI_Colors::highlight;
+	style.Colors[ImGuiCol_ResizeGrip]            = UI_Colors::light;
+	style.Colors[ImGuiCol_ResizeGripHovered]     = UI_Colors::lighter;
+	style.Colors[ImGuiCol_ResizeGripActive]      = UI_Colors::highlight;
+	style.Colors[ImGuiCol_PlotLines]             = UI_Colors::base;
+	style.Colors[ImGuiCol_PlotLinesHovered]      = UI_Colors::mid;
+	style.Colors[ImGuiCol_PlotHistogram]         = UI_Colors::light;
+	style.Colors[ImGuiCol_PlotHistogramHovered]  = UI_Colors::lighter;
+	style.Colors[ImGuiCol_TextSelectedBg]        = UI_Colors::highlight;
+	style.Colors[ImGuiCol_DragDropTarget]        = UI_Colors::highlight;
+	style.Colors[ImGuiCol_NavHighlight]          = UI_Colors::mid;
+	style.Colors[ImGuiCol_Tab]                   = UI_Colors::base;
+	style.Colors[ImGuiCol_TabHovered]            = UI_Colors::lighter;
+	style.Colors[ImGuiCol_TabActive]             = UI_Colors::light;
+	style.Colors[ImGuiCol_TabUnfocused]          = UI_Colors::mid;
+	style.Colors[ImGuiCol_TabUnfocusedActive]    = UI_Colors::base;
+	style.Colors[ImGuiCol_DockingPreview]        = UI_Colors::lighter;
+}
+
+void UI::initStyle()
+{
+	ImGuiStyle& style = ImGui::GetStyle();
+	style.WindowRounding = 5.0f;
+	style.WindowBorderSize = 0.0f;
+	style.ChildRounding = 5.0f;
+	style.ChildBorderSize = 0.0f;
+	style.PopupRounding = 5.0f;
+	style.PopupBorderSize = 0.0f;
+	style.FrameRounding = 5.0f;
+	style.FrameBorderSize = 0.0f;
+	style.GrabRounding = 5.0f;
+	style.ScrollbarSize = 10.0f;
+	style.ScrollbarRounding = 5.0f;
+	style.TabRounding = 4.0f;
+	style.TabBorderSize = 0.0f;
+	style.TabBarBorderSize = 1.0f;
+	style.TabBarBorderSize = 0.0f;
+	style.TabBarOverlineSize = 0.0f;
+	style.DockingSeparatorSize = 1.0f;
 }
 
 void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings, std::queue<Message>& messageQueue)
@@ -279,7 +364,31 @@ void UI::initUpdate(const int& WIN_WIDTH, const int& WIN_HEIGHT)
 	ImGui::PopStyleVar();
 
 	// create a docking space inside our inner window that lets prevents anything from docking in the central node (so we can see our game content)
-	ImGui::DockSpace(ImGui::GetID("Dockspace"), ImVec2(0.0f, 0.0f),  ImGuiDockNodeFlags_PassthruCentralNode);
+	ImGuiDockNode* node = ImGui::DockBuilderGetNode(ImGui::GetID("Dockspace"));
+
+	ImGuiID dockspaceId = ImGui::DockSpace(ImGui::GetID("Dockspace"), ImVec2(0.0f, 0.0f),  ImGuiDockNodeFlags_PassthruCentralNode);
+
+	if (!node) // Windows dock init only if no imgui.ini was found
+	{
+		ImGui::DockBuilderRemoveNode(dockspaceId); // clear previous layout
+		ImGui::DockBuilderAddNode(dockspaceId, ImGuiDockNodeFlags_DockSpace);
+		ImGui::DockBuilderSetNodeSize(dockspaceId, ImGui::GetWindowSize());
+
+		ImGuiID dockNodeEditor = dockspaceId;
+		ImGuiID dockLoadedInstrument = ImGui::DockBuilderSplitNode(dockNodeEditor, ImGuiDir_Left, 0.20f, nullptr, &dockNodeEditor);
+		ImGuiID dockStoredInstrument = ImGui::DockBuilderSplitNode(dockLoadedInstrument, ImGuiDir_Down, 0.70f, nullptr, &dockLoadedInstrument);
+		ImGuiID dockAudioBuffer = ImGui::DockBuilderSplitNode(dockNodeEditor, ImGuiDir_Down, 0.30f, nullptr, &dockNodeEditor);
+		ImGuiID dockAudioSpectrum = ImGui::DockBuilderSplitNode(dockAudioBuffer, ImGuiDir_Right, 0.50f, nullptr, &dockAudioBuffer);
+
+		// Dock windows
+		ImGui::DockBuilderDockWindow("Loaded instruments", dockLoadedInstrument);
+		ImGui::DockBuilderDockWindow("Stored instruments", dockStoredInstrument);
+		ImGui::DockBuilderDockWindow("Node editor", dockNodeEditor);
+		ImGui::DockBuilderDockWindow("Audio buffer", dockAudioBuffer);
+		ImGui::DockBuilderDockWindow("Audio Spectrum", dockAudioSpectrum);
+
+		ImGui::DockBuilderFinish(dockspaceId);
+	}
 }
 
 void UI::endUpdate()
