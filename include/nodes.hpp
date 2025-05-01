@@ -398,9 +398,11 @@ struct OscNode : public Node
 
 		if (ImGui::BeginPopup(appendId("OscTypePopup").c_str()))
 		{
+			ImGui::Text("Oscillator type");
+			ImGui::Separator();
 			for (int i = 0; i < oscTypeNumber; i++)
 			{
-				if (ImGui::Button(popupText[i].c_str()))
+				if (ImGui::MenuItem(popupText[i].c_str()))
 				{
 					this->oscType = static_cast<OscType>(i);
 					ImGui::CloseCurrentPopup();

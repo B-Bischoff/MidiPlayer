@@ -111,6 +111,9 @@ void NodeEditorUI::handleNodeCreation()
 
 	if (ImGui::BeginPopup("Create New Node"))
 	{
+		ImGui::Text("Create new node");
+		ImGui::Separator();
+
 		std::shared_ptr<Node> node = nullptr;
 
 		// Loop over all the registered node and print their name to the menu item
