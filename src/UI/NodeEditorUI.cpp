@@ -36,8 +36,15 @@ void NodeEditorUI::initStyle()
 	style.HoveredNodeBorderWidth = 3.0f;
 	style.SelectedNodeBorderWidth = 5.0f;
 
+	constexpr ImVec4 nodeBackground(
+		UI_Colors::background_light.x,
+		UI_Colors::background_light.y,
+		UI_Colors::background_light.z,
+		0.75);
+
+
 	style.Colors[ax::NodeEditor::StyleColor_Grid]              = ImColor(0);
-	style.Colors[ax::NodeEditor::StyleColor_NodeBg]            = UI_Colors::background_light;
+	style.Colors[ax::NodeEditor::StyleColor_NodeBg]            = nodeBackground;
 	style.Colors[ax::NodeEditor::StyleColor_PinRect]           = UI_Colors::base;
 	style.Colors[ax::NodeEditor::StyleColor_HovNodeBorder]     = UI_Colors::base;
 	style.Colors[ax::NodeEditor::StyleColor_SelNodeBorder]     = UI_Colors::highlight;
