@@ -364,7 +364,31 @@ void UI::initUpdate(const int& WIN_WIDTH, const int& WIN_HEIGHT)
 	ImGui::PopStyleVar();
 
 	// create a docking space inside our inner window that lets prevents anything from docking in the central node (so we can see our game content)
-	ImGui::DockSpace(ImGui::GetID("Dockspace"), ImVec2(0.0f, 0.0f),  ImGuiDockNodeFlags_PassthruCentralNode);
+	ImGuiDockNode* node = ImGui::DockBuilderGetNode(ImGui::GetID("Dockspace"));
+
+	ImGuiID dockspaceId = ImGui::DockSpace(ImGui::GetID("Dockspace"), ImVec2(0.0f, 0.0f),  ImGuiDockNodeFlags_PassthruCentralNode);
+
+	if (!node) // Windows dock init only if no imgui.ini was found
+	{
+		ImGui::DockBuilderRemoveNode(dockspaceId); // clear previous layout
+		ImGui::DockBuilderAddNode(dockspaceId, ImGuiDockNodeFlags_DockSpace);
+		ImGui::DockBuilderSetNodeSize(dockspaceId, ImGui::GetWindowSize());
+
+		ImGuiID dockNodeEditor = dockspaceId;
+		ImGuiID dockLoadedInstrument = ImGui::DockBuilderSplitNode(dockNodeEditor, ImGuiDir_Left, 0.20f, nullptr, &dockNodeEditor);
+		ImGuiID dockStoredInstrument = ImGui::DockBuilderSplitNode(dockLoadedInstrument, ImGuiDir_Down, 0.70f, nullptr, &dockLoadedInstrument);
+		ImGuiID dockAudioBuffer = ImGui::DockBuilderSplitNode(dockNodeEditor, ImGuiDir_Down, 0.30f, nullptr, &dockNodeEditor);
+		ImGuiID dockAudioSpectrum = ImGui::DockBuilderSplitNode(dockAudioBuffer, ImGuiDir_Right, 0.50f, nullptr, &dockAudioBuffer);
+
+		// Dock windows
+		ImGui::DockBuilderDockWindow("Loaded instruments", dockLoadedInstrument);
+		ImGui::DockBuilderDockWindow("Stored instruments", dockStoredInstrument);
+		ImGui::DockBuilderDockWindow("Node editor", dockNodeEditor);
+		ImGui::DockBuilderDockWindow("Audio buffer", dockAudioBuffer);
+		ImGui::DockBuilderDockWindow("Audio Spectrum", dockAudioSpectrum);
+
+		ImGui::DockBuilderFinish(dockspaceId);
+	}
 }
 
 void UI::endUpdate()
