@@ -4,7 +4,7 @@
 
 void UIToBackendAdapter::updateBackend(Master& master, NodeUIManagers& managers)
 {
-	printTreesDiff(master, managers);
+	//printTreesDiff(master, managers);
 	Node& UIMaster = *(managers.node.getMasterNode());
 
 	std::vector<BackendInstruction*> instructions;
