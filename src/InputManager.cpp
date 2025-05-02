@@ -1,34 +1,9 @@
 #include "InputManager.hpp"
 
 InputManager::InputManager(GLFWwindow* window)
+	: _midiDeviceUsed(""), _midiStream(nullptr), _midiDeviceCount(0)
 {
-	Pm_Initialize();
-
-	int numDevices = Pm_CountDevices();
-	if (numDevices <= 0)
-	{
-		Logger::log("PortMidi", Warning) << "No MIDI devices found." << std::endl;
-		return;
-	}
-
-	for (int i = 0; i < numDevices; i++)
-	{
-		const PmDeviceInfo* info = Pm_GetDeviceInfo(i);
-		assert(info);
-#if VERBOSE
-		std::cout << i << " " << info->name << std::endl;
-		std::cout << "input/output: " << info->input << " " << info->output << std::endl;
-		std::cout << "open/virtual: " << info->opened << " " << info->is_virtual << std::endl;
-		std::cout << std::endl;
-#endif
-	}
-
-	PmError errnum = Pm_OpenInput(&_midiStream, 1, NULL, 512, NULL, NULL);
-	if (errnum != pmNoError)
-	{
-		Logger::log("PortMidi", Error) << Pm_GetErrorText(errnum) << std::endl;
-		exit(1);
-	}
+	pollMidiDevices(false);
 
 	// Setup a callback to get mods (ctrl, shift, ...) key state
 	// Others key state are obtained using glfwGetKey()
@@ -107,7 +82,7 @@ void InputManager::updateKeysState(GLFWwindow* window, const MidiPlayerSettings&
 	}
 	else if (_midiStream != nullptr)
 	{
-		int numEvents = Pm_Read(_midiStream, buffer, 32);
+		int numEvents = Pm_Read(_midiStream, buffer, 255);
 		for (int i = 0; i < numEvents; i++)
 		{
 			PmEvent& event = buffer[i];
@@ -145,6 +120,13 @@ void InputManager::addKeyPressed(std::vector<MidiInfo>& keyPressed, int keyIndex
 		true, // rising edge
 	};
 
+	// It sometimes happen that a key gets "stucks" and doesn't have a release event
+	// It might happen when changing an octave while playing a note or even randomly
+	// due to the midi polling occuring every second.
+	// This manual key index removing is a workaround while finding a more elegant solution
+	// to this problem.
+	removeKeyPressed(keyPressed, keyIndex);
+
 	keyPressed.push_back(info);
 }
 
@@ -158,4 +140,110 @@ void InputManager::removeKeyPressed(std::vector<MidiInfo>& keyPressed, int keyIn
 			break;
 		}
 	}
+}
+
+void InputManager::pollMidiDevices(bool log)
+{
+	if (_midiStream)
+	{
+		Pm_Close(_midiStream);
+		_midiStream = nullptr;
+	}
+
+	Pm_Terminate();
+	Pm_Initialize();
+	const int numDevices = Pm_CountDevices();
+
+	if (log && numDevices > _midiDeviceCount)
+		ImGui::InsertNotification({ImGuiToastType::Info, 5000, "New Midi device detected"});
+	else if (log && numDevices < _midiDeviceCount)
+		ImGui::InsertNotification({ImGuiToastType::Warning, 5000, "Midi device removed"});
+
+	_midiDeviceCount = numDevices;
+	_detectedDevices.clear();
+
+	for (int i = 0; i < numDevices; i++)
+	{
+		const PmDeviceInfo* info = Pm_GetDeviceInfo(i);
+		assert(info);
+
+		if (info->input == 0) // Only register device whose input == 1
+			continue;
+
+		MidiDevice device = { *info, info->name, i };
+		_detectedDevices.push_back(device);
+
+		if (device.name == _midiDeviceUsed)
+			openMidiDevice(device, false);
+	}
+}
+
+bool InputManager::openMidiDevice(const MidiDevice& device, bool log)
+{
+	PmError errnum = Pm_OpenInput(&_midiStream, device.index, NULL, 512, NULL, NULL);
+	if (errnum != pmNoError)
+	{
+		if (log)
+		{
+			Logger::log("PortMidi", Error) << "Failed to use device " << device.name << std::endl;
+			ImGui::InsertNotification({ImGuiToastType::Error, 5000, "Failed to use device %s", device.name.c_str()});
+		}
+		_midiDeviceUsed.clear();
+		return false;
+	}
+	if (log)
+	{
+		Logger::log("InputManager", Info) << "Using midi device: " << device.name << " id "<< device.index << std::endl;
+		ImGui::InsertNotification({ImGuiToastType::Success, 5000, "Using midi device %s", device.name.c_str()});
+	}
+	return true;
+}
+
+const std::vector<MidiDevice>& InputManager::getDetectedMidiDevices() const
+{
+	return _detectedDevices;
+}
+
+void InputManager::setMidiDeviceUsed(const std::string& deviceName)
+{
+	for (const MidiDevice& device : _detectedDevices)
+	{
+		if (deviceName == device.name)
+		{
+			if (_midiDeviceUsed == deviceName)
+			{
+				Logger::log("PortMidi", Warning) << "Device " << device.name << " is already in use" << std::endl;
+				ImGui::InsertNotification({ImGuiToastType::Warning, 5000, "Device %s is already in use", device.name.c_str()});
+				return;
+			}
+
+			const bool success = openMidiDevice(device, true);
+			_midiDeviceUsed = deviceName;
+			if (!success)
+			{
+				_midiDeviceUsed.clear();
+				_midiStream = nullptr;
+			}
+			return;
+		}
+	}
+	Logger::log("InputManager", Error) << "Midi device " << deviceName << " was not found" << std::endl;
+	ImGui::InsertNotification({ImGuiToastType::Error, 5000, "Midi device %s was not found", deviceName.c_str()});
+}
+
+void InputManager::closeMidiDevice()
+{
+	if (_midiStream)
+	{
+		Pm_Close(_midiStream);
+		_midiStream = nullptr;
+	}
+	Logger::log("InputManager", Info) << "Closed midi device: " <<_midiDeviceUsed << std::endl;
+	ImGui::InsertNotification({ImGuiToastType::Info, 5000, "Closed midi device: %s", _midiDeviceUsed.c_str()});
+	_midiDeviceUsed.clear();
+}
+
+std::string InputManager::getMidiDeviceUsed() const
+{
+	return _midiDeviceUsed;
 }

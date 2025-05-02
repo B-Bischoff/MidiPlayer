@@ -148,16 +148,21 @@ int main(int argc, char* argv[])
 
 	std::queue<Message> messageQueue;
 
+	Timer midiPollingTimer(1.0);
+	double refreshCooldown = 0;
+	time_point lastFrameTime;
 	while (!glfwWindowShouldClose(window) && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
 		auto programElapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(startTime - audio.startTime);
+		const std::chrono::duration<double> deltaTime = startTime - lastFrameTime;
 
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glfwPollEvents();
-		// Poll new midi devices
+		if (midiPollingTimer.update(deltaTime.count()))
+			inputManager.pollMidiDevices(true);
 
 		inputManager.updateKeysState(window, settings, keyPressed);
 		inputManager.createKeysEvents(messageQueue);
@@ -173,12 +178,13 @@ int main(int argc, char* argv[])
 		}
 		*/
 
-		ui.update(audio, instruments, settings, messageQueue);
+		ui.update(audio, instruments, settings, messageQueue, inputManager);
 		ui.render();
 
 		glfwSwapBuffers(window);
 
 		handleFrameProcessTime(startTime, targetFrameDuration, audio);
+		lastFrameTime = startTime;
 	}
 
 	delete [] audio.buffer;

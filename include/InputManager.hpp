@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 #include <portmidi.h>
 #include <imgui.h> // [TODO] used for vec2 struct but please replace this
+#include "ImGuiNotify.hpp"
 
 #include <array>
 #include <vector>
@@ -40,11 +41,21 @@ public:
 	}
 };
 
+struct MidiDevice {
+	PmDeviceInfo info;
+	std::string name;
+	int index;
+};
+
 class InputManager {
 private:
 	// Midi events (PortMidi specifics)
 	PmStream* _midiStream = nullptr;
-	PmEvent buffer[32];
+	PmEvent buffer[255];
+
+	std::vector<MidiDevice> _detectedDevices;
+	int _midiDeviceCount;
+	std::string _midiDeviceUsed;
 
 	// Keyboard data
 	KeyData keys[GLFW_KEY_LAST] = {};
@@ -67,9 +78,18 @@ public:
 	void updateKeysState(GLFWwindow* window, const MidiPlayerSettings& settings, std::vector<MidiInfo>& keyPressed);
 	void createKeysEvents(std::queue<Message>& messageQueue);
 
+	void pollMidiDevices(bool log = false);
+
+	const std::vector<MidiDevice>& getDetectedMidiDevices() const;
+	void setMidiDeviceUsed(const std::string& deviceName);
+	std::string getMidiDeviceUsed() const;
+	void closeMidiDevice();
+
 private:
 	static void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 	void addKeyPressed(std::vector<MidiInfo>& keyPressed, int keyIndex, int velocity) const;
 	void removeKeyPressed(std::vector<MidiInfo>& keyPressed, int keyIndex) const;
+
+	bool openMidiDevice(const MidiDevice& device, bool log = false);
 };

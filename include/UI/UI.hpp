@@ -14,6 +14,7 @@
 
 #include <map>
 
+#include "InputManager.hpp"
 #include "path.hpp"
 #include "Message.hpp"
 
@@ -25,6 +26,7 @@
 struct WindowsState {
 	bool showLog;
 	bool showSettings;
+	bool showMidiSettings;
 };
 
 class UI {
@@ -50,7 +52,7 @@ private:
 
 public:
 	UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path);
-	void update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings, std::queue<Message>& messageQueue);
+	void update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings, std::queue<Message>& messageQueue, InputManager& inputManager);
 	void render();
 
 private:
@@ -66,6 +68,7 @@ private:
 	void updateMenuBar();
 	void updateSavedInstruments(std::vector<Instrument>& instruments, std::string& selectedStoredInstrument);
 	void updateLoadedInstruments(std::vector<Instrument>& instruments, int& selectedInstrument, bool& loadDefaultInstrument);
+	void updateMidiSettings(InputManager& inputManager);
 
 	void processEventQueue(std::queue<Message>& messageQueue);
 };

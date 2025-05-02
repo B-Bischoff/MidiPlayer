@@ -99,6 +99,25 @@ struct MidiInfo
 	bool risingEdge; // Only true for the first frame, becomes false when holding key
 };
 
+struct Timer {
+public:
+	double duration;
+
+	Timer(double duration) : duration(duration) {};
+private:
+	double _counter;
+
+public:
+	bool update(double deltaTime) {
+		_counter -= deltaTime;
+		if (_counter <= 0.0)
+		{
+			_counter = duration;
+			return true;
+		}
+		return false;
+	};
+};
 
 void rtAudioInit(AudioData& audio, int id);
 int uploadBuffer(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);

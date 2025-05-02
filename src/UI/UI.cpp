@@ -38,6 +38,7 @@ UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
 	// Windows state init
 	_windowsState.showLog = false;
 	_windowsState.showSettings = false;
+	_windowsState.showMidiSettings = false;
 
 	initFonts();
 	initStyle();
@@ -139,7 +140,7 @@ void UI::initStyle()
 	style.DockingSeparatorSize = 1.0f;
 }
 
-void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings, std::queue<Message>& messageQueue)
+void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings, std::queue<Message>& messageQueue, InputManager& inputManager)
 {
 	initUpdate(1920, 1080);
 
@@ -177,6 +178,9 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlay
 		ImGui::End();
 	}
 
+	if (_windowsState.showMidiSettings)
+		updateMidiSettings(inputManager);
+
 	endUpdate();
 }
 
@@ -199,6 +203,8 @@ void UI::updateMenuBar()
 				_windowsState.showLog = !_windowsState.showLog;
 			if (ImGui::MenuItem("Settings", NULL, _windowsState.showSettings))
 				_windowsState.showSettings = !_windowsState.showSettings;
+			if (ImGui::MenuItem("Midi settings", NULL, _windowsState.showMidiSettings))
+				_windowsState.showMidiSettings = !_windowsState.showMidiSettings;
 
 			ImGui::EndMenu();
 		}
@@ -287,6 +293,30 @@ void UI::updateLoadedInstruments(std::vector<Instrument>& instruments, int& sele
 			}
 		}
 	}
+	ImGui::End();
+}
+
+void UI::updateMidiSettings(InputManager& inputManager)
+{
+	if (ImGui::Begin("Midi settings", &_windowsState.showMidiSettings))
+	{
+		ImGui::Text("Detected midi devices: (only input device are listed)");
+		ImGui::Separator();
+		const std::vector<MidiDevice> devices = inputManager.getDetectedMidiDevices();
+
+		for (const MidiDevice& device : devices)
+		{
+			const bool selected = device.name == inputManager.getMidiDeviceUsed();
+			if (ImGui::Selectable(device.name.c_str(), selected))
+			{
+				if (!selected)
+					inputManager.setMidiDeviceUsed(device.name);
+				else
+					inputManager.closeMidiDevice();
+			}
+		}
+	}
+
 	ImGui::End();
 }
 
