@@ -7,6 +7,7 @@
 #include "inc.hpp"
 
 #include "UI/UI.hpp"
+#include "InputManager.hpp"
 #include "AudioBackend/Instrument.hpp"
 
 static void handleFrameProcessTime(const time_point& startTime, const std::chrono::duration<double>& targetFrameDuration, AudioData& audio);
@@ -127,13 +128,9 @@ int main(int argc, char* argv[])
 	audio.startTime = std::chrono::high_resolution_clock::now();
 	rtAudioInit(audio, argc > 1 ? std::atoi(argv[1]) : -1);
 
-	InputManager inputManager = {};
-	initInput(inputManager);
+	InputManager inputManager(window);
 
-	// Setup a callback to get mods (ctrl, shift, ...) key state
-	// Others key state are obtained using glfwGetKey()
 	glfwSetWindowUserPointer(window, (void*)&inputManager);
-	glfwSetKeyCallback(window, glfwKeyCallback);
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(100)); // let rtaudio get more stable [TODO] check if that is necessary
 	audio.writeCursor = (audio.leftPhase + audio.getLatencyInFramesPerUpdate()) % audio.getBufferSize();
@@ -160,8 +157,10 @@ int main(int argc, char* argv[])
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glfwPollEvents();
-		updateKeysState(window, settings, inputManager, keyPressed, t);
-		createKeysEvents(inputManager, messageQueue);
+		// Poll new midi devices
+
+		inputManager.updateKeysState(window, settings, keyPressed);
+		inputManager.createKeysEvents(messageQueue);
 
 		generateAudio(audio, instruments, keyPressed, t);
 
@@ -183,11 +182,6 @@ int main(int argc, char* argv[])
 	}
 
 	delete [] audio.buffer;
-
-	// [TODO] should this be in destructor ?
-	Pm_Close(inputManager.midiStream);
-	Pm_Terminate();
-	// [TODO] clean up audio
 
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();

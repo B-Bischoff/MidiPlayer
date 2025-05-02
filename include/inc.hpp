@@ -99,40 +99,8 @@ struct MidiInfo
 	bool risingEdge; // Only true for the first frame, becomes false when holding key
 };
 
-// Keyboard
-struct KeyData
-{
-	bool down; // rising edge
-	bool up; // fallign edge
-	bool pressed; // press state
-	bool lastFramePressed;
-};
-
-struct InputManager
-{
-	// Midi events (PortMidi specifics)
-	PmStream* midiStream = nullptr;
-	PmEvent buffer[32];
-
-	// Keyboard data
-	KeyData keys[GLFW_KEY_LAST] = {};
-	unsigned int octave = 4;
-	static constexpr unsigned int maxOctave = 8;
-
-	// Mouse
-	static constexpr int GLFW_MAX_MOUSE_BTN = 8;
-	KeyData mouseButtons[GLFW_MAX_MOUSE_BTN];
-	// [TODO] use glm?
-	ImVec2 cursorPos;
-	ImVec2 cursorDir;
-	// [TODO] add scroll
-};
 
 void rtAudioInit(AudioData& audio, int id);
 int uploadBuffer(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
-void updateKeysState(GLFWwindow* window, const MidiPlayerSettings& settings, InputManager& inputManager, std::vector<MidiInfo>& keyPressed, double time);
-void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-void initInput(InputManager& inputManger);
 void generateAudio(AudioData& audio, std::vector<Instrument>& instruments, std::vector<MidiInfo>& keyPressed, double& time);
 int uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
-void createKeysEvents(InputManager& inputManager, std::queue<Message>& messageQueue);
