@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "inc.hpp" // MidiPlayerSettings struct
+#include "WindowContext.hpp"
 #include "Logger.hpp"
 
 // Keyboard
@@ -95,6 +96,8 @@ private:
 
 class InputManager {
 private:
+	GLFWwindow* _window; // Initialized by the Window class
+
 	PmStream* _midiStream = nullptr;
 	PortMidiEvents _midiEvents;
 
@@ -120,7 +123,7 @@ public:
 	~InputManager();
 
 	void updateModifierKey(unsigned int key, bool pressed);
-	void updateKeysState(GLFWwindow* window, const MidiPlayerSettings& settings, std::vector<MidiInfo>& keyPressed);
+	void updateKeysState(const MidiPlayerSettings& settings, std::vector<MidiInfo>& keyPressed);
 	void createKeysEvents(std::queue<Message>& messageQueue);
 
 	void pollMidiDevices(bool log = false);

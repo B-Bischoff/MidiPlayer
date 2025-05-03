@@ -139,9 +139,9 @@ void UI::initStyle()
 	style.DockingSeparatorSize = 1.0f;
 }
 
-void UI::update(Audio& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings, std::queue<Message>& messageQueue, InputManager& inputManager)
+void UI::update(Window& window, Audio& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings, std::queue<Message>& messageQueue, InputManager& inputManager)
 {
-	initUpdate(1920, 1080);
+	initUpdate(window.getDimensions().x, window.getDimensions().y);
 
 	updateMenuBar();
 	processEventQueue(messageQueue);
