@@ -27,17 +27,17 @@ AudioSpectrum::~AudioSpectrum()
 	delete[] _magnitudes;
 }
 
-void AudioSpectrum::update(const AudioData& audio)
+void AudioSpectrum::update(const Audio& audio)
 {
 	processAudioSpectrum(audio);
-	plot(_frequencies, _magnitudes, audio.sampleRate / 2.0);
+	plot(_frequencies, _magnitudes, audio.getSampleRate() / 2.0);
 }
 
-void AudioSpectrum::processAudioSpectrum(const AudioData& audio)
+void AudioSpectrum::processAudioSpectrum(const Audio& audio)
 {
 	// Find in audio buffer, sound that will be played this update
 	// which is not directly at writeCursor because of the latency.
-	int dataStart = (int)audio.writeCursor - (int)(audio.getFramesPerUpdate() * audio.latency);
+	int dataStart = (int)audio.getWriteCursorPos() - (int)(audio.getFramesPerUpdate() * audio.getLatency());
 
 	// Make sure index is in buffer
 	dataStart = dataStart % (int)audio.getBufferSize();
@@ -45,12 +45,12 @@ void AudioSpectrum::processAudioSpectrum(const AudioData& audio)
 
 	for (int i = 0; i < SAMPLE_NB; i++)
 	{
-		const int bufferIndex = (dataStart + i * audio.channels) % audio.getBufferSize();
+		const int bufferIndex = (dataStart + i * audio.getChannels()) % audio.getBufferSize();
 
-		_arrayIn[i].r = hannWindowing(audio.buffer[bufferIndex], i);
-		if (audio.channels == 2)
+		_arrayIn[i].r = hannWindowing(audio.getBuffer()[bufferIndex], i);
+		if (audio.getChannels() == 2)
 		{
-			_arrayIn[i].r += hannWindowing(audio.buffer[bufferIndex + 1], i);
+			_arrayIn[i].r += hannWindowing(audio.getBuffer()[bufferIndex + 1], i);
 			_arrayIn[i].r /= 2.0;
 		}
 	}
@@ -64,7 +64,7 @@ void AudioSpectrum::processAudioSpectrum(const AudioData& audio)
 	}
 
 	for (int i = 0; i < FFT_SIZE / 2; i++)
-		_frequencies[i] = (double)audio.sampleRate / (double)FFT_SIZE  * i;
+		_frequencies[i] = (double)audio.getSampleRate() / (double)FFT_SIZE  * i;
 }
 
 double AudioSpectrum::hannWindowing(double v, unsigned int index)

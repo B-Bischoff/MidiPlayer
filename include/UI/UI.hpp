@@ -14,6 +14,7 @@
 
 #include <map>
 
+#include "Audio.hpp"
 #include "InputManager.hpp"
 #include "path.hpp"
 #include "Message.hpp"
@@ -51,8 +52,8 @@ private:
 	Instrument* _selectedInstrument;
 
 public:
-	UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path);
-	void update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings, std::queue<Message>& messageQueue, InputManager& inputManager);
+	UI(GLFWwindow* window, Audio& audio, const ApplicationPath& path);
+	void update(Audio& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings, std::queue<Message>& messageQueue, InputManager& inputManager);
 	void render();
 
 private:

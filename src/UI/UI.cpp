@@ -1,6 +1,6 @@
 #include "UI/UI.hpp"
 
-UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
+UI::UI(GLFWwindow* window, Audio& audio, const ApplicationPath& path)
 	: _imPlot(audio), _audioSpectrum(audio.getFramesPerUpdate(), 4096), _path(path), _selectedInstrument(nullptr)
 {
 #if defined(IMGUI_IMPL_OPENGL_ES2)
@@ -140,7 +140,7 @@ void UI::initStyle()
 	style.DockingSeparatorSize = 1.0f;
 }
 
-void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings, std::queue<Message>& messageQueue, InputManager& inputManager)
+void UI::update(Audio& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings, std::queue<Message>& messageQueue, InputManager& inputManager)
 {
 	initUpdate(1920, 1080);
 

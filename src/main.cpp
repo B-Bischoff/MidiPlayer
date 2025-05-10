@@ -9,8 +9,9 @@
 #include "UI/UI.hpp"
 #include "InputManager.hpp"
 #include "AudioBackend/Instrument.hpp"
+#include "Audio.hpp"
 
-static void handleFrameProcessTime(const time_point& startTime, const std::chrono::duration<double>& targetFrameDuration, AudioData& audio);
+static void handleFrameProcessTime(const time_point& startTime, const std::chrono::duration<double>& targetFrameDuration, Audio& audio);
 
 double AudioComponent::time = 0.0;
 unsigned int AudioComponent::nextId = 1;
@@ -101,47 +102,18 @@ int main(int argc, char* argv[])
 	GLFWwindow* window = init(SCREEN_WIDTH, SCREEN_HEIGHT);
 	MidiPlayerSettings settings;
 
-	AudioData audio = {
-		.sampleRate = 44100,
-		.channels = 2,
-		.bufferDuration = 1,
-		.latency = 3,
-		.buffer = nullptr,
-		.leftPhase = 0, .rightPhase = 1,
-		.writeCursor = 0,
-		.targetFPS = 60,
-	};
-	audio.samplesToAdjust = 0;
+	Audio audio;
 
-	const std::chrono::duration<double> targetFrameDuration(1.0f / (double)audio.targetFPS);
-
-	audio.buffer = new float[audio.getBufferSize()];
-
-	if (audio.buffer == nullptr)
-	{
-		Logger::log("Audio init", Error) << "Ring buffer allocation failed" << std::endl;
-		exit(1);
-	}
-
-	memset(audio.buffer, 0, sizeof(float) * audio.getBufferSize());
-
-	audio.startTime = std::chrono::high_resolution_clock::now();
-	rtAudioInit(audio, argc > 1 ? std::atoi(argv[1]) : -1);
+	const std::chrono::duration<double> targetFrameDuration(1.0f / (double)audio.getTargetFPS());
 
 	InputManager inputManager(window);
-
 	glfwSetWindowUserPointer(window, (void*)&inputManager);
-
-	std::this_thread::sleep_for(std::chrono::milliseconds(100)); // let rtaudio get more stable [TODO] check if that is necessary
-	audio.writeCursor = (audio.leftPhase + audio.getLatencyInFramesPerUpdate()) % audio.getBufferSize();
-	//std::cout << "L/R/W : " << audio.leftPhase << " " << audio.rightPhase << " " << audio.writeCursor << std::endl;
 
 	UI ui(window, audio, path);
 	Logger::subscribeStream(Log::getStream()); // Duplicate all logs to UI
 
 	double t = 0.0;
 
-	ImVector<LinkInfo> links;
 	std::vector<Instrument> instruments;
 
 	std::vector<MidiInfo> keyPressed;
@@ -154,7 +126,7 @@ int main(int argc, char* argv[])
 	while (!glfwWindowShouldClose(window) && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
-		auto programElapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(startTime - audio.startTime);
+		//auto programElapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(startTime - audio.getStartTime());
 		const std::chrono::duration<double> deltaTime = startTime - lastFrameTime;
 
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -167,7 +139,7 @@ int main(int argc, char* argv[])
 		inputManager.updateKeysState(window, settings, keyPressed);
 		inputManager.createKeysEvents(messageQueue);
 
-		generateAudio(audio, instruments, keyPressed, t);
+		audio.update(instruments, keyPressed, t);
 
 		/*
 		// Lag simulator
@@ -187,23 +159,21 @@ int main(int argc, char* argv[])
 		lastFrameTime = startTime;
 	}
 
-	delete [] audio.buffer;
-
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
 	glfwTerminate();
 }
 
-static void handleFrameProcessTime(const time_point& startTime, const std::chrono::duration<double>& targetFrameDuration, AudioData& audio)
+static void handleFrameProcessTime(const time_point& startTime, const std::chrono::duration<double>& targetFrameDuration, Audio& audio)
 {
 	auto endTime = std::chrono::high_resolution_clock::now();
 	auto deltaTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
 
 	auto sleepDuration = targetFrameDuration - deltaTime;
 
-	auto startTimeP = std::chrono::duration_cast<std::chrono::duration<double>>(startTime - audio.startTime);
-	auto endTimeP = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - audio.startTime);
+	auto startTimeP = std::chrono::duration_cast<std::chrono::duration<double>>(startTime - audio.getStartTime());
+	auto endTimeP = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - audio.getStartTime());
 
 	if (sleepDuration > std::chrono::duration<double>(0.0))
 	{
@@ -216,8 +186,8 @@ static void handleFrameProcessTime(const time_point& startTime, const std::chron
 	{
 		//std::cerr << "[WARNING] : update took longer than expected : " << deltaTime.count() << std::endl;
 
-		const double maxAllowedLag = (1.0 / audio.targetFPS) * audio.latency;
-		if (deltaTime.count() - (1.0 / audio.targetFPS) > maxAllowedLag)
+		const double maxAllowedLag = (1.0 / audio.getTargetFPS()) * audio.getLatency();
+		if (deltaTime.count() - (1.0 / audio.getTargetFPS()) > maxAllowedLag)
 		{
 			// [TODO] handle lag whose duration is greater than theoric latency between read & write cursors
 			// Test showed that handle this kind of lag is not mandatory

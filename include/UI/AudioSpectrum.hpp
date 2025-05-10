@@ -1,7 +1,9 @@
 #pragma once
 
-#include "inc.hpp"
 #include "kiss_fft.h"
+
+#include "Audio.hpp"
+#include "inc.hpp"
 #include "Logger.hpp"
 
 class AudioSpectrum {
@@ -16,12 +18,12 @@ private:
 	double* _frequencies;
 	double* _magnitudes;
 
-	void processAudioSpectrum(const AudioData& audio);
+	void processAudioSpectrum(const Audio& audio);
 	double hannWindowing(double v, unsigned int index);
 	void plot(const double* xAxis, const double* yAxis, const unsigned int& xMax);
 
 public:
 	AudioSpectrum(const int& sampleNb, const int& fftSize);
 	~AudioSpectrum();
-	void update(const AudioData& audio);
+	void update(const Audio& audio);
 };

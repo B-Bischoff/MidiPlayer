@@ -23,4 +23,25 @@ struct Oscillator : public AudioComponent {
 
 		return value;
 	}
+
+	double freqToAngularVelocity(double hertz)
+	{
+		return hertz * 2.0 * M_PI;
+	}
+
+	double osc(double hertz, double phase, double time, OscType type, double LFOHertz, double LFOAmplitude)
+	{
+		double t = freqToAngularVelocity(hertz) * time + LFOAmplitude * hertz * (sin(freqToAngularVelocity(LFOHertz) * time)) + phase;
+
+		switch(type)
+		{
+			case Sine: return sin(t);
+			case Square: return sin(t) > 0 ? 1.0 : -1.0;
+			case Triangle: return asin(sin(t)) * (2.0 / M_PI);
+			case Saw_Ana: return 0; // [TODO] implement
+			case Saw_Dig: return (2.0 / M_PI) * (hertz * M_PI * fmod(time, 1.0 / hertz) - (M_PI / 2.0));
+			case Noise: return 2.0 * ((double)rand() / std::numeric_limits<int>::max()) - 1.0;
+			default: return 0;
+		}
+	}
 };

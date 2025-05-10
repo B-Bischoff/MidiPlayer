@@ -3,6 +3,7 @@
 #include <implot.h>
 #include "inc.hpp"
 
+#include "Audio.hpp"
 #include "UI/Colors.hpp"
 #include "Message.hpp"
 #include "MidiMath.hpp"
@@ -21,12 +22,12 @@ private:
 	ImPlotColormap _colormap;
 
 public:
-	ImPlotUI(AudioData& audio);
+	ImPlotUI(Audio& audio);
 	~ImPlotUI();
 
 	void initStyle();
 
-	void update(AudioData& audio, std::queue<Message>& messages);
+	void update(Audio& audio, std::queue<Message>& messages);
 	void setPrintEnvelopeEditor(bool value, Vec2* controlPoints = nullptr, unsigned int nodeId = 0);
 	unsigned int getNodeId() const;
 
