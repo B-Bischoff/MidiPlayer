@@ -37,7 +37,7 @@ void AudioSpectrum::processAudioSpectrum(const Audio& audio)
 {
 	// Find in audio buffer, sound that will be played this update
 	// which is not directly at writeCursor because of the latency.
-	int dataStart = (int)audio.getWriteCursorPos() - (int)(audio.getFramesPerUpdate() * audio.getLatency());
+	int dataStart = (int)audio.getWriteCursorPos() - (int)(audio.getSamplesPerUpdate() * audio.getLatency());
 
 	// Make sure index is in buffer
 	dataStart = dataStart % (int)audio.getBufferSize();

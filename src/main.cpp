@@ -112,13 +112,11 @@ int main(int argc, char* argv[])
 	UI ui(window, audio, path);
 	Logger::subscribeStream(Log::getStream()); // Duplicate all logs to UI
 
-	double t = 0.0;
+	std::vector<Instrument> instruments = {};
 
-	std::vector<Instrument> instruments;
+	std::vector<MidiInfo> keyPressed = {};
 
-	std::vector<MidiInfo> keyPressed;
-
-	std::queue<Message> messageQueue;
+	std::queue<Message> messageQueue = {};
 
 	Timer midiPollingTimer(1.0);
 	double refreshCooldown = 0;
@@ -126,7 +124,6 @@ int main(int argc, char* argv[])
 	while (!glfwWindowShouldClose(window) && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
-		//auto programElapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(startTime - audio.getStartTime());
 		const std::chrono::duration<double> deltaTime = startTime - lastFrameTime;
 
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -139,7 +136,7 @@ int main(int argc, char* argv[])
 		inputManager.updateKeysState(window, settings, keyPressed);
 		inputManager.createKeysEvents(messageQueue);
 
-		audio.update(instruments, keyPressed, t);
+		audio.update(instruments, keyPressed);
 
 		/*
 		// Lag simulator
@@ -171,9 +168,6 @@ static void handleFrameProcessTime(const time_point& startTime, const std::chron
 	auto deltaTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
 
 	auto sleepDuration = targetFrameDuration - deltaTime;
-
-	auto startTimeP = std::chrono::duration_cast<std::chrono::duration<double>>(startTime - audio.getStartTime());
-	auto endTimeP = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - audio.getStartTime());
 
 	if (sleepDuration > std::chrono::duration<double>(0.0))
 	{

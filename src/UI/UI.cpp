@@ -1,7 +1,7 @@
 #include "UI/UI.hpp"
 
 UI::UI(GLFWwindow* window, Audio& audio, const ApplicationPath& path)
-	: _imPlot(audio), _audioSpectrum(audio.getFramesPerUpdate(), 4096), _path(path), _selectedInstrument(nullptr)
+	: _imPlot(audio), _audioSpectrum(audio.getSamplesPerUpdate(), 4096), _path(path), _selectedInstrument(nullptr)
 {
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 	const char* glsl_version = "#version 100";

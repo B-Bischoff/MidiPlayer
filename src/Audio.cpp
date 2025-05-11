@@ -2,15 +2,22 @@
 
 Audio::Audio(unsigned int sampleRate, unsigned int channels, unsigned int bufferDuration, unsigned int latency)
 	: _sampleRate(sampleRate), _channels(channels), _bufferDuration(bufferDuration), _latency(latency),
-	_targetFPS(60), _buffer(nullptr), _leftPhase(0), _rightPhase(1), _writeCursor(0)
+	_targetFPS(60), _buffer(nullptr), _leftPhase(0), _rightPhase(1), _writeCursor(0), _syncCursors(false),
+	_samplesToAdjust(0), _time(0.0)
 {
 	initBuffer();
-	_startTime = std::chrono::high_resolution_clock::now();
 	initOutputDevice();
 
-	std::this_thread::sleep_for(std::chrono::milliseconds(100)); // let rtaudio get more stable [TODO] check if that is necessary
-	_writeCursor = (_leftPhase + getLatencyInFramesPerUpdate()) % getBufferSize();
+	// Read cursors might have already moved, so make write cursor point ahead of it.
+	_writeCursor = (_leftPhase + getLatencyInSamplesPerUpdate()) % getBufferSize();
+}
 
+Audio::~Audio()
+{
+	if (_stream.isStreamRunning())
+		_stream.stopStream();
+	if (_stream.isStreamOpen())
+		_stream.closeStream();
 }
 
 void Audio::initBuffer()
@@ -75,35 +82,21 @@ void Audio::initOutputDevice()
 	}
 }
 
-void Audio::update(std::vector<Instrument>& instruments, std::vector<MidiInfo>& keyPressed, double& time)
+void Audio::update(std::vector<Instrument>& instruments, std::vector<MidiInfo>& keyPressed)
 {
-	static int TEST = 0;
-	const double fractionalPart = getFramesPerUpdate() - static_cast<int>(getFramesPerUpdate());
-	int complementaryFrame = 0;
-	bool writeOneMoreFrame = false;
-	if (fractionalPart != 0.0)
-	{
-		complementaryFrame = std::ceil(1.0 / fractionalPart);
-		writeOneMoreFrame = TEST % complementaryFrame == 0;
-	}
-	TEST++;
-	//std::cout << writeOneMoreFrame << std::endl;
-	//for (int i = 0; i < audio.sampleRate / audio.targetFPS + (int)writeOneMoreFrame; i++)
+	std::chrono::duration<double> frameDuration(1.0 / static_cast<double>(_sampleRate));
 
-	for (int i = 0; i < static_cast<int>(getFramesPerUpdate()) + writeOneMoreFrame + _samplesToAdjust; i++)
+	const int samplesToGenerate = static_cast<int>(getSamplesPerUpdate()) + _samplesToAdjust;
+
+	for (int i = 0; i < samplesToGenerate; i++)
 	{
 		double value = 0.0;
 
-		value = 0.0;
 		for (Instrument& instrument : instruments)
 			value += instrument.process(keyPressed) * 1.0;
 
-		//if (writeOneMoreFrame && i == audio.sampleRate/audio.targetFPS)
-		//	value = 0;
-		//std::cout << "TIME : " << time << " " << value << " " << std::endl;
-		//t += (double)audio.sampleRate / (double)audio.targetFPS;
-		time += 1.0 / static_cast<double>(_sampleRate);
-		AudioComponent::time = time;
+		_time += 1.0 / static_cast<double>(_sampleRate);
+		AudioComponent::time = _time;
 
 		for (int j = 0; j < _channels; j++)
 		{
@@ -134,7 +127,7 @@ int Audio::uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBuf
 		if (cursorsDelta < 0)
 			cursorsDelta += audio->getBufferSize();
 
-		audio->_samplesToAdjust = audio->getLatencyInFramesPerUpdate() - cursorsDelta;
+		audio->_samplesToAdjust = audio->getLatencyInSamplesPerUpdate() - cursorsDelta;
 	}
 
 	return 0;
@@ -167,7 +160,7 @@ void Audio::incrementWriteCursor()
 	_writeCursor = (_writeCursor + 1) % getBufferSize();
 }
 
-double Audio::getFramesPerUpdate() const
+double Audio::getSamplesPerUpdate() const
 {
 	return static_cast<double>(_sampleRate) / static_cast<double>(_targetFPS);
 }
@@ -177,9 +170,9 @@ unsigned int Audio::getLatency() const
 	return _latency;
 }
 
-unsigned int Audio::getLatencyInFramesPerUpdate() const
+unsigned int Audio::getLatencyInSamplesPerUpdate() const
 {
-	return _latency * getFramesPerUpdate() * _channels;
+	return _latency * getSamplesPerUpdate() * _channels;
 }
 
 unsigned int Audio::getChannels() const
@@ -215,9 +208,4 @@ const float* Audio::getBuffer() const
 unsigned int Audio::getTargetFPS() const
 {
 	return _targetFPS;
-}
-
-time_point Audio::getStartTime() const
-{
-	return _startTime;
 }

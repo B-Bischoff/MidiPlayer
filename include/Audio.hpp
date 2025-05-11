@@ -19,18 +19,18 @@ public:
 		unsigned int bufferDuration = 1,
 		unsigned int latency = 3
 	);
+	~Audio();
 
-	void update(std::vector<Instrument>& instruments, std::vector<MidiInfo>& keyPressed, double& time);
+	void update(std::vector<Instrument>& instruments, std::vector<MidiInfo>& keyPressed);
 
 	unsigned int getBufferSize() const;
 	unsigned int getLatency() const;
-	unsigned int getLatencyInFramesPerUpdate() const;
+	unsigned int getLatencyInSamplesPerUpdate() const;
 	unsigned int getChannels() const;
-	double getFramesPerUpdate() const;
+	double getSamplesPerUpdate() const;
 	unsigned int getSampleRate() const;
 	unsigned int getWriteCursorPos() const;
 	const float* getBuffer() const;
-	time_point getStartTime() const;
 	unsigned int getTargetFPS() const;
 	// cursor 0 == left phase, cursor 1 == right phase
 	unsigned int getReadCursorPos(const unsigned int& cusor = 0) const;
@@ -46,7 +46,7 @@ private:
 	// In seconds
 	unsigned int _bufferDuration;
 
-	// Buffer frame offset between the read and write cursor.
+	// Buffer frame offset between the read and write cursor (buffer frame value is defined by rtAudio).
 	// On slow computer, a too small value may cause the read cusor to overtake the write cursor.
 	unsigned int _latency;
 
@@ -60,7 +60,10 @@ private:
 	int _samplesToAdjust; // Used to keep read and write cursors synced in case of lag or inconsistant number of samples read over time
 	RtAudio _stream;
 
-	time_point _startTime;
+	// Internal audio time used by audio components.
+	// This time is manually incremented in the update method.
+	double _time;
+	// -------------------------------------------------
 
 	void initBuffer();
 	void initOutputDevice();
