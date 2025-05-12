@@ -8,6 +8,8 @@ Audio::Audio(unsigned int sampleRate, unsigned int channels, unsigned int buffer
 	initBuffer();
 	initOutputDevice();
 
+	std::this_thread::sleep_for(std::chrono::milliseconds(100)); // let rtaudio get more stable
+
 	// Read cursors might have already moved, so make write cursor point ahead of it.
 	_writeCursor = (_leftPhase + getLatencyInSamplesPerUpdate()) % getBufferSize();
 }
@@ -168,6 +170,26 @@ double Audio::getSamplesPerUpdate() const
 unsigned int Audio::getLatency() const
 {
 	return _latency;
+}
+
+bool Audio::setLatency(unsigned int bufferFrameOffset)
+{
+	if (bufferFrameOffset == _latency)
+		return false;
+
+	const double durationInSeconds = bufferFrameOffset * getSamplesPerUpdate() / _sampleRate;
+
+	// Arbitrary limits
+	if (bufferFrameOffset > 30 || bufferFrameOffset == 0)
+	{
+		Logger::log("Audio", Warning) << "Invalid latency: " << bufferFrameOffset << " (" << durationInSeconds << " seconds)" << std::endl;
+		return true;
+	}
+
+	Logger::log("Audio", Info) << "New latency: " << bufferFrameOffset << " buffer frame (" << durationInSeconds << " seconds)" << std::endl;
+	_latency = bufferFrameOffset;
+
+	return false;
 }
 
 unsigned int Audio::getLatencyInSamplesPerUpdate() const

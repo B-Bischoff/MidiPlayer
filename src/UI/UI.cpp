@@ -38,7 +38,6 @@ UI::UI(GLFWwindow* window, Audio& audio, const ApplicationPath& path)
 	// Windows state init
 	_windowsState.showLog = false;
 	_windowsState.showSettings = false;
-	_windowsState.showMidiSettings = false;
 
 	initFonts();
 	initStyle();
@@ -171,15 +170,7 @@ void UI::update(Audio& audio, std::vector<Instrument>& instruments, MidiPlayerSe
 		_log.draw("Log", &_windowsState.showLog);
 
 	if (_windowsState.showSettings)
-	{
-		ImGui::Begin("Settings", &_windowsState.showSettings);
-
-		ImGui::Checkbox("Use keyboard as MIDI input", &settings.useKeyboardAsInput);
-		ImGui::End();
-	}
-
-	if (_windowsState.showMidiSettings)
-		updateMidiSettings(inputManager);
+		updateSettings(audio, inputManager, settings);
 
 	endUpdate();
 }
@@ -203,8 +194,6 @@ void UI::updateMenuBar()
 				_windowsState.showLog = !_windowsState.showLog;
 			if (ImGui::MenuItem("Settings", NULL, _windowsState.showSettings))
 				_windowsState.showSettings = !_windowsState.showSettings;
-			if (ImGui::MenuItem("Midi settings", NULL, _windowsState.showMidiSettings))
-				_windowsState.showMidiSettings = !_windowsState.showMidiSettings;
 
 			ImGui::EndMenu();
 		}
@@ -296,10 +285,65 @@ void UI::updateLoadedInstruments(std::vector<Instrument>& instruments, int& sele
 	ImGui::End();
 }
 
-void UI::updateMidiSettings(InputManager& inputManager)
+void UI::updateSettings(Audio& audio, InputManager& inputManager, MidiPlayerSettings& settings)
 {
-	if (ImGui::Begin("Midi settings", &_windowsState.showMidiSettings))
+	ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_FirstUseEver, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowSize(ImVec2(ImGui::GetMainViewport()->Size.x * 0.5, ImGui::GetMainViewport()->Size.y * 0.8));
+	if (ImGui::Begin("Settings", &_windowsState.showSettings, ImGuiWindowFlags_NoCollapse))
 	{
+		// Audio settings
+		ImGui::SeparatorText("Audio");
+		ImGui::Indent();
+
+		// Audio output
+
+		// sample rate
+		static int selectedItem = 0;
+		const char* items[] = { "44100Hz", "48000Hz" };
+		ImGui::Text("Sample rate");
+		ImGui::PushID("SampleRateSettingCombo");
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(125);
+		if (ImGui::Combo("", &selectedItem, items, sizeof(items) / sizeof(const char*)))
+		{
+			Logger::log("Settings") << "Changed sample rate to " << items[selectedItem] << std::endl;
+		}
+		ImGui::PopID();
+
+		// channels
+		ImGui::Text("Number of channels");
+		ImGui::SameLine();
+		static int selectedChannelMode = 0;
+		ImGui::RadioButton("1 - Mono", &selectedChannelMode, 0); ImGui::SameLine();
+		ImGui::RadioButton("2 - Stereo", &selectedChannelMode, 1);
+
+		// latency
+		ImGui::Text("Audio latency (ms)");
+		ImGui::SameLine();
+		helpMarker("Time between audio generation and playback (in milliseconds)");
+
+		const float space = 1.0 / 60.0 * 1000.0;
+		float latency = space * audio.getLatency();
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(125);
+		ImGui::PushID("LatencySettingSlider");
+		if (ImGui::SliderFloat("", &latency, space, space * 30, "%.3f", ImGuiSliderFlags_AlwaysClamp))
+		{
+			const unsigned int bufferFrameOffset = (latency / 1000.0) * 60.0;
+			audio.setLatency(bufferFrameOffset);
+		}
+
+		ImGui::PopID();
+		ImGui::SameLine();
+		helpMarker("Click and drag to edit value.\nHold SHIFT/ALT for faster/slower edit.");
+
+		ImGui::Text("\n");
+		ImGui::Unindent();
+
+
+		// Midi settings
+		ImGui::SeparatorText("Midi");
+		ImGui::Indent();
 		ImGui::Text("Detected midi devices: (only input device are listed)");
 		ImGui::Separator();
 		const std::vector<MidiDevice> devices = inputManager.getDetectedMidiDevices();
@@ -315,6 +359,18 @@ void UI::updateMidiSettings(InputManager& inputManager)
 					inputManager.closeMidiDevice();
 			}
 		}
+		ImGui::Text("\n");
+		ImGui::Unindent();
+
+
+		// Misc settings
+		// [TODO] find something else that "misc"
+		ImGui::SeparatorText("Misc");
+		ImGui::Indent();
+		ImGui::Text("Use keyboard as MIDI input");
+		ImGui::SameLine();
+		ImGui::Checkbox("", &settings.useKeyboardAsInput);
+		ImGui::Unindent();
 	}
 
 	ImGui::End();
@@ -417,6 +473,8 @@ void UI::initUpdate(const int& WIN_WIDTH, const int& WIN_HEIGHT)
 		ImGui::DockBuilderDockWindow("Audio buffer", dockAudioBuffer);
 		ImGui::DockBuilderDockWindow("Audio Spectrum", dockAudioSpectrum);
 
+		// "Setting window" position is initiated at its Begin() as it not docked with the other windows
+
 		ImGui::DockBuilderFinish(dockspaceId);
 	}
 }
@@ -455,4 +513,16 @@ void UI::switchSelectedInstrument(Instrument& newInstrument)
 	}
 
 	_selectedInstrument = &newInstrument;
+}
+
+void UI::helpMarker(const std::string& message)
+{
+	ImGui::TextDisabled("(?)");
+	if (ImGui::BeginItemTooltip())
+	{
+		ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+		ImGui::TextUnformatted(message.c_str());
+		ImGui::PopTextWrapPos();
+		ImGui::EndTooltip();
+	}
 }

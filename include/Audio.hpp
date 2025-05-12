@@ -35,6 +35,8 @@ public:
 	// cursor 0 == left phase, cursor 1 == right phase
 	unsigned int getReadCursorPos(const unsigned int& cusor = 0) const;
 
+	bool setLatency(unsigned int bufferFrameOffset);
+
 private:
 	// ----------------- AUDIO SETTINGS -----------------
 	// In Hertz. Usually 44100 or 48000

@@ -27,7 +27,6 @@
 struct WindowsState {
 	bool showLog;
 	bool showSettings;
-	bool showMidiSettings;
 };
 
 class UI {
@@ -69,7 +68,9 @@ private:
 	void updateMenuBar();
 	void updateSavedInstruments(std::vector<Instrument>& instruments, std::string& selectedStoredInstrument);
 	void updateLoadedInstruments(std::vector<Instrument>& instruments, int& selectedInstrument, bool& loadDefaultInstrument);
-	void updateMidiSettings(InputManager& inputManager);
+	void updateSettings(Audio& audio, InputManager& inputManager, MidiPlayerSettings& settings);
 
 	void processEventQueue(std::queue<Message>& messageQueue);
+
+	void helpMarker(const std::string& message);
 };
