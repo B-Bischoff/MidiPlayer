@@ -299,7 +299,8 @@ void UI::updateSettings(Audio& audio, InputManager& inputManager, MidiPlayerSett
 
 		// sample rate
 		static int selectedItem = 0;
-		const char* items[] = { "44100Hz", "48000Hz" };
+		const unsigned int freq[] = { 44100, 48000, 10000 };
+		const char* items[] = { "44100Hz", "48000Hz", "20000Hz" };
 		ImGui::Text("Sample rate");
 		ImGui::PushID("SampleRateSettingCombo");
 		ImGui::SameLine();
@@ -307,6 +308,7 @@ void UI::updateSettings(Audio& audio, InputManager& inputManager, MidiPlayerSett
 		if (ImGui::Combo("", &selectedItem, items, sizeof(items) / sizeof(const char*)))
 		{
 			Logger::log("Settings") << "Changed sample rate to " << items[selectedItem] << std::endl;
+			audio.setSampleRate(freq[selectedItem]);
 		}
 		ImGui::PopID();
 
@@ -314,8 +316,11 @@ void UI::updateSettings(Audio& audio, InputManager& inputManager, MidiPlayerSett
 		ImGui::Text("Number of channels");
 		ImGui::SameLine();
 		static int selectedChannelMode = 0;
-		ImGui::RadioButton("1 - Mono", &selectedChannelMode, 0); ImGui::SameLine();
-		ImGui::RadioButton("2 - Stereo", &selectedChannelMode, 1);
+		if (ImGui::RadioButton("1 - Mono", &selectedChannelMode, 0))
+			audio.setChannelNumber(1);
+		ImGui::SameLine();
+		if (ImGui::RadioButton("2 - Stereo", &selectedChannelMode, 1))
+			audio.setChannelNumber(2);
 
 		// latency
 		ImGui::Text("Audio latency (ms)");

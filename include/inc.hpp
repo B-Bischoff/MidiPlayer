@@ -56,7 +56,7 @@ struct Timer {
 public:
 	double duration;
 
-	Timer(double duration) : duration(duration) {};
+	Timer(double duration) : duration(duration), _counter(0) {};
 private:
 	double _counter;
 
