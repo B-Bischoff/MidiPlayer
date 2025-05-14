@@ -38,6 +38,10 @@ public:
 	bool setLatency(unsigned int bufferFrameOffset);
 	bool setSampleRate(unsigned int sampleRate);
 	bool setChannelNumber(unsigned int channelNumber);
+	bool setAudioDevice(unsigned int deviceId);
+
+	std::vector<unsigned int> getDeviceIds();
+	RtAudio::DeviceInfo getDeviceInfo(unsigned int id);
 
 private:
 	// ----------------- AUDIO SETTINGS -----------------
@@ -70,7 +74,7 @@ private:
 	// -------------------------------------------------
 
 	void initBuffer();
-	void initOutputDevice(unsigned sampleRate, unsigned int channelNumber);
+	bool initOutputDevice(unsigned int deviceId, unsigned sampleRate, unsigned int channelNumber);
 
 	// [TODO] Make an entity used as an intermediate between sound generation/mixing and sound management (stream open, volume, runtime reconfiguration, ...)
 	static int uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);

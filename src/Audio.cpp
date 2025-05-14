@@ -6,7 +6,7 @@ Audio::Audio(unsigned int sampleRate, unsigned int channels, unsigned int buffer
 	_samplesToAdjust(0), _time(0.0)
 {
 	initBuffer();
-	initOutputDevice(_sampleRate, _channels);
+	initOutputDevice(0, _sampleRate, _channels);
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(100)); // let rtaudio get more stable
 
@@ -43,7 +43,7 @@ void Audio::initBuffer()
 	_writeCursor = (_leftPhase + getLatencyInSamplesPerUpdate()) % getBufferSize();
 }
 
-void Audio::initOutputDevice(unsigned int sampleRate, unsigned int channelNumber)
+bool Audio::initOutputDevice(unsigned int deviceId, unsigned int sampleRate, unsigned int channelNumber)
 {
 	stopAndCloseStreamIfExist();
 
@@ -67,7 +67,7 @@ void Audio::initOutputDevice(unsigned int sampleRate, unsigned int channelNumber
 	}
 
 	RtAudio::StreamParameters parameters;
-	parameters.deviceId = _stream.getDefaultOutputDevice();
+	parameters.deviceId = deviceId == 0 ? _stream.getDefaultOutputDevice() : deviceId;
 	parameters.nChannels = channelNumber;
 	parameters.firstChannel = 0; // left ear in stereo
 	const unsigned int streamSampleRate = sampleRate;
@@ -77,21 +77,21 @@ void Audio::initOutputDevice(unsigned int sampleRate, unsigned int channelNumber
 	// It seems to be a valid frame size on Windows (?)
 	// Causing the uploadBuffer function to be called with nBufferFrames = 0
 	// Which doesn't output anything ...
-	unsigned int bufferFrames = streamSampleRate / audio.targetFPS;
+	unsigned int bufferFrames = streamSampleRate / _targetFPS;
 #else
-	unsigned int bufferFrames = 0;
+	unsigned int bufferFrames = streamSampleRate / _targetFPS;
 #endif
 
 	if (_stream.openStream(&parameters, NULL, RTAUDIO_FLOAT64, streamSampleRate, &bufferFrames, &uploadBuffer, this) != RTAUDIO_NO_ERROR)
 	{
 		Logger::log("RtAudio", Error) << "Failed to open stream." << std::endl;
-		exit(1);
+		return true;
 	}
 
 	if (_stream.startStream() != RTAUDIO_NO_ERROR)
 	{
 		Logger::log("RtAudio", Error) << "Failed to start stream." << std::endl;
-		exit(1);
+		return true;
 	}
 
 	Logger::log("Audio", Info) << "Successfully opened audio stream with the following properties:" << std::endl;
@@ -102,6 +102,8 @@ void Audio::initOutputDevice(unsigned int sampleRate, unsigned int channelNumber
 	_sampleRate = _stream.getStreamSampleRate();
 	_channels = channelNumber;
 	// add device info
+
+	return false;
 }
 
 void Audio::update(std::vector<Instrument>& instruments, std::vector<MidiInfo>& keyPressed)
@@ -225,7 +227,7 @@ bool Audio::setChannelNumber(unsigned int channelNumber)
 	_channels = channelNumber;
 	_stream.abortStream();
 	initBuffer();
-	initOutputDevice(_sampleRate, channelNumber);
+	initOutputDevice(0, _sampleRate, channelNumber);
 	return false;
 }
 
@@ -247,7 +249,7 @@ bool Audio::setSampleRate(unsigned int sampleRate)
 	_sampleRate = sampleRate;
 	_stream.abortStream();
 	initBuffer();
-	initOutputDevice(sampleRate, _channels);
+	initOutputDevice(0, sampleRate, _channels);
 	return false;
 }
 
@@ -274,4 +276,20 @@ const float* Audio::getBuffer() const
 unsigned int Audio::getTargetFPS() const
 {
 	return _targetFPS;
+}
+
+std::vector<unsigned int> Audio::getDeviceIds()
+{
+	return _stream.getDeviceIds();
+}
+
+RtAudio::DeviceInfo Audio::getDeviceInfo(unsigned int id)
+{
+	return _stream.getDeviceInfo(id);
+}
+
+bool Audio::setAudioDevice(unsigned int deviceId)
+{
+	_stream.abortStream();
+	return initOutputDevice(deviceId, _sampleRate, _channels);
 }

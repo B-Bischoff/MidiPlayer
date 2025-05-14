@@ -288,7 +288,7 @@ void UI::updateLoadedInstruments(std::vector<Instrument>& instruments, int& sele
 void UI::updateSettings(Audio& audio, InputManager& inputManager, MidiPlayerSettings& settings)
 {
 	ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_FirstUseEver, ImVec2(0.5f, 0.5f));
-	ImGui::SetNextWindowSize(ImVec2(ImGui::GetMainViewport()->Size.x * 0.5, ImGui::GetMainViewport()->Size.y * 0.8));
+	ImGui::SetNextWindowSize(ImVec2(ImGui::GetMainViewport()->Size.x * 0.5, ImGui::GetMainViewport()->Size.y * 0.8), ImGuiCond_FirstUseEver);
 	if (ImGui::Begin("Settings", &_windowsState.showSettings, ImGuiWindowFlags_NoCollapse))
 	{
 		// Audio settings
@@ -296,6 +296,36 @@ void UI::updateSettings(Audio& audio, InputManager& inputManager, MidiPlayerSett
 		ImGui::Indent();
 
 		// Audio output
+		std::vector<unsigned int> deviceIds = audio.getDeviceIds();
+		if (deviceIds.size() == 0)
+			ImGui::Text("No audio device available");
+		else
+		{
+			ImGui::Text("Available audio device(s):");
+			for (unsigned int deviceId : deviceIds)
+			{
+				RtAudio::DeviceInfo info = audio.getDeviceInfo(deviceId);
+
+				if (info.ID == 0) continue; // Device is not available
+				if (info.outputChannels == 0) continue; // Skip input only devices
+
+				if (ImGui::Selectable(info.name.c_str(), false))
+				{
+					if (audio.setAudioDevice(info.ID))
+					{
+						ImGui::InsertNotification({ImGuiToastType::Error, 5000, "Failed to open device %s", info.name.c_str()});
+					}
+				}
+
+				ImGui::SameLine();
+				ImGui::Text("%d %d", info.outputChannels, info.inputChannels);
+				/*
+				for (unsigned int sampleRate : info.sampleRates)
+					ImGui::Text("%d", sampleRate); ImGui::SameLine();
+				ImGui::Text("\n");
+				*/
+			}
+		}
 
 		// sample rate
 		static int selectedItem = 0;
