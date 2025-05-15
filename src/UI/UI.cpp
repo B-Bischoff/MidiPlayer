@@ -296,12 +296,17 @@ void UI::updateSettings(Audio& audio, InputManager& inputManager, MidiPlayerSett
 		ImGui::Indent();
 
 		// Audio output
+		const RtAudio::DeviceInfo& usedDeviceInfo = audio.getUsedDeviceInfo();
 		std::vector<unsigned int> deviceIds = audio.getDeviceIds();
+		int currentItem = -1;
+
 		if (deviceIds.size() == 0)
 			ImGui::Text("No audio device available");
 		else
 		{
-			ImGui::Text("Available audio device(s):");
+			std::vector<const char*> deviceNames;
+			std::vector<RtAudio::DeviceInfo> deviceInfos;
+
 			for (unsigned int deviceId : deviceIds)
 			{
 				RtAudio::DeviceInfo info = audio.getDeviceInfo(deviceId);
@@ -309,28 +314,34 @@ void UI::updateSettings(Audio& audio, InputManager& inputManager, MidiPlayerSett
 				if (info.ID == 0) continue; // Device is not available
 				if (info.outputChannels == 0) continue; // Skip input only devices
 
-				if (ImGui::Selectable(info.name.c_str(), false))
-				{
-					if (audio.setAudioDevice(info.ID))
-					{
-						ImGui::InsertNotification({ImGuiToastType::Error, 5000, "Failed to open device %s", info.name.c_str()});
-					}
-				}
+				deviceInfos.push_back(info);
+				deviceNames.push_back(deviceInfos.back().name.c_str());
 
-				ImGui::SameLine();
-				ImGui::Text("%d %d", info.outputChannels, info.inputChannels);
-				/*
-				for (unsigned int sampleRate : info.sampleRates)
-					ImGui::Text("%d", sampleRate); ImGui::SameLine();
-				ImGui::Text("\n");
-				*/
+				if (usedDeviceInfo.ID == info.ID)
+					currentItem = deviceInfos.size() - 1;
 			}
+
+			if (currentItem == -1) // No audio device in use
+				ImGui::Text("No audio device currently in use: ");
+			else
+				ImGui::Text("Currently used audio device: ");
+			ImGui::SameLine();
+			ImGui::PushID("ComboUsedAudioDevice");
+			if (ImGui::Combo("", &currentItem, deviceNames.data(), deviceNames.size()))
+			{
+				if (audio.setAudioDevice(deviceInfos[currentItem].ID))
+					ImGui::InsertNotification({ImGuiToastType::Error, 5000, "Failed to open device %s", deviceNames[currentItem]});
+				else
+					ImGui::InsertNotification({ImGuiToastType::Success, 5000, "Successfully opened device %s", deviceNames[currentItem]});
+			}
+			ImGui::PopID();
 		}
 
 		// sample rate
-		static int selectedItem = 0;
-		const unsigned int freq[] = { 44100, 48000, 10000 };
-		const char* items[] = { "44100Hz", "48000Hz", "20000Hz" };
+		const unsigned int freq[] = { 44100, 48000 };
+		const char* items[] = { "44100Hz", "48000Hz" };
+		int selectedItem = audio.getSampleRate() == freq[0] ? 0 : 1;
+
 		ImGui::Text("Sample rate");
 		ImGui::PushID("SampleRateSettingCombo");
 		ImGui::SameLine();
@@ -345,11 +356,11 @@ void UI::updateSettings(Audio& audio, InputManager& inputManager, MidiPlayerSett
 		// channels
 		ImGui::Text("Number of channels");
 		ImGui::SameLine();
-		static int selectedChannelMode = 0;
-		if (ImGui::RadioButton("1 - Mono", &selectedChannelMode, 0))
+		int selectedChannelMode = static_cast<int>(audio.getChannels());
+		if (ImGui::RadioButton("1 - Mono", &selectedChannelMode, 1))
 			audio.setChannelNumber(1);
 		ImGui::SameLine();
-		if (ImGui::RadioButton("2 - Stereo", &selectedChannelMode, 1))
+		if (ImGui::RadioButton("2 - Stereo", &selectedChannelMode, 2))
 			audio.setChannelNumber(2);
 
 		// latency

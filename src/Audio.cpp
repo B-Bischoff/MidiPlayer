@@ -84,6 +84,7 @@ bool Audio::initOutputDevice(unsigned int deviceId, unsigned int sampleRate, uns
 
 	if (_stream.openStream(&parameters, NULL, RTAUDIO_FLOAT64, streamSampleRate, &bufferFrames, &uploadBuffer, this) != RTAUDIO_NO_ERROR)
 	{
+		_deviceInfo = {};
 		Logger::log("RtAudio", Error) << "Failed to open stream." << std::endl;
 		return true;
 	}
@@ -101,6 +102,7 @@ bool Audio::initOutputDevice(unsigned int deviceId, unsigned int sampleRate, uns
 
 	_sampleRate = _stream.getStreamSampleRate();
 	_channels = channelNumber;
+	_deviceInfo = _stream.getDeviceInfo(parameters.deviceId);
 	// add device info
 
 	return false;
@@ -292,4 +294,9 @@ bool Audio::setAudioDevice(unsigned int deviceId)
 {
 	_stream.abortStream();
 	return initOutputDevice(deviceId, _sampleRate, _channels);
+}
+
+const RtAudio::DeviceInfo& Audio::getUsedDeviceInfo() const
+{
+	return _deviceInfo;
 }

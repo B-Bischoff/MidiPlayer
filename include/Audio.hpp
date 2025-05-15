@@ -42,6 +42,7 @@ public:
 
 	std::vector<unsigned int> getDeviceIds();
 	RtAudio::DeviceInfo getDeviceInfo(unsigned int id);
+	const RtAudio::DeviceInfo& getUsedDeviceInfo() const;
 
 private:
 	// ----------------- AUDIO SETTINGS -----------------
@@ -67,6 +68,7 @@ private:
 	bool _syncCursors;
 	int _samplesToAdjust; // Used to keep read and write cursors synced in case of lag or inconsistant number of samples read over time
 	RtAudio _stream;
+	RtAudio::DeviceInfo _deviceInfo; // Informations about the used audio devicejk
 
 	// Internal audio time used by audio components.
 	// This time is manually incremented in the update method.
