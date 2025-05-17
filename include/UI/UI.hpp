@@ -73,4 +73,11 @@ private:
 	void processEventQueue(std::queue<Message>& messageQueue);
 
 	void helpMarker(const std::string& message);
+
+	// updateSettings helpers
+	void updateAudioOutput(Audio& audio);
+	void updateAudioSampleRate(Audio& audio);
+	void updateAudioChannels(Audio& audio);
+	void updateAudioLatency(Audio& audio);
+	void updateMidiSettings(InputManager& inputManager, MidiPlayerSettings& settings);
 };

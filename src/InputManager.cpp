@@ -233,11 +233,11 @@ void InputManager::setMidiDeviceUsed(const std::string& deviceName)
 
 void InputManager::closeMidiDevice()
 {
-	if (_midiStream)
-	{
-		Pm_Close(_midiStream);
-		_midiStream = nullptr;
-	}
+	if (_midiStream == nullptr)
+		return;
+
+	Pm_Close(_midiStream);
+	_midiStream = nullptr;
 	Logger::log("InputManager", Info) << "Closed midi device: " <<_midiDeviceUsed << std::endl;
 	ImGui::InsertNotification({ImGuiToastType::Info, 5000, "Closed midi device: %s", _midiDeviceUsed.c_str()});
 	_midiDeviceUsed.clear();
