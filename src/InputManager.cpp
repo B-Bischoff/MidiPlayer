@@ -1,7 +1,7 @@
 #include "InputManager.hpp"
 
 InputManager::InputManager(GLFWwindow* window)
-	: _midiDeviceUsed(""), _midiStream(nullptr), _midiDeviceCount(0)
+	: _midiEvents(255), _midiDeviceUsed(""), _midiStream(nullptr), _midiDeviceCount(0)
 {
 	pollMidiDevices(false);
 
@@ -82,23 +82,24 @@ void InputManager::updateKeysState(GLFWwindow* window, const MidiPlayerSettings&
 	}
 	else if (_midiStream != nullptr)
 	{
-		int numEvents = Pm_Read(_midiStream, buffer, 255);
-		for (int i = 0; i < numEvents; i++)
-		{
-			PmEvent& event = buffer[i];
+		_midiEvents.readNewEvents(_midiStream);
+		const std::vector<PmEvent>& events = _midiEvents.getEvents();
 
+		for (const PmEvent& event : events)
+		{
 			// Extract MIDI status and data bytes
 			PmMessage message = event.message;
 			int status = Pm_MessageStatus(message);
 			int keyIndex = Pm_MessageData1(message);
 			int velocity = Pm_MessageData2(message);
 
-			Logger::log("KeyInfo", Debug) << "state " << status << " key " << (int)keyIndex << " vel " << (int)velocity << std::endl;
 			if ((status == 145 || status == 155) && velocity != 0.0)
 				addKeyPressed(keyPressed, keyIndex, velocity);
 			else
 				removeKeyPressed(keyPressed, keyIndex);
 		}
+
+		_midiEvents.clear();
 	}
 }
 
@@ -120,12 +121,7 @@ void InputManager::addKeyPressed(std::vector<MidiInfo>& keyPressed, int keyIndex
 		true, // rising edge
 	};
 
-	// It sometimes happen that a key gets "stucks" and doesn't have a release event
-	// It might happen when changing an octave while playing a note or even randomly
-	// due to the midi polling occuring every second.
-	// This manual key index removing is a workaround while finding a more elegant solution
-	// to this problem.
-	removeKeyPressed(keyPressed, keyIndex);
+	removeKeyPressed(keyPressed, keyIndex); // Remove key if it was not released for some reason
 
 	keyPressed.push_back(info);
 }
@@ -146,6 +142,7 @@ void InputManager::pollMidiDevices(bool log)
 {
 	if (_midiStream)
 	{
+		_midiEvents.readNewEvents(_midiStream); // Store event that might have occured before closing midi stream
 		Pm_Close(_midiStream);
 		_midiStream = nullptr;
 	}

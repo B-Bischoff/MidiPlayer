@@ -47,11 +47,56 @@ struct MidiDevice {
 	int index;
 };
 
+class PortMidiEvents {
+public:
+	PortMidiEvents(const unsigned int eventCapacity) {
+		_events.reserve(eventCapacity);
+	}
+
+	const std::vector<PmEvent>& getEvents() const {
+		return _events;
+	}
+
+	void readNewEvents(PortMidiStream* midiStream) {
+		const size_t oldSize = _events.size();
+		const size_t freeCapacity = _events.capacity() - oldSize;
+
+		if (freeCapacity == 0)
+		{
+			Logger::log("PortMidiEvents", Warning) << "Buffer full, cannot read new MIDI events." << std::endl;
+			return;
+		}
+
+		// Ensure size matches capacity
+		if (_events.size() < _events.capacity())
+			_events.resize(_events.capacity());
+
+		int numEvents = Pm_Read(midiStream, _events.data() + oldSize, static_cast<int>(_events.capacity() - oldSize));
+
+		if (numEvents < 0) {
+			Logger::log("PortMidiEvents", Error) << "Error while reading events: " << Pm_GetErrorText(PmError(numEvents)) << std::endl;
+
+			// Roll back size
+			_events.resize(oldSize);
+			return;
+		}
+
+		// Extend size to include new events
+		_events.resize(oldSize + static_cast<size_t>(numEvents));
+	}
+
+	void clear() {
+		_events.clear();
+	}
+
+private:
+	std::vector<PmEvent> _events;
+};
+
 class InputManager {
 private:
-	// Midi events (PortMidi specifics)
 	PmStream* _midiStream = nullptr;
-	PmEvent buffer[255];
+	PortMidiEvents _midiEvents;
 
 	std::vector<MidiDevice> _detectedDevices;
 	int _midiDeviceCount;
