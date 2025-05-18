@@ -2,9 +2,6 @@
 
 #include "inc.hpp"
 
-double osc(double hertz, double phase, double time, OscType type = Sine, double LFOHertz = 0.0, double LFOAmplitude = 0.0);
-double pianoKeyFrequency(int keyId);
-
 template<typename... Args>
 std::forward_list<AudioComponent*> combineVectorsToForwardList(const Args&... vectors)
 {

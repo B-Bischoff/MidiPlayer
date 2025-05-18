@@ -1,7 +1,7 @@
 #include "UI/UI.hpp"
 
-UI::UI(GLFWwindow* window, AudioData& audio, const ApplicationPath& path)
-	: _imPlot(audio), _audioSpectrum(audio.getFramesPerUpdate(), 4096), _path(path), _selectedInstrument(nullptr)
+UI::UI(GLFWwindow* window, Audio& audio, const ApplicationPath& path)
+	: _imPlot(audio), _audioSpectrum(audio.getSamplesPerUpdate(), 4096), _path(path), _selectedInstrument(nullptr)
 {
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 	const char* glsl_version = "#version 100";
@@ -139,7 +139,7 @@ void UI::initStyle()
 	style.DockingSeparatorSize = 1.0f;
 }
 
-void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings, std::queue<Message>& messageQueue)
+void UI::update(Audio& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings, std::queue<Message>& messageQueue, InputManager& inputManager)
 {
 	initUpdate(1920, 1080);
 
@@ -170,12 +170,7 @@ void UI::update(AudioData& audio, std::vector<Instrument>& instruments, MidiPlay
 		_log.draw("Log", &_windowsState.showLog);
 
 	if (_windowsState.showSettings)
-	{
-		ImGui::Begin("Settings", &_windowsState.showSettings);
-
-		ImGui::Checkbox("Use keyboard as MIDI input", &settings.useKeyboardAsInput);
-		ImGui::End();
-	}
+		updateSettings(audio, inputManager, settings);
 
 	endUpdate();
 }
@@ -193,15 +188,22 @@ void UI::updateMenuBar()
 
 			ImGui::EndMenu();
 		}
-		if (ImGui::BeginMenu("View"))
-		{
-			if (ImGui::MenuItem("Log", NULL, _windowsState.showLog))
-				_windowsState.showLog = !_windowsState.showLog;
-			if (ImGui::MenuItem("Settings", NULL, _windowsState.showSettings))
-				_windowsState.showSettings = !_windowsState.showSettings;
 
-			ImGui::EndMenu();
-		}
+		// Apply Menu style to buttons
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 3)); // matches menu button padding
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0);
+		ImGui::PushStyleColor(ImGuiCol_Button,        ImGui::GetStyleColorVec4(ImGuiCol_MenuBarBg));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyleColorVec4(ImGuiCol_HeaderHovered));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImGui::GetStyleColorVec4(ImGuiCol_HeaderActive));
+
+		// Use button instead of menus that would contain one or two fields to limit required clicks to show a window
+		if (ImGui::Button("Settings"))
+			_windowsState.showSettings = !_windowsState.showSettings;
+		if (ImGui::Button("Log"))
+			_windowsState.showLog = !_windowsState.showLog;
+
+		ImGui::PopStyleColor(3);
+		ImGui::PopStyleVar(2);
 		ImGui::EndMenuBar();
 	}
 }
@@ -387,6 +389,8 @@ void UI::initUpdate(const int& WIN_WIDTH, const int& WIN_HEIGHT)
 		ImGui::DockBuilderDockWindow("Audio buffer", dockAudioBuffer);
 		ImGui::DockBuilderDockWindow("Audio Spectrum", dockAudioSpectrum);
 
+		// "Setting window" position is initiated at its Begin() as it not docked with the other windows
+
 		ImGui::DockBuilderFinish(dockspaceId);
 	}
 }
@@ -425,4 +429,16 @@ void UI::switchSelectedInstrument(Instrument& newInstrument)
 	}
 
 	_selectedInstrument = &newInstrument;
+}
+
+void UI::helpMarker(const std::string& message)
+{
+	ImGui::TextDisabled("(?)");
+	if (ImGui::BeginItemTooltip())
+	{
+		ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+		ImGui::TextUnformatted(message.c_str());
+		ImGui::PopTextWrapPos();
+		ImGui::EndTooltip();
+	}
 }
