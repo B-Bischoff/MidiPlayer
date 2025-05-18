@@ -188,15 +188,22 @@ void UI::updateMenuBar()
 
 			ImGui::EndMenu();
 		}
-		if (ImGui::BeginMenu("View"))
-		{
-			if (ImGui::MenuItem("Log", NULL, _windowsState.showLog))
-				_windowsState.showLog = !_windowsState.showLog;
-			if (ImGui::MenuItem("Settings", NULL, _windowsState.showSettings))
-				_windowsState.showSettings = !_windowsState.showSettings;
 
-			ImGui::EndMenu();
-		}
+		// Apply Menu style to buttons
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 3)); // matches menu button padding
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0);
+		ImGui::PushStyleColor(ImGuiCol_Button,        ImGui::GetStyleColorVec4(ImGuiCol_MenuBarBg));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyleColorVec4(ImGuiCol_HeaderHovered));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImGui::GetStyleColorVec4(ImGuiCol_HeaderActive));
+
+		// Use button instead of menus that would contain one or two fields to limit required clicks to show a window
+		if (ImGui::Button("Settings"))
+			_windowsState.showSettings = !_windowsState.showSettings;
+		if (ImGui::Button("Log"))
+			_windowsState.showLog = !_windowsState.showLog;
+
+		ImGui::PopStyleColor(3);
+		ImGui::PopStyleVar(2);
 		ImGui::EndMenuBar();
 	}
 }

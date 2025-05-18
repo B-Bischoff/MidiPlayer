@@ -110,7 +110,7 @@ void UI::updateAudioLatency(Audio& audio)
 	const float space = 1.0 / 60.0 * 1000.0;
 	float latency = space * audio.getLatency();
 	ImGui::SameLine();
-	ImGui::SetNextItemWidth(125);
+	ImGui::SetNextItemWidth(300);
 	ImGui::PushID("LatencySettingSlider");
 	if (ImGui::SliderFloat("", &latency, space, space * 30, "%.3f", ImGuiSliderFlags_AlwaysClamp))
 	{
@@ -125,6 +125,7 @@ void UI::updateAudioLatency(Audio& audio)
 
 void UI::updateMidiSettings(InputManager& inputManager, MidiPlayerSettings& settings)
 {
+	const std::string currentMidiDeviceUsed = inputManager.getMidiDeviceUsed();
 	const std::vector<MidiDevice> devices = inputManager.getDetectedMidiDevices();
 	std::vector<const char*> deviceNames;
 	int currentItem = -1;
@@ -132,7 +133,7 @@ void UI::updateMidiSettings(InputManager& inputManager, MidiPlayerSettings& sett
 	for (const MidiDevice& device : devices)
 	{
 		deviceNames.push_back(device.name.c_str());
-		if (device.name == inputManager.getMidiDeviceUsed())
+		if (device.name == currentMidiDeviceUsed)
 			currentItem = deviceNames.size() - 1;
 	}
 
@@ -155,21 +156,32 @@ void UI::updateMidiSettings(InputManager& inputManager, MidiPlayerSettings& sett
 		ImGui::PushID("UsedMidiDeviceCombo");
 		ImGui::SetNextItemWidth(comboWidth > 0.0f ? comboWidth : 1.0f); // avoid negative
 		if (ImGui::Combo("", &currentItem, deviceNames.data(), deviceNames.size()))
+		{
 			inputManager.setMidiDeviceUsed(deviceNames[currentItem]);
+
+			// Logic to automatically disable keyboard as MIDI input
+			if (currentMidiDeviceUsed.empty() && settings.useKeyboardAsInput)
+				settings.useKeyboardAsInput = false;
+		}
 		ImGui::PopID();
 		ImGui::SameLine();
+		if (currentMidiDeviceUsed.empty())
+			ImGui::BeginDisabled();
 		if (ImGui::Button("Close MIDI device"))
+		{
 			inputManager.closeMidiDevice();
+
+			// Logic to automatically enable keyboard as MIDI input
+			if (!currentMidiDeviceUsed.empty() && !settings.useKeyboardAsInput)
+				settings.useKeyboardAsInput = true;
+		}
+		if (currentMidiDeviceUsed.empty())
+			ImGui::EndDisabled();
 	}
 
-	ImGui::Text("\n");
-	ImGui::Unindent();
-
-	// Misc settings
-	// [TODO] find something else that "misc"
-	ImGui::SeparatorText("Misc");
-	ImGui::Indent();
 	ImGui::Text("Use keyboard as MIDI input");
+	ImGui::SameLine();
+	helpMarker("Using keyboard keys are:\n S D     G H J\nZ X C V B N M\nTo change octave: O / P");
 	ImGui::SameLine();
 	ImGui::PushID("UseKeyboardSettings");
 	ImGui::Checkbox("", &settings.useKeyboardAsInput);
