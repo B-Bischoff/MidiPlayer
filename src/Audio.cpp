@@ -6,7 +6,7 @@ Audio::Audio(unsigned int sampleRate, unsigned int channels, unsigned int buffer
 	_samplesToAdjust(0), _time(0.0)
 {
 	initBuffer();
-	initOutputDevice(0, _sampleRate, _channels);
+	initOutputDevice(0); // Open system default audio device
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(100)); // let rtaudio get more stable
 
@@ -29,6 +29,10 @@ void Audio::stopAndCloseStreamIfExist()
 
 void Audio::initBuffer()
 {
+	// Stop registered callback from reading buffer while it's being (re)allocated
+	if (_stream.isStreamRunning())
+		_stream.abortStream();
+
 	_buffer = std::make_unique<float[]>(getBufferSize());
 	if (_buffer == nullptr)
 	{
@@ -43,7 +47,7 @@ void Audio::initBuffer()
 	_writeCursor = (_leftPhase + getLatencyInSamplesPerUpdate()) % getBufferSize();
 }
 
-bool Audio::initOutputDevice(unsigned int deviceId, unsigned int sampleRate, unsigned int channelNumber)
+bool Audio::initOutputDevice(unsigned int deviceId)
 {
 	stopAndCloseStreamIfExist();
 
@@ -51,36 +55,15 @@ bool Audio::initOutputDevice(unsigned int deviceId, unsigned int sampleRate, uns
 	if (deviceIds.size() < 1)
 	{
 		Logger::log("RtAudio", Error) << "No audio device found." << std::endl;
-		exit(1);
-	}
-
-	if (RT_AUDIO_DEBUG)
-	{
-		RtAudio& stream = _stream;
-		Logger::log("RtAudio", Debug) << "Default audio device id: " << stream.getDefaultOutputDevice() << std::endl;
-
-		for (const unsigned int& id : deviceIds)
-		{
-			const RtAudio::DeviceInfo info = stream.getDeviceInfo(id);
-			Logger::log("RtAudio", Debug) << "id " << id << " Name: " << info.name << std::endl;
-		}
+		return true;
 	}
 
 	RtAudio::StreamParameters parameters;
 	parameters.deviceId = deviceId == 0 ? _stream.getDefaultOutputDevice() : deviceId;
-	parameters.nChannels = channelNumber;
+	parameters.nChannels = _channels;
 	parameters.firstChannel = 0; // left ear in stereo
-	const unsigned int streamSampleRate = sampleRate;
-
-#ifdef PLATFORM_WINDOWS
-	// 0 is used to get the smallest frame number possible.
-	// It seems to be a valid frame size on Windows (?)
-	// Causing the uploadBuffer function to be called with nBufferFrames = 0
-	// Which doesn't output anything ...
+	const unsigned int streamSampleRate = _sampleRate;
 	unsigned int bufferFrames = streamSampleRate / _targetFPS;
-#else
-	unsigned int bufferFrames = streamSampleRate / _targetFPS;
-#endif
 
 	if (_stream.openStream(&parameters, NULL, RTAUDIO_FLOAT64, streamSampleRate, &bufferFrames, &uploadBuffer, this) != RTAUDIO_NO_ERROR)
 	{
@@ -97,13 +80,11 @@ bool Audio::initOutputDevice(unsigned int deviceId, unsigned int sampleRate, uns
 
 	Logger::log("Audio", Info) << "Successfully opened audio stream with the following properties:" << std::endl;
 	Logger::log("Audio", Info)  << "Sample rate: " << _stream.getStreamSampleRate() << "Hz" << std::endl;
-	Logger::log("Audio", Info)  << "Channel number: " << channelNumber << std::endl;
+	Logger::log("Audio", Info)  << "Channel number: " << _channels << std::endl;
 	Logger::log("Audio", Info)  << "Buffer duration: " << _bufferDuration << " second(s)" << std::endl;
 
 	_sampleRate = _stream.getStreamSampleRate();
-	_channels = channelNumber;
 	_deviceInfo = _stream.getDeviceInfo(parameters.deviceId);
-	// add device info
 
 	return false;
 }
@@ -227,10 +208,8 @@ bool Audio::setChannelNumber(unsigned int channelNumber)
 		return false;
 
 	_channels = channelNumber;
-	_stream.abortStream();
 	initBuffer();
-	initOutputDevice(0, _sampleRate, channelNumber);
-	return false;
+	return initOutputDevice(_deviceInfo.ID);
 }
 
 unsigned int Audio::getChannels() const
@@ -249,10 +228,8 @@ bool Audio::setSampleRate(unsigned int sampleRate)
 		return false;
 
 	_sampleRate = sampleRate;
-	_stream.abortStream();
 	initBuffer();
-	initOutputDevice(0, sampleRate, _channels);
-	return false;
+	return initOutputDevice(_deviceInfo.ID);
 }
 
 unsigned int Audio::getWriteCursorPos() const
@@ -292,8 +269,7 @@ RtAudio::DeviceInfo Audio::getDeviceInfo(unsigned int id)
 
 bool Audio::setAudioDevice(unsigned int deviceId)
 {
-	_stream.abortStream();
-	return initOutputDevice(deviceId, _sampleRate, _channels);
+	return initOutputDevice(deviceId);
 }
 
 const RtAudio::DeviceInfo& Audio::getUsedDeviceInfo() const

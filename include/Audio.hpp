@@ -68,7 +68,7 @@ private:
 	bool _syncCursors;
 	int _samplesToAdjust; // Used to keep read and write cursors synced in case of lag or inconsistant number of samples read over time
 	RtAudio _stream;
-	RtAudio::DeviceInfo _deviceInfo; // Informations about the used audio devicejk
+	RtAudio::DeviceInfo _deviceInfo; // Informations about the used audio device
 
 	// Internal audio time used by audio components.
 	// This time is manually incremented in the update method.
@@ -76,7 +76,7 @@ private:
 	// -------------------------------------------------
 
 	void initBuffer();
-	bool initOutputDevice(unsigned int deviceId, unsigned sampleRate, unsigned int channelNumber);
+	bool initOutputDevice(unsigned int deviceId);
 
 	// [TODO] Make an entity used as an intermediate between sound generation/mixing and sound management (stream open, volume, runtime reconfiguration, ...)
 	static int uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);

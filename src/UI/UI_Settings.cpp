@@ -84,7 +84,8 @@ void UI::updateAudioSampleRate(Audio& audio)
 	if (ImGui::Combo("", &selectedItem, items, sizeof(items) / sizeof(const char*)))
 	{
 		Logger::log("Settings") << "Changed sample rate to " << items[selectedItem] << std::endl;
-		audio.setSampleRate(freq[selectedItem]);
+		if (audio.setSampleRate(freq[selectedItem]))
+			ImGui::InsertNotification({ImGuiToastType::Error, 5000, "Error changing sample rate to: %d", items[selectedItem]});
 	}
 	ImGui::PopID();
 }
@@ -95,10 +96,16 @@ void UI::updateAudioChannels(Audio& audio)
 	ImGui::SameLine();
 	int selectedChannelMode = static_cast<int>(audio.getChannels());
 	if (ImGui::RadioButton("1 - Mono", &selectedChannelMode, 1))
-		audio.setChannelNumber(1);
+	{
+		if (audio.setChannelNumber(1))
+			ImGui::InsertNotification({ImGuiToastType::Error, 5000, "Error changing channel(s) number to: 1"});
+	}
 	ImGui::SameLine();
 	if (ImGui::RadioButton("2 - Stereo", &selectedChannelMode, 2))
-		audio.setChannelNumber(2);
+	{
+		if (audio.setChannelNumber(2))
+			ImGui::InsertNotification({ImGuiToastType::Error, 5000, "Error changing channel(s) number to: 2"});
+	}
 }
 
 void UI::updateAudioLatency(Audio& audio)
