@@ -10,53 +10,13 @@
 #include "InputManager.hpp"
 #include "AudioBackend/Instrument.hpp"
 #include "Audio.hpp"
+#include "Window.hpp"
 
 static void handleFrameProcessTime(const time_point& startTime, const std::chrono::duration<double>& targetFrameDuration, Audio& audio);
 
 double AudioComponent::time = 0.0;
 unsigned int AudioComponent::nextId = 1;
 unsigned int KeyboardFrequency::keyIndex = 0;
-
-GLFWwindow* init(const int WIN_WIDTH, const int WIN_HEIGHT)
-{
-	// GLFW init
-	if (!glfwInit())
-	{
-		std::cerr << "Failed to initialize GLFW." << std::endl;
-		std::cin.get();
-		exit(1);
-	}
-
-	// Window init
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-#ifdef __APPLE__
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-
-	GLFWwindow* window = glfwCreateWindow(WIN_WIDTH, WIN_HEIGHT, "MidiPlayer", NULL, NULL);
-	if (window == nullptr)
-	{
-		Logger::log("GLFW", Error) << "Failed to initialize window." << std::endl;
-		glfwTerminate();
-		exit(1);
-	}
-	glfwMakeContextCurrent(window);
-	glfwSwapInterval(0);
-
-	// GLEW init
-	glewExperimental = true; // Needed for core profile
-	if (glewInit() != GLEW_OK)
-	{
-		Logger::log("GLEW", Error) << "Failed to initialize GLEW." << std::endl;
-		glfwTerminate();
-		exit(1);
-	}
-
-	return window;
-}
 
 fs::path findRessourcesFolder(const fs::path& applicationPath, bool verbose = false)
 {
@@ -97,19 +57,21 @@ int main(int argc, char* argv[])
 	};
 
 	int FRAME_COUNT = 0;
-	const int SCREEN_WIDTH = 1920;
-	const int SCREEN_HEIGHT = 1080;
-	GLFWwindow* window = init(SCREEN_WIDTH, SCREEN_HEIGHT);
+
 	MidiPlayerSettings settings;
 
 	Audio audio;
+	constexpr unsigned int SCREEN_WIDTH = 1920;
+	constexpr unsigned int SCREEN_HEIGHT = 1080;
+	Window window(ImVec2(SCREEN_WIDTH, SCREEN_HEIGHT), "MidiPlayer");
 
 	const std::chrono::duration<double> targetFrameDuration(1.0f / (double)audio.getTargetFPS());
 
-	InputManager inputManager(window);
-	glfwSetWindowUserPointer(window, (void*)&inputManager);
+	InputManager inputManager(window.getWindow());
+	WindowContext windowContext = { &window, &inputManager };
+	window.setUserPointer((void*)&windowContext);
 
-	UI ui(window, audio, path);
+	UI ui(window.getWindow(), audio, path);
 	Logger::subscribeStream(Log::getStream()); // Duplicate all logs to UI
 
 	std::vector<Instrument> instruments = {};
@@ -121,19 +83,17 @@ int main(int argc, char* argv[])
 	Timer midiPollingTimer(1.0);
 	double refreshCooldown = 0;
 	time_point lastFrameTime;
-	while (!glfwWindowShouldClose(window) && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS)
+	while (!window.shouldClose() && glfwGetKey(window.getWindow(), GLFW_KEY_ESCAPE) != GLFW_PRESS)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
 		const std::chrono::duration<double> deltaTime = startTime - lastFrameTime;
 
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		window.beginFrame(ImVec4(0.1f, 0.1f, 0.1f, 1.0f), GL_COLOR_BUFFER_BIT);
 
-		glfwPollEvents();
 		if (midiPollingTimer.update(deltaTime.count()))
 			inputManager.pollMidiDevices(true);
 
-		inputManager.updateKeysState(window, settings, keyPressed);
+		inputManager.updateKeysState(settings, keyPressed);
 		inputManager.createKeysEvents(messageQueue);
 
 		audio.update(instruments, keyPressed);
@@ -147,10 +107,10 @@ int main(int argc, char* argv[])
 		}
 		*/
 
-		ui.update(audio, instruments, settings, messageQueue, inputManager);
+		ui.update(window, audio, instruments, settings, messageQueue, inputManager);
 		ui.render();
 
-		glfwSwapBuffers(window);
+		window.endFrame();
 
 		handleFrameProcessTime(startTime, targetFrameDuration, audio);
 		lastFrameTime = startTime;

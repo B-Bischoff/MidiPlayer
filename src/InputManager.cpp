@@ -1,8 +1,14 @@
 #include "InputManager.hpp"
 
 InputManager::InputManager(GLFWwindow* window)
-	: _midiEvents(255), _midiDeviceUsed(""), _midiStream(nullptr), _midiDeviceCount(0)
+	: _window(window), _midiEvents(255), _midiDeviceUsed(""), _midiStream(nullptr), _midiDeviceCount(0)
 {
+	if (_window == nullptr)
+	{
+		Logger::log("InputManager", Error) << "Invalid window pointer" << std::endl;
+		exit(1);
+	}
+
 	pollMidiDevices(false);
 
 	// Setup a callback to get mods (ctrl, shift, ...) key state
@@ -18,7 +24,13 @@ InputManager::~InputManager()
 
 void InputManager::glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-	InputManager* inputManager = static_cast<InputManager*>(glfwGetWindowUserPointer(window));
+	WindowContext* userPointer = static_cast<WindowContext*>(glfwGetWindowUserPointer(window));
+	if (!userPointer)
+	{
+		Logger::log("GLFW", Error) << "Could not find window from user pointer" << std::endl;
+		exit(1);
+	}
+	InputManager* inputManager = userPointer->inputManager;
 	assert(inputManager);
 
 	constexpr std::array<unsigned int, 6> modKeys = { GLFW_MOD_SHIFT, GLFW_MOD_CONTROL, GLFW_MOD_ALT, GLFW_MOD_SUPER, GLFW_MOD_CAPS_LOCK, GLFW_MOD_NUM_LOCK, };
@@ -41,11 +53,11 @@ void InputManager::updateModifierKey(unsigned int key, bool pressed)
 	keys[key].updateKeyData(pressed);
 }
 
-void InputManager::updateKeysState(GLFWwindow* window, const MidiPlayerSettings& settings, std::vector<MidiInfo>& keyPressed)
+void InputManager::updateKeysState(const MidiPlayerSettings& settings, std::vector<MidiInfo>& keyPressed)
 {
 	// Mouse
 	double xpos, ypos;
-	glfwGetCursorPos(window, &xpos, &ypos);
+	glfwGetCursorPos(_window, &xpos, &ypos);
 	cursorDir = ImVec2(xpos - cursorPos.x, ypos - cursorPos.y);
 	cursorPos = ImVec2(xpos, ypos);
 
@@ -53,7 +65,7 @@ void InputManager::updateKeysState(GLFWwindow* window, const MidiPlayerSettings&
 
 	// Get keyboard inputs
 	for (int i = GLFW_KEY_SPACE; i < GLFW_KEY_LAST; i++)
-		keys[i].updateKeyData((bool)glfwGetKey(window, i));
+		keys[i].updateKeyData((bool)glfwGetKey(_window, i));
 
 	// Reset rising edges
 	for (MidiInfo& info : keyPressed)

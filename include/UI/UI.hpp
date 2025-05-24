@@ -15,6 +15,7 @@
 #include <map>
 
 #include "Audio.hpp"
+#include "Window.hpp"
 #include "InputManager.hpp"
 #include "path.hpp"
 #include "Message.hpp"
@@ -52,7 +53,7 @@ private:
 
 public:
 	UI(GLFWwindow* window, Audio& audio, const ApplicationPath& path);
-	void update(Audio& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings, std::queue<Message>& messageQueue, InputManager& inputManager);
+	void update(Window& window, Audio& audio, std::vector<Instrument>& instruments, MidiPlayerSettings& settings, std::queue<Message>& messageQueue, InputManager& inputManager);
 	void render();
 
 private:
