@@ -19,6 +19,12 @@ void UI::updateSettings(Audio& audio, InputManager& inputManager, MidiPlayerSett
 		ImGui::SeparatorText("MIDI");
 		ImGui::Indent();
 		updateMidiSettings(inputManager, settings);
+		ImGui::Text("\n");
+		ImGui::Unindent();
+
+		ImGui::SeparatorText("UI");
+		ImGui::Indent();
+		updateUISettings();
 		ImGui::Unindent();
 	}
 
@@ -192,5 +198,17 @@ void UI::updateMidiSettings(InputManager& inputManager, MidiPlayerSettings& sett
 	ImGui::SameLine();
 	ImGui::PushID("UseKeyboardSettings");
 	ImGui::Checkbox("", &settings.useKeyboardAsInput);
+	ImGui::PopID();
+}
+
+void UI::updateUISettings()
+{
+	ImGuiIO& io = ImGui::GetIO();
+	float fontScale = io.FontGlobalScale;
+	ImGui::Text("Font scale ");
+	ImGui::SameLine();
+	ImGui::PushID("FontScaleDragFloat");
+	if (ImGui::DragFloat("", &fontScale, 0.05, 0.3, 1.5))
+		io.FontGlobalScale = fontScale;
 	ImGui::PopID();
 }
