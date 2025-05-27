@@ -51,6 +51,8 @@ int main(int argc, char* argv[])
 	if (ressourceDirectoryPath.string().empty())
 		exit(1);
 
+	std::srand(std::time(0));
+
 	ApplicationPath path = {
 		.application = applicationPath,
 		.ressourceDirectory = ressourceDirectoryPath,

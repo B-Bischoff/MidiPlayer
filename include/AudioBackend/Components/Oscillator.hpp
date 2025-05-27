@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdlib>
 #include "AudioComponent.hpp"
 #include "audio_backend.hpp"
 
@@ -40,7 +41,7 @@ struct Oscillator : public AudioComponent {
 			case Triangle: return asin(sin(t)) * (2.0 / M_PI);
 			case Saw_Ana: return 0; // [TODO] implement
 			case Saw_Dig: return (2.0 / M_PI) * (hertz * M_PI * fmod(time, 1.0 / hertz) - (M_PI / 2.0));
-			case Noise: return 2.0 * ((double)rand() / std::numeric_limits<int>::max()) - 1.0;
+			case Noise: return 2.0 * (static_cast<double>(std::rand()) / RAND_MAX) - 1.0;
 			default: return 0;
 		}
 	}
