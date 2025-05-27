@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include "AudioComponent.hpp"
 #include "audio_backend.hpp"
 
@@ -12,7 +13,7 @@ struct LowPassFilter : public AudioComponent {
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
-		double alphaValue = getInputsValue(alpha, keyPressed, currentKey);
+		double alphaValue = std::clamp(getInputsValue(alpha, keyPressed, currentKey), 0.0, 1.0);
 		double signalValue = getInputsValue(input, keyPressed, currentKey);
 
 		state = alphaValue * signalValue + (1.0 - alphaValue) * state;
