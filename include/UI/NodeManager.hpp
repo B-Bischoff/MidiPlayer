@@ -111,33 +111,42 @@ std::shared_ptr<Node> NodeManager::addNode(IDManager& idManager) {
 
 // Serialization methods
 
-template <class Archive>
-void NodeManager::serialize(Archive& archive) {
-	for (std::shared_ptr<Node>& node : _nodes)
-	{
+struct NodeData {
+	std::shared_ptr<Node> node;
+	ImVec2 position;
+
+	template <class Archive>
+	void serialize(Archive& archive) {
 		archive(
 			cereal::make_nvp("node", node),
-			cereal::make_nvp("node_position", ed::GetNodePosition(node->id))
+			cereal::make_nvp("position", position)
 		);
 	}
+};
+
+template <class Archive>
+void NodeManager::serialize(Archive& archive) {
+	std::vector<NodeData> nodesData;
+	for (std::shared_ptr<Node>& node : _nodes)
+	{
+		NodeData nodeData = { node, ed::GetNodePosition(node->id) };
+		nodesData.push_back(nodeData);
+	}
+	archive(cereal::make_nvp("nodes", nodesData));
 }
 
 template <class Archive>
 void NodeManager::load(Archive& archive, IDManager& idManager) {
-	try{
-		while (true)
-		{
-			std::shared_ptr<Node> node;
-			archive(node);
-			ImVec2 pos;
-			archive(pos);
+	std::vector<NodeData> nodesData;
+	archive(nodesData);
+	Logger::log("nodes data size", Error) << nodesData.size() << std::endl;
 
-			registerNodeIds(idManager, node);
-			ed::SetNodePosition(node->id, pos);
+	for (NodeData& nodeData : nodesData)
+	{
+		Logger::log("Node") << nodeData.node->name << " " << nodeData.node->id << " " << nodeData.position.x << " " << nodeData.position.y << std::endl;
+		registerNodeIds(idManager, nodeData.node);
+		ed::SetNodePosition(nodeData.node->id, nodeData.position);
 
-			_nodes.push_back(node);
-		}
+		_nodes.push_back(nodeData.node);
 	}
-	catch (std::exception& e)
-	{ }
 }

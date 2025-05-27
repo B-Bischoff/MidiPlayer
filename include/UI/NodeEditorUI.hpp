@@ -29,29 +29,6 @@
 #include "MidiMath.hpp"
 
 // SERIALIZE HELPERS
-template<class Archive>
-void serialize(Archive& archive, Pin& pin)
-{
-	archive(
-		cereal::make_nvp("pin_id", pin.id),
-		cereal::make_nvp("node_id", pin.node->id),
-		cereal::make_nvp("pin_name", pin.name),
-		cereal::make_nvp("pin_kind", (int)pin.kind),
-		cereal::make_nvp("pin_input_id", pin.inputId),
-		cereal::make_nvp("pin_mode", (int)pin.mode)
-	);
-}
-
-template<class Archive>
-void serialize(Archive& archive, LinkInfo& link)
-{
-	archive(
-		cereal::make_nvp("link_id", link.Id.Get()),
-		cereal::make_nvp("link_input_id", link.InputId.Get()),
-		cereal::make_nvp("link_output_id", link.OutputId.Get())
-		//CEREAL_NVP(link.Color)
-	);
-}
 
 template<class Archive>
 void serialize(Archive& archive, ImVec2& v)

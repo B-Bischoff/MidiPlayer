@@ -322,16 +322,8 @@ void NodeEditorUI::loadFile(Master& master, const fs::path& path)
 
 	ImVector<LinkInfo> links;
 
-	{
-		cereal::JSONInputArchive archive(file);
-		_nodeManager.load(archive, _idManager);
-	}
-
-	file.close();
-	file.open(path);
-
 	cereal::JSONInputArchive archive(file);
-	archive.setNextName("link");
+	_nodeManager.load(archive, _idManager);
 	_linkManager.load(archive, _idManager);
 
 	// Link hidden node
@@ -357,15 +349,8 @@ void NodeEditorUI::loadFile(Master& master, std::stringstream& stream)
 
 	ImVector<LinkInfo> links;
 
-	{
-		std::stringstream streamCopy1(stream.str());
-		cereal::JSONInputArchive archive(streamCopy1);
-		_nodeManager.load(archive, _idManager);
-	}
-
-	std::stringstream streamCopy2(stream.str());
-	cereal::JSONInputArchive archive(streamCopy2);
-	archive.setNextName("link");
+	cereal::JSONInputArchive archive(stream);
+	_nodeManager.load(archive, _idManager);
 	_linkManager.load(archive, _idManager);
 
 	// Link hidden node

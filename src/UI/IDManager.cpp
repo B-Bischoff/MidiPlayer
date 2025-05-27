@@ -34,7 +34,7 @@ unsigned int IDManager::getID(unsigned int wantedId)
 {
 	if (_ids.find(wantedId) == _ids.end())
 	{
-		Logger::log("IDManager", Error) << "Requested id is not available." << std::endl;
+		Logger::log("IDManager", Error) << "Requested id '" << wantedId << "' is not available." << std::endl;
 		assert(0);
 		return INVALID_ID;
 	}
