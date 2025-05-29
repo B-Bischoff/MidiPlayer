@@ -503,6 +503,18 @@ struct LowPassFilterNode : public Node {
 	}
 };
 
+struct HighPassFilterNode : public Node {
+	HighPassFilterNode(IDManager* idManager = nullptr)
+	{
+		id = getId(idManager);
+		name = "High Pass Filter";
+
+		inputs.push_back(createPin(idManager, "> input", PinKind::Input, LowPassFilter::Inputs::input));
+		inputs.push_back(createPin(idManager, "> alpha", PinKind::Input, LowPassFilter::Inputs::alpha));
+		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
+	}
+};
+
 struct CombFilterNode : public Node {
 	CombFilterNode(IDManager* idManager = nullptr)
 	{
@@ -537,7 +549,9 @@ CEREAL_REGISTER_TYPE(ADSR_Node)
 CEREAL_REGISTER_TYPE(KeyboardFrequencyNode)
 CEREAL_REGISTER_TYPE(MultNode)
 CEREAL_REGISTER_TYPE(LowPassFilterNode)
+CEREAL_REGISTER_TYPE(HighPassFilterNode)
 CEREAL_REGISTER_TYPE(CombFilterNode)
+CEREAL_REGISTER_TYPE(OverdriveNode)
 
 // Register child class if it does not have serialization method.
 // This indicate cereal to use Node serialization method.
@@ -545,4 +559,6 @@ CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, MasterNode)
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, KeyboardFrequencyNode)
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, MultNode)
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, LowPassFilterNode)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, HighPassFilterNode)
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, CombFilterNode)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, OverdriveNode)
