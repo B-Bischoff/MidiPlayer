@@ -517,6 +517,18 @@ struct CombFilterNode : public Node {
 	}
 };
 
+struct OverdriveNode : public Node {
+	OverdriveNode(IDManager* idManager = nullptr)
+	{
+		id = getId(idManager);
+		name = "Overdrive";
+
+		inputs.push_back(createPin(idManager, "> input", PinKind::Input, Overdrive::Inputs::input));
+		inputs.push_back(createPin(idManager, "> drive", PinKind::Input, Overdrive::Inputs::drive));
+		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
+	}
+};
+
 // Register every Node child classes
 CEREAL_REGISTER_TYPE(MasterNode)
 CEREAL_REGISTER_TYPE(NumberNode)

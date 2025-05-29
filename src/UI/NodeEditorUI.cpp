@@ -16,6 +16,7 @@ NodeEditorUI::NodeEditorUI()
 	_nodeManager.registerNode<MultNode, Multiplier>("Multiply");
 	_nodeManager.registerNode<LowPassFilterNode, LowPassFilter>("Low Pass Filter");
 	_nodeManager.registerNode<CombFilterNode, CombFilter>("Comb Filter");
+	_nodeManager.registerNode<OverdriveNode, Overdrive>("Overdrive");
 
 	_nodeManager.addNode<MasterNode>(_idManager);
 
