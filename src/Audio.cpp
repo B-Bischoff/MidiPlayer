@@ -107,7 +107,7 @@ void Audio::update(std::vector<Instrument>& instruments, std::vector<MidiInfo>& 
 
 		for (int j = 0; j < _channels; j++)
 		{
-			_buffer[_writeCursor] = value;
+			_buffer[_writeCursor] = std::clamp(value, -1.0, 1.0);
 			incrementWriteCursor();
 		}
 	}

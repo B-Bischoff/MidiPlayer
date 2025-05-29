@@ -139,11 +139,9 @@ template <class Archive>
 void NodeManager::load(Archive& archive, IDManager& idManager) {
 	std::vector<NodeData> nodesData;
 	archive(nodesData);
-	Logger::log("nodes data size", Error) << nodesData.size() << std::endl;
 
 	for (NodeData& nodeData : nodesData)
 	{
-		Logger::log("Node") << nodeData.node->name << " " << nodeData.node->id << " " << nodeData.position.x << " " << nodeData.position.y << std::endl;
 		registerNodeIds(idManager, nodeData.node);
 		ed::SetNodePosition(nodeData.node->id, nodeData.position);
 

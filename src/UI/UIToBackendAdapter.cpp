@@ -206,8 +206,8 @@ void UIToBackendAdapter::addAudioComponent(Master& master, Node& masterUI, NodeU
 	AudioComponent* parentAudioComponent = master.getAudioComponent(parentNode->audioComponentId); assert(parentAudioComponent);
 	if (!parentAudioComponent->idIsDirectChild(newAudioComponent->id))
 		parentAudioComponent->addInput(instruction.UI_PARENT_NODE_INPUT_ID - 1, newAudioComponent);
-	else // [TODO] If in the future linking two nodes multiple time is desired: remove this check and add a post processing step to instructions list to remove duplication instructions.
-		Logger::log("Add node instruction", Warning) << "Parent " << parentAudioComponent->id << " was already linked to child " << newAudioComponent->id << std::endl;
+	//else // [TODO] If in the future linking two nodes multiple time is desired: remove this check and add a post processing step to instructions list to remove duplication instructions.
+	//	Logger::log("Add node instruction", Warning) << "Parent " << parentAudioComponent->id << " was already linked to child " << newAudioComponent->id << std::endl;
 }
 
 void UIToBackendAdapter::removeAudioComponent(Master& master, const RemoveNode& instruction)

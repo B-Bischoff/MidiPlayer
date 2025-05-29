@@ -3,6 +3,7 @@
 #include <memory>
 #include <cstring>
 #include <assert.h>
+#include <algorithm>
 #include <RtAudio.h>
 
 #include "AudioBackend/Instrument.hpp"

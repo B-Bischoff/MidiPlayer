@@ -91,8 +91,6 @@ void LinkManager::load(Archive& archive, IDManager& idManager) {
 
 	for (LinkData& link : links)
 	{
-		Logger::log("Link") << link.id << " " << link.inputId << " " << link.outputId << std::endl;
-
 		link.id = idManager.getID(link.id); assert(link.id != INVALID_ID);
 		_links.push_back( {link.id, link.inputId, link.outputId} );
 	}

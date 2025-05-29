@@ -15,6 +15,7 @@
 #include <assert.h>
 #include <thread>
 #include <cstring>
+#include <cstdlib>
 #include <limits>
 #include <queue>
 
