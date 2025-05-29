@@ -86,11 +86,9 @@ struct Node
 
 	virtual ~Node() {}
 
-	virtual AudioComponent* convertNodeToAudioComponent() const = 0;
 	virtual void assignToAudioComponent(AudioComponent* audioComponentId) const
 	{
-		Logger::log("Node", Error) << "Method 'assignToAudioComponent' is not overloaded for node : " << name << std::endl;
-		exit(1);
+		// Default method for nodes that do not have members to be copied
 	}
 
 	virtual void render(std::queue<Message>& messages)
@@ -265,8 +263,6 @@ struct MasterNode : public Node
 
 		inputs.push_back(createPin(idManager, "> input", PinKind::Input, Master::Inputs::input));
 	}
-
-	AudioComponent* convertNodeToAudioComponent() const override { return new Master; }
 };
 
 struct NumberNode : public Node
@@ -281,13 +277,6 @@ struct NumberNode : public Node
 
 		value = 0.0f;
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
-	}
-
-	AudioComponent* convertNodeToAudioComponent() const override
-	{
-		Number* audioComponent = new Number;
-		audioComponent->number = value;
-		return audioComponent;
 	}
 
 	void assignToAudioComponent(AudioComponent* audioComponent) const override
@@ -346,13 +335,6 @@ struct OscNode : public Node
 		inputs.push_back(createPin(idManager, "> LFO Hz", PinKind::Input, Oscillator::Inputs::LFO_Hz));
 		inputs.push_back(createPin(idManager, "> LFO Amplitude", PinKind::Input, Oscillator::Inputs::LFO_Amplitude));
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
-	}
-
-	AudioComponent* convertNodeToAudioComponent() const override
-	{
-		Oscillator* audioComponent = new Oscillator;
-		assignToAudioComponent(audioComponent);
-		return audioComponent;
 	}
 
 	void assignToAudioComponent(AudioComponent* audioComponent) const override
@@ -440,13 +422,6 @@ struct ADSR_Node : public Node {
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 
-	AudioComponent* convertNodeToAudioComponent() const override
-	{
-		ADSR* audioComponent = new ADSR;
-		assignToAudioComponent(audioComponent);
-		return audioComponent;
-	}
-
 	void assignToAudioComponent(AudioComponent* audioComponent) const override
 	{
 		ADSR* adsr = dynamic_cast<ADSR*>(audioComponent); assert(adsr);
@@ -500,8 +475,6 @@ struct KeyboardFrequencyNode : public Node {
 
 		outputs.push_back(createPin(idManager, "frequency >", PinKind::Output));
 	}
-
-	AudioComponent* convertNodeToAudioComponent() const override { return new KeyboardFrequency; }
 };
 
 struct MultNode : public Node {
@@ -515,8 +488,6 @@ struct MultNode : public Node {
 		inputs.push_back(createPin(idManager, "> input B", PinKind::Input, Multiplier::Inputs::inputB));
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
-
-	AudioComponent* convertNodeToAudioComponent() const override { return new Multiplier; }
 };
 
 struct LowPassFilterNode : public Node {
@@ -530,8 +501,6 @@ struct LowPassFilterNode : public Node {
 		inputs.push_back(createPin(idManager, "> alpha", PinKind::Input, LowPassFilter::Inputs::alpha));
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
-
-	AudioComponent* convertNodeToAudioComponent() const override { return new LowPassFilter; }
 };
 
 struct CombFilterNode : public Node {
@@ -546,8 +515,6 @@ struct CombFilterNode : public Node {
 		inputs.push_back(createPin(idManager, "> feedback", PinKind::Input, CombFilter::Input::feedback));
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
-
-	AudioComponent* convertNodeToAudioComponent() const override { return new CombFilter; }
 };
 
 // Register every Node child classes
