@@ -15,6 +15,7 @@ struct NodeInfo {
 	std::string name;
 	std::function<Node*(IDManager*)> instantiateFunction;
 	std::function<Node*(Node*)> instantiateCopyFunction;
+	std::function<AudioComponent*(Node*)> convertNodeToAudioComponent;
 };
 
 // [TODO] give NodeManager and LinkManager their own IDManager ??
@@ -23,7 +24,7 @@ private:
 	std::vector<std::shared_ptr<Node>> _nodes;
 
 public:
-	template <typename T>
+	template <typename NodeType, typename AudioComponentType>
 	void registerNode(const std::string& nodeName);
 
 	// [TODO] This should not be public
@@ -67,34 +68,41 @@ private:
 
 // Template method definition
 
-template<typename T>
+template<typename NodeType, typename AudioComponentType>
 void NodeManager::registerNode(const std::string& nodeName) {
-	if (std::is_base_of<Node, T>::value == false)
+	if (std::is_base_of<Node, NodeType>::value == false)
 	{
-		Logger::log("NodeManager", Error) << "registration failed, type T (" << typeid(T).name() << ") is not a child of Node struct" << std::endl;
+		Logger::log("NodeManager", Error) << "registration failed, type NodeType (" << typeid(NodeType).name() << ") is not a child of Node struct" << std::endl;
 		exit(1);
 	}
 
-	const std::type_index typeIndex = std::type_index(typeid(T));
+	const std::type_index typeIndex = std::type_index(typeid(NodeType));
 
 	NodeInfo info;
 
 	if (_nodesInfo.find(typeIndex) != _nodesInfo.end())
 	{
-		Logger::log("NodeManager", Error) << "double registration of type T (" << typeid(T).name() << ")" << std::endl;
+		Logger::log("NodeManager", Error) << "double registration of node type (" << typeid(NodeType).name() << ")" << std::endl;
 		exit(1);
 	}
 
 	// Register instantion function of this new node type
 	info.instantiateFunction = [](IDManager* idManager) -> Node* {
-		return new T(idManager);
+		return new NodeType(idManager);
 	};
 
-	// Register instantion function based on an existing node
+	// Register instantiation function based on an existing node
 	info.instantiateCopyFunction = [](const Node* node) -> Node* {
-		T* newNode = new T;
-		*newNode = *(dynamic_cast<const T*>(node));
+		NodeType* newNode = new NodeType;
+		*newNode = *(dynamic_cast<const NodeType*>(node));
 		return newNode;
+	};
+
+	// Register function to convert UI Node to its associated AudioComponent
+	info.convertNodeToAudioComponent = [](const Node* node) -> AudioComponentType* {
+		AudioComponentType* audioComponent = new AudioComponentType;
+		node->assignToAudioComponent(audioComponent);
+		return audioComponent;
 	};
 
 	info.name = nodeName;

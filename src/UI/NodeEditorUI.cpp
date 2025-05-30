@@ -8,14 +8,14 @@ NodeEditorUI::NodeEditorUI()
 	_UIModified = false;
 	_navigateToContent = false;
 
-	_nodeManager.registerNode<MasterNode>("Master");
-	_nodeManager.registerNode<NumberNode>("Number");
-	_nodeManager.registerNode<OscNode>("Oscillator");
-	_nodeManager.registerNode<ADSR_Node>("ADSR Envelope");
-	_nodeManager.registerNode<KeyboardFrequencyNode>("Keyboard Frequency");
-	_nodeManager.registerNode<MultNode>("Multiply");
-	_nodeManager.registerNode<LowPassFilterNode>("Low Pass Filter");
-	_nodeManager.registerNode<CombFilterNode>("Comb Filter");
+	_nodeManager.registerNode<MasterNode, Master>("Master");
+	_nodeManager.registerNode<NumberNode, Number>("Number");
+	_nodeManager.registerNode<OscNode, Oscillator>("Oscillator");
+	_nodeManager.registerNode<ADSR_Node, ADSR>("ADSR Envelope");
+	_nodeManager.registerNode<KeyboardFrequencyNode, KeyboardFrequency>("Keyboard Frequency");
+	_nodeManager.registerNode<MultNode, Multiplier>("Multiply");
+	_nodeManager.registerNode<LowPassFilterNode, LowPassFilter>("Low Pass Filter");
+	_nodeManager.registerNode<CombFilterNode, CombFilter>("Comb Filter");
 
 	_nodeManager.addNode<MasterNode>(_idManager);
 

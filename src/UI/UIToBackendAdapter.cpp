@@ -198,7 +198,8 @@ void UIToBackendAdapter::addAudioComponent(Master& master, Node& masterUI, NodeU
 	if (newAudioComponent == nullptr)
 	{
 		// Allocate new AudioComponent and link UI node to it
-		newAudioComponent = node->convertNodeToAudioComponent(); assert(newAudioComponent);
+		const NodeInfo& nodeInfo = managers.node.getNodeInfo(node);
+		newAudioComponent = nodeInfo.convertNodeToAudioComponent(node);
 		node->audioComponentId = newAudioComponent->id;
 	}
 
