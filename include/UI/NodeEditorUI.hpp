@@ -6,6 +6,7 @@
 #include <memory>
 #include <sstream>
 #include <unordered_map>
+#include <unordered_set>
 
 #include <cereal/archives/json.hpp>
 #include <cereal/archives/binary.hpp>
@@ -116,4 +117,6 @@ private:
 	void registerNodeIds(Node& node);
 
 	void showLabel(const std::string& label) const;
+
+	bool checkCircularLinking(const std::shared_ptr<Node>& rootNode, const std::shared_ptr<Node>& currentNode, std::unordered_set<unsigned int>traversedNodeIds = {});
 };

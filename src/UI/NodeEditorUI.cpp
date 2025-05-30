@@ -234,15 +234,39 @@ void NodeEditorUI::handleLinkCreation(Master& master)
 		}
 		else if (ed::AcceptNewItem())
 		{
-			_linkManager.addLink(_idManager, _nodeManager, inputPinId, outputPinId);
-			_UIModified = true;
+			ed::LinkId linkId = _linkManager.addLink(_idManager, _nodeManager, inputPinId, outputPinId);
+			const std::shared_ptr<Node>& rootNode = _nodeManager.findNodeByPinId(outputPin.kind == PinKind::Input ? inputPin.id : outputPin.id);
+			if (checkCircularLinking(rootNode, rootNode))
+			{
+				_linkManager.removeLink(_idManager, linkId);
+				ImGui::InsertNotification({ImGuiToastType::Warning, 5000, "Do not create ckrcular dependencies between nodes"});
+				Logger::log("NodeEditor", Warning) << "Circular dependency detected: removed link." << std::endl;
+			}
+			else
+				_UIModified = true;
 		}
-
-		// You may choose to reject connection between these nodes
-		// by calling ed::RejectNewItem(). This will allow editor to give
-		// visual feedback by changing link thickness and color.
 	}
 	ed::EndCreate();
+}
+
+bool NodeEditorUI::checkCircularLinking(const std::shared_ptr<Node>& rootNode, const std::shared_ptr<Node>& currentNode, std::unordered_set<unsigned int>traversedNodeIds)
+{
+	if (traversedNodeIds.count(currentNode->id))
+		return true;
+
+	traversedNodeIds.insert(currentNode->id);
+
+	std::list<LinkInfo> links = _linkManager.findNodeLinks(_nodeManager, currentNode->id, 1);
+	for (const LinkInfo& link : links)
+	{
+		const std::shared_ptr<Node> linkedNode = _nodeManager.findNodeByPinId(link.OutputId);
+		if (checkCircularLinking(rootNode, linkedNode, traversedNodeIds))
+			return true;
+	}
+
+	traversedNodeIds.erase(currentNode->id);
+
+	return false;
 }
 
 void NodeEditorUI::handleDeletion(Master& master, std::queue<Message>& messages)
