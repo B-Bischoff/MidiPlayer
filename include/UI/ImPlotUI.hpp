@@ -11,7 +11,6 @@
 class ImPlotUI {
 private:
 	ImPlotContext* _context;
-	float* _timeArray;
 
 	// Envelope editor
 	bool _printEnvelopeEditor = false;
@@ -27,7 +26,7 @@ public:
 
 	void initStyle();
 
-	void update(Audio& audio, std::queue<Message>& messages);
+	void update(Audio& audio, std::queue<Message>& messages, MidiPlayerSettings& settings);
 	void setPrintEnvelopeEditor(bool value, Vec2* controlPoints = nullptr, unsigned int nodeId = 0);
 	unsigned int getNodeId() const;
 
@@ -35,4 +34,6 @@ private:
 	void printEnvelopeEditor(std::queue<Message>& messages);
 	void printEnvelopeEditorPoints();
 	void handleControlPoints(std::queue<Message>& messages);
+
+	void printPlot(Audio& audio, unsigned int offset = 0, bool stereo = false);
 };

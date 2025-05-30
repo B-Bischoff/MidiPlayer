@@ -80,6 +80,8 @@ void AudioSpectrum::plot(const double* xAxis, const double* yAxis, const unsigne
 
 	if (windowOpened && ImPlot::BeginPlot("Plot", ImVec2(ImGui::GetContentRegionAvail())))
 	{
+		ImPlot::SetupAxis(ImAxis_X1, "Frequency (Hertz)");
+		ImPlot::SetupAxis(ImAxis_Y1, "Amplitude");
 		ImPlot::SetupAxisScale(ImAxis_X1, ImPlotScale_Log10);
 		ImPlot::SetupAxisLimits(ImAxis_X1, 1.0, xMax);
 		ImPlot::SetupAxisLimits(ImAxis_Y1, 0.0, 10.0); // Set Y axis go from 0 to 10

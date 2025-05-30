@@ -163,7 +163,7 @@ void UI::update(Window& window, Audio& audio, std::vector<Instrument>& instrumen
 	updateLoadedInstruments(instruments, selectedInstrument, loadDefaultInstrument);
 
 	_nodeEditor.update(_selectedInstrument->master, messageQueue, _selectedInstrument);
-	_imPlot.update(audio, messageQueue);
+	_imPlot.update(audio, messageQueue, settings);
 	_audioSpectrum.update(audio);
 
 	if (_windowsState.showLog)
