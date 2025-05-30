@@ -220,7 +220,18 @@ void NodeEditorUI::handleLinkCreation(Master& master)
 
 		// Do not accept link on pin using slider
 		if (inputPin.mode == Pin::Mode::Slider || outputPin.mode == Pin::Mode::Slider)
-			ed::RejectNewItem();
+		{
+			showLabel("Cannot link slider");
+			ed::RejectNewItem(ImColor(255, 128, 128), 2.0f);
+		}
+		else if (inputPin.kind == outputPin.kind)
+		{
+			if (inputPin.kind == PinKind::Input)
+				showLabel("Cannot link two inputs");
+			else
+				showLabel("Cannot link two outputs");
+			ed::RejectNewItem(ImColor(255, 128, 128), 2.0f);
+		}
 		else if (ed::AcceptNewItem())
 		{
 			_linkManager.addLink(_idManager, _nodeManager, inputPinId, outputPinId);
@@ -529,4 +540,22 @@ void NodeEditorUI::cut(std::queue<Message>& messages)
 		deleteNode(selectedNodes[i], messages);
 
 	ed::ClearSelection();
+}
+
+void NodeEditorUI::showLabel(const std::string& label) const
+{
+	ImGui::SetCursorPosY(ImGui::GetCursorPosY() - ImGui::GetTextLineHeight());
+	auto size = ImGui::CalcTextSize(label.c_str());
+
+	auto padding = ImGui::GetStyle().FramePadding;
+	auto spacing = ImGui::GetStyle().ItemSpacing;
+
+	ImGui::SetCursorPos(ImGui::GetCursorPos() + ImVec2(spacing.x, -spacing.y));
+
+	auto rectMin = ImGui::GetCursorScreenPos() - padding;
+	auto rectMax = ImGui::GetCursorScreenPos() + size + padding;
+
+	auto drawList = ImGui::GetWindowDrawList();
+	drawList->AddRectFilled(rectMin, rectMax, ImColor(45, 32, 32, 180), size.y * 0.15f);
+	ImGui::TextUnformatted(label.c_str());
 }

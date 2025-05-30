@@ -1,5 +1,7 @@
 #pragma once
 
+#define IMGUI_DEFINE_MATH_OPERATORS
+
 #include <fstream>
 #include <memory>
 #include <sstream>
@@ -112,4 +114,6 @@ private:
 	void deleteNode(const ed::NodeId& id, std::queue<Message>& messages);
 
 	void registerNodeIds(Node& node);
+
+	void showLabel(const std::string& label) const;
 };

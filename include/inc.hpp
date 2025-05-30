@@ -8,6 +8,10 @@
 #include <portmidi.h>
 #include <RtAudio.h>
 
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include "imgui.h"
+#include "implot.h"
+
 #include <iostream>
 #include <chrono>
 #include <chrono>
