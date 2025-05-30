@@ -8,6 +8,10 @@
 #include <portmidi.h>
 #include <RtAudio.h>
 
+#ifndef NOTIFY_RENDER_OUTSIDE_MAIN_WINDOW
+#define NOTIFY_RENDER_OUTSIDE_MAIN_WINDOW false
+#endif
+
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui.h"
 #include "implot.h"
