@@ -24,7 +24,7 @@ void UI::updateSettings(Audio& audio, InputManager& inputManager, MidiPlayerSett
 
 		ImGui::SeparatorText("UI");
 		ImGui::Indent();
-		updateUISettings();
+		updateUISettings(settings);
 		ImGui::Unindent();
 	}
 
@@ -201,14 +201,20 @@ void UI::updateMidiSettings(InputManager& inputManager, MidiPlayerSettings& sett
 	ImGui::PopID();
 }
 
-void UI::updateUISettings()
+void UI::updateUISettings(MidiPlayerSettings& settings)
 {
 	ImGuiIO& io = ImGui::GetIO();
 	float fontScale = io.FontGlobalScale;
 	ImGui::Text("Font scale ");
 	ImGui::SameLine();
 	ImGui::PushID("FontScaleDragFloat");
-	if (ImGui::DragFloat("", &fontScale, 0.05, 0.3, 1.5))
+	if (ImGui::DragFloat("", &fontScale, 0.005, 0.3, 1.5))
 		io.FontGlobalScale = fontScale;
+	ImGui::PopID();
+
+	ImGui::Text("Separate left/right buffer graph");
+	ImGui::SameLine();
+	ImGui::PushID("SplitGraphCheckBox");
+	ImGui::Checkbox("", &settings.splitBufferGraph);
 	ImGui::PopID();
 }

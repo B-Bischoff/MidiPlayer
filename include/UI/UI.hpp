@@ -81,5 +81,5 @@ private:
 	void updateAudioChannels(Audio& audio);
 	void updateAudioLatency(Audio& audio);
 	void updateMidiSettings(InputManager& inputManager, MidiPlayerSettings& settings);
-	void updateUISettings();
+	void updateUISettings(MidiPlayerSettings& settings);
 };

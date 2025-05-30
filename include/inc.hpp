@@ -42,6 +42,7 @@ enum OscType { Sine, Square, Triangle, Saw_Ana, Saw_Dig, Noise };
 
 struct MidiPlayerSettings {
 	bool useKeyboardAsInput = true;
+	bool splitBufferGraph = false;
 };
 
 struct MidiInfo

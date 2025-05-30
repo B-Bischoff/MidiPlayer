@@ -4,11 +4,6 @@ ImPlotUI::ImPlotUI(Audio& audio)
 {
 	_context = ImPlot::CreateContext();
 
-	// [TODO] use a smart pointer
-	_timeArray = new float[audio.getBufferSize()];
-	for (int i = 0; i < audio.getBufferSize(); i++)
-		_timeArray[i] = 1.0 / static_cast<double>(audio.getSampleRate()) * i;
-
 	// Invert the mouse buttons for plot navigation
 	ImPlotInputMap& map = ImPlot::GetInputMap();
 	map.Pan = ImGuiMouseButton_Right;
@@ -45,29 +40,52 @@ void ImPlotUI::initStyle()
 ImPlotUI::~ImPlotUI()
 {
 	ImPlot::DestroyContext(_context);
-	delete [] _timeArray;
 }
 
-void ImPlotUI::update(Audio& audio, std::queue<Message>& messages)
+void ImPlotUI::printPlot(Audio& audio, unsigned int offset, bool stereo)
+{
+	ImPlot::SetupAxis(ImAxis_X1, "Time (seconds)");
+	ImPlot::SetupAxis(ImAxis_Y1, "Amplitude");
+	ImPlot::SetupAxisLimits(ImAxis_Y1, -1.0, 1.0); // Set Y axis go from -1 to +1
+	if (!stereo)
+		ImPlot::PlotLine("value", audio.getBuffer() + offset, audio.getBufferSize() / audio.getChannels(), 1.0 / audio.getSampleRate(), 0, ImPlotLineFlags(), 0, audio.getChannels()*sizeof(float));
+	else
+	{
+		ImPlot::PlotLine("left", audio.getBuffer(), audio.getBufferSize() / audio.getChannels(), 1.0 / audio.getSampleRate(), 0, ImPlotLineFlags(), 0, audio.getChannels()*sizeof(float));
+		ImPlot::PlotLine("right", audio.getBuffer() + 1, audio.getBufferSize() / audio.getChannels(), 1.0 / audio.getSampleRate(), 0, ImPlotLineFlags(), 0, audio.getChannels()*sizeof(float));
+	}
+	double writeCursorX = audio.getWriteCursorPos() / (double)audio.getSampleRate() / audio.getChannels();
+	double readCursorX = audio.getReadCursorPos() / (double)audio.getSampleRate() / audio.getChannels();
+	double writeCursorXArray[2] = { writeCursorX, writeCursorX };
+	double readCursorXArray[2] = { readCursorX, readCursorX };
+	double cursorY[2] = { 0.0, 1.0 };
+	ImPlot::PlotLine("write cursor", writeCursorXArray, cursorY, 2);
+	ImPlot::PlotLine("read cursor", readCursorXArray, cursorY, 2);
+	ImPlot::EndPlot();
+}
+
+void ImPlotUI::update(Audio& audio, std::queue<Message>& messages, MidiPlayerSettings& settings)
 {
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 
 	const bool windowOpened = ImGui::Begin("Audio buffer");
 	ImGui::PopStyleVar(1);
 
-	if (windowOpened && ImPlot::BeginPlot("Plot", ImVec2(ImGui::GetContentRegionAvail())))
+	if (settings.splitBufferGraph)
 	{
-		ImPlot::SetupAxisLimits(ImAxis_Y1, -1.0, 1.0); // Set Y axis go from -1 to +1
-		ImPlot::PlotLine("line", _timeArray, audio.getBuffer(), audio.getBufferSize());
-		double writeCursorX = audio.getWriteCursorPos() / (double)audio.getSampleRate();
-		double readCursorX = audio.getReadCursorPos() / (double)audio.getSampleRate();;
-		double writeCursorXArray[2] = { writeCursorX, writeCursorX };
-		double readCursorXArray[2] = { readCursorX, readCursorX };
-		double cursorY[2] = { 0.0, 1.0 };
-		ImPlot::PlotLine("write cursor", writeCursorXArray, cursorY, 2);
-		ImPlot::PlotLine("read cursor", readCursorXArray, cursorY, 2);
-
-		ImPlot::EndPlot();
+		if (windowOpened && ImPlot::BeginSubplots("Stereo View", 2, 1, ImVec2(ImGui::GetContentRegionAvail()), ImPlotSubplotFlags_LinkCols | ImPlotSubplotFlags_NoTitle))
+		{
+			if (ImPlot::BeginPlot("Left ear", ImVec2(ImGui::GetContentRegionAvail())))
+				printPlot(audio, 0, false);
+			if (ImPlot::BeginPlot("Right ear", ImVec2(ImGui::GetContentRegionAvail())))
+				printPlot(audio, 1, false);
+			ImPlot::EndSubplots();
+		}
+	}
+	else
+	{
+		if (ImPlot::BeginPlot("Buffer", ImVec2(ImGui::GetContentRegionAvail())))
+			printPlot(audio, 0, true);
 	}
 
 	if (_printEnvelopeEditor)
