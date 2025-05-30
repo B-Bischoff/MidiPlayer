@@ -15,7 +15,9 @@ NodeEditorUI::NodeEditorUI()
 	_nodeManager.registerNode<KeyboardFrequencyNode, KeyboardFrequency>("Keyboard Frequency");
 	_nodeManager.registerNode<MultNode, Multiplier>("Multiply");
 	_nodeManager.registerNode<LowPassFilterNode, LowPassFilter>("Low Pass Filter");
+	_nodeManager.registerNode<HighPassFilterNode, HighPassFilter>("High Pass Filter");
 	_nodeManager.registerNode<CombFilterNode, CombFilter>("Comb Filter");
+	_nodeManager.registerNode<OverdriveNode, Overdrive>("Overdrive");
 
 	_nodeManager.addNode<MasterNode>(_idManager);
 
