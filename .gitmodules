@@ -1,13 +1,14 @@
 [submodule "external/portmidi"]
 	path = external/portmidi
 	url = git@github.com:PortMidi/portmidi.git
+	tag = v2.0.1
 [submodule "external/rtaudio"]
 	path = external/rtaudio
 	url = git@github.com:thestk/rtaudio.git
 [submodule "external/imgui"]
 	path = external/imgui
 	url = git@github.com:ocornut/imgui.git
-	branch = v1.91.5-docking
+	branch = docking
 [submodule "external/implot"]
 	path = external/implot
 	url = git@github.com:epezent/implot.git
@@ -27,7 +28,7 @@
 [submodule "external/kissfft"]
 	path = external/kissfft
 	url = git@github.com:mborgerding/kissfft.git
-	branch = 131.1.0
+	tag = 131.1.0
 [submodule "external/imgui-notify"]
 	path = external/imgui-notify
 	url = git@github.com:TyomaVader/ImGuiNotify.git

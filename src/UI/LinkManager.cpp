@@ -1,13 +1,13 @@
 #include "UI/LinkManager.hpp"
 
-void LinkManager::addLink(IDManager& idManager, NodeManager& nodeManager, ed::PinId input, ed::PinId output)
+ed::LinkId LinkManager::addLink(IDManager& idManager, NodeManager& nodeManager, ed::PinId input, ed::PinId output)
 {
 	Pin& inputPin = nodeManager.findPinById(input);
 	Pin& outputPin = nodeManager.findPinById(output);
 	if (inputPin.kind == outputPin.kind)
 	{
 		Logger::log("LinkManager", Warning) << "Do not link same pin kind." << std::endl;
-		return;
+		return 0;
 	}
 
 	std::shared_ptr<Node>& inputNode = nodeManager.findNodeByPinId(input);
@@ -15,7 +15,7 @@ void LinkManager::addLink(IDManager& idManager, NodeManager& nodeManager, ed::Pi
 	if (inputNode == outputNode)
 	{
 		Logger::log("LinkManager", Warning) << "Do not link multiple pins from the same node." << std::endl;
-		return;
+		return 0;
 	}
 
 	// Make sure input and output are not reversed
@@ -28,6 +28,7 @@ void LinkManager::addLink(IDManager& idManager, NodeManager& nodeManager, ed::Pi
 	link.OutputId = output;
 
 	_links.push_back(link);
+	return link.Id;
 }
 
 void LinkManager::eraseLink(ed::LinkId id)
