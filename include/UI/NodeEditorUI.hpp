@@ -86,7 +86,7 @@ public:
 	NodeEditorUI();
 	~NodeEditorUI();
 
-	void update(Master& master, std::queue<Message>& messages, Instrument* selectedInstrument = nullptr);
+	void update(Master& master, std::queue<Message>& messages, std::vector<Instrument>& instruments, Instrument* selectedInstrument = nullptr);
 
 	void serialize(const fs::path& path);
 	void serialize(std::stringstream& stream);

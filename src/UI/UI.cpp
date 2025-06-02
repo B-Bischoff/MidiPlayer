@@ -150,19 +150,12 @@ void UI::update(Window& window, Audio& audio, std::vector<Instrument>& instrumen
 	static int selectedInstrument = -1;
 	static std::string selectedStoredInstrument = "";
 
-	// [TODO] find a better way to do this
-	// Nodes need to be rendered a first time before you can set its position
-	// (which is done when loading nodes from file/stream)
-	if (loadDefaultInstrument)
-	{
-		loadDefaultInstrument = false;
-		_nodeEditor.loadFile(_selectedInstrument->master, _instruments["default"]);
-	}
-
 	updateSavedInstruments(instruments, selectedStoredInstrument);
-	updateLoadedInstruments(instruments, selectedInstrument, loadDefaultInstrument);
 
-	_nodeEditor.update(_selectedInstrument->master, messageQueue, _selectedInstrument);
+	// Removed for the first release. Only allow a single instrument.
+	//updateLoadedInstruments(instruments, selectedInstrument, loadDefaultInstrument);
+
+	_nodeEditor.update(_selectedInstrument->master, messageQueue, instruments, _selectedInstrument);
 	_imPlot.update(audio, messageQueue, settings);
 	_audioSpectrum.update(audio);
 
@@ -332,6 +325,11 @@ void UI::processEventQueue(std::queue<Message>& messageQueue)
 				delete cursorPos;
 				break;
 			}
+			case UI_CREATE_INSTRUMENT : {
+				std::vector<Instrument>* instruments = (std::vector<Instrument>*)message.data;
+				createNewInstrument(*instruments);
+				break;
+			}
 			default: {
 				assert(0 && "[UI] invalid message.");
 			}
@@ -339,6 +337,25 @@ void UI::processEventQueue(std::queue<Message>& messageQueue)
 		}
 		messageQueue.pop();
 	}
+}
+
+void UI::createNewInstrument(std::vector<Instrument>& instruments)
+{
+	if (instruments.size() >= 1)
+	{
+		Logger::log("UI", Warning) << "For now, only one instrument can be created." << std::endl;
+		return;
+	}
+
+	instruments.push_back(Instrument());
+	instruments.back().name = "instrument" + std::to_string(instruments.size() - 1);
+	if (instruments.size() == 1) // Auto-select new instrument if no other existing
+	{
+		_selectedInstrument = &instruments[instruments.size() - 1];
+		switchSelectedInstrument(instruments.back());
+	}
+	// Update selected instrument ptr in case of ptr invalidation
+	_nodeEditor.loadFile(_selectedInstrument->master, _instruments["default"]);
 }
 
 void UI::initUpdate(const int& WIN_WIDTH, const int& WIN_HEIGHT)
