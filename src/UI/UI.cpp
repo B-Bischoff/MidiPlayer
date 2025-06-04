@@ -394,13 +394,13 @@ void UI::initUpdate(const int& WIN_WIDTH, const int& WIN_HEIGHT)
 		ImGui::DockBuilderSetNodeSize(dockspaceId, ImGui::GetWindowSize());
 
 		ImGuiID dockNodeEditor = dockspaceId;
-		ImGuiID dockLoadedInstrument = ImGui::DockBuilderSplitNode(dockNodeEditor, ImGuiDir_Left, 0.20f, nullptr, &dockNodeEditor);
-		ImGuiID dockStoredInstrument = ImGui::DockBuilderSplitNode(dockLoadedInstrument, ImGuiDir_Down, 0.70f, nullptr, &dockLoadedInstrument);
+		//ImGuiID dockLoadedInstrument = ImGui::DockBuilderSplitNode(dockNodeEditor, ImGuiDir_Left, 0.20f, nullptr, &dockNodeEditor);
+		ImGuiID dockStoredInstrument = ImGui::DockBuilderSplitNode(dockNodeEditor, ImGuiDir_Left, 0.20f, nullptr, &dockNodeEditor);
 		ImGuiID dockAudioBuffer = ImGui::DockBuilderSplitNode(dockNodeEditor, ImGuiDir_Down, 0.30f, nullptr, &dockNodeEditor);
 		ImGuiID dockAudioSpectrum = ImGui::DockBuilderSplitNode(dockAudioBuffer, ImGuiDir_Right, 0.50f, nullptr, &dockAudioBuffer);
 
 		// Dock windows
-		ImGui::DockBuilderDockWindow("Loaded instruments", dockLoadedInstrument);
+		//ImGui::DockBuilderDockWindow("Loaded instruments", dockLoadedInstrument);
 		ImGui::DockBuilderDockWindow("Stored instruments", dockStoredInstrument);
 		ImGui::DockBuilderDockWindow("Node editor", dockNodeEditor);
 		ImGui::DockBuilderDockWindow("Audio buffer", dockAudioBuffer);
