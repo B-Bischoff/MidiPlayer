@@ -66,6 +66,7 @@ private:
 	void initUpdate(const int& WIN_WIDTH, const int& WIN_HEIGHT);
 	void endUpdate();
 
+	void createNewInstrument(std::vector<Instrument>& instruments);
 	void switchSelectedInstrument(Instrument& newInstrument);
 
 	void updateMenuBar();

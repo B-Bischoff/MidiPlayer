@@ -56,7 +56,7 @@ void NodeEditorUI::initStyle()
 	style.Colors[ax::NodeEditor::StyleColor_NodeSelRectBorder] = UI_Colors::base;
 }
 
-void NodeEditorUI::update(Master& master, std::queue<Message>& messages, Instrument* selectedInstrument)
+void NodeEditorUI::update(Master& master, std::queue<Message>& messages, std::vector<Instrument>& instruments, Instrument* selectedInstrument)
 {
 	ImGuiWindowFlags f;
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
@@ -64,6 +64,24 @@ void NodeEditorUI::update(Master& master, std::queue<Message>& messages, Instrum
 	// Do not open window when no instrument is selected
 	const bool windowOpened = ImGui::Begin("Node editor") && (selectedInstrument != nullptr);
 	ImGui::PopStyleVar(1);
+
+	if (!windowOpened)
+	{
+		// Center button horizontally and vertically
+		const ImVec2 windowSize = ImGui::GetWindowSize();
+
+		const char* text = "Create new instrument";
+		const ImVec2 textSize = ImGui::CalcTextSize(text);
+		const ImVec2 textPos = ImVec2((windowSize.x - textSize.x) * 0.5f, (windowSize.y - textSize.y) * 0.5f);
+		ImGui::SetCursorPos(textPos);
+
+		ImGui::SetWindowFontScale(1.3);
+		if (ImGui::Button(text))
+			messages.push(Message(UI_CREATE_INSTRUMENT, &instruments));
+		ImGui::SetWindowFontScale(1.0); // reset scale
+	}
+
+
 	if (windowOpened)
 	{
 		ed::SetCurrentEditor(_context);
