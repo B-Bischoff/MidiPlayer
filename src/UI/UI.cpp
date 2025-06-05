@@ -207,24 +207,28 @@ void UI::updateSavedInstruments(std::vector<Instrument>& instruments, std::strin
 	ImGui::Text("Save new instrument");
 	ImGui::Separator();
 	static char instrumentFilename[128] = "";
+	bool saveInstrument = false;
+
+	updateOverwritePopup(saveInstrument);
+
+	fs::path newInstrumentPath = _path.ressourceDirectory;
+	std::string filename = instrumentFilename + std::string(INSTRUMENTS_EXTENSION);
+	newInstrumentPath.append(INSTRUMENTS_DIR);
+	newInstrumentPath.append(filename);
+
 	if (ImGui::Button("Save Instrument: ") && instruments.size())
 	{
-		fs::path newInstrumentPath = _path.ressourceDirectory;
-		std::string filename = instrumentFilename + std::string(INSTRUMENTS_EXTENSION);
-		newInstrumentPath.append(INSTRUMENTS_DIR);
-		newInstrumentPath.append(filename);
-		_nodeEditor.serialize(newInstrumentPath);
-
-		// Don't add already existing instrument
-		if (std::find_if(_instruments.begin(), _instruments.end(), \
-					[&newInstrumentPath](const auto& pair) { return pair.second == newInstrumentPath; }) == _instruments.end())
-		{
-			const std::string presetName = newInstrumentPath.stem().string();
-			_instruments[presetName] = newInstrumentPath;
-		}
+		if (fs::exists(newInstrumentPath))
+			ImGui::OpenPopup("Overwrite?");
+		else
+			saveInstrument = true;
 	}
+
 	ImGui::InputText("filename", instrumentFilename, IM_ARRAYSIZE(instrumentFilename));
 	ImGui::Dummy(ImVec2(0, 20.0f));
+
+	if (saveInstrument)
+		serializeInstrument(newInstrumentPath);
 
 	ImGui::Text("Stored instruments");
 	ImGui::Separator();
@@ -239,6 +243,46 @@ void UI::updateSavedInstruments(std::vector<Instrument>& instruments, std::strin
 			selectedStoredInstrument = it->first;
 	}
 	ImGui::End();
+}
+
+void UI::updateOverwritePopup(bool& saveInstrument)
+{
+	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+	ImGui::SetNextWindowPos(center, 0, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal("Overwrite?", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+	{
+		ImGui::Text("A file with this name already exists, are you sure you want to overwrite it?\nThis operation cannot be undone!\n\n");
+		ImGui::Separator();
+
+		if (ImGui::Button("OK", ImVec2(120, 0)))
+		{
+			saveInstrument = true;
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::SetItemDefaultFocus();
+		ImGui::SameLine();
+
+		if (ImGui::Button("Cancel", ImVec2(120, 0)))
+			ImGui::CloseCurrentPopup();
+		ImGui::EndPopup();
+	}
+}
+
+void UI::serializeInstrument(const fs::path& instrumentPath)
+{
+	_nodeEditor.serialize(instrumentPath);
+
+	Logger::log("NodeEditor", Info) << "Saved file: " << instrumentPath.string() << std::endl;
+	ImGui::InsertNotification({ImGuiToastType::Info, 3000, "Saved file: %s", instrumentPath.string().c_str()});
+
+	// Don't add already existing instrument
+	if (std::find_if(_instruments.begin(), _instruments.end(), \
+				[&instrumentPath](const auto& pair) { return pair.second == instrumentPath; }) == _instruments.end())
+	{
+		const std::string presetName = instrumentPath.stem().string();
+		_instruments[presetName] = instrumentPath;
+	}
 }
 
 void UI::updateLoadedInstruments(std::vector<Instrument>& instruments, int& selectedInstrument, bool& loadDefaultInstrument)
