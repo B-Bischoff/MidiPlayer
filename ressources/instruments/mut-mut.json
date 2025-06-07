@@ -261,22 +261,6 @@
                   "pin_kind": 1,
                   "pin_input_id": 1,
                   "pin_mode": 1
-                },
-                {
-                  "pin_id": 26,
-                  "node_id": 23,
-                  "pin_name": "> LFO Hz",
-                  "pin_kind": 1,
-                  "pin_input_id": 2,
-                  "pin_mode": 0
-                },
-                {
-                  "pin_id": 27,
-                  "node_id": 23,
-                  "pin_name": "> LFO Amplitude",
-                  "pin_kind": 1,
-                  "pin_input_id": 3,
-                  "pin_mode": 0
                 }
               ],
               "node_outputs": [
@@ -482,22 +466,6 @@
                   "pin_kind": 1,
                   "pin_input_id": 1,
                   "pin_mode": 0
-                },
-                {
-                  "pin_id": 49,
-                  "node_id": 46,
-                  "pin_name": "> LFO Hz",
-                  "pin_kind": 1,
-                  "pin_input_id": 2,
-                  "pin_mode": 0
-                },
-                {
-                  "pin_id": 50,
-                  "node_id": 46,
-                  "pin_name": "> LFO Amplitude",
-                  "pin_kind": 1,
-                  "pin_input_id": 3,
-                  "pin_mode": 0
                 }
               ],
               "node_outputs": [
@@ -610,22 +578,6 @@
                   "pin_name": "> phase",
                   "pin_kind": 1,
                   "pin_input_id": 1,
-                  "pin_mode": 0
-                },
-                {
-                  "pin_id": 64,
-                  "node_id": 61,
-                  "pin_name": "> LFO Hz",
-                  "pin_kind": 1,
-                  "pin_input_id": 2,
-                  "pin_mode": 0
-                },
-                {
-                  "pin_id": 65,
-                  "node_id": 61,
-                  "pin_name": "> LFO Amplitude",
-                  "pin_kind": 1,
-                  "pin_input_id": 3,
                   "pin_mode": 0
                 }
               ],
@@ -786,22 +738,6 @@
                   "pin_name": "> phase",
                   "pin_kind": 1,
                   "pin_input_id": 1,
-                  "pin_mode": 0
-                },
-                {
-                  "pin_id": 82,
-                  "node_id": 79,
-                  "pin_name": "> LFO Hz",
-                  "pin_kind": 1,
-                  "pin_input_id": 2,
-                  "pin_mode": 0
-                },
-                {
-                  "pin_id": 83,
-                  "node_id": 79,
-                  "pin_name": "> LFO Amplitude",
-                  "pin_kind": 1,
-                  "pin_input_id": 3,
                   "pin_mode": 0
                 }
               ],

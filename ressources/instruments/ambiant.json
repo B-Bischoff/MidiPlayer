@@ -57,22 +57,6 @@
                   "pin_kind": 1,
                   "pin_input_id": 1,
                   "pin_mode": 0
-                },
-                {
-                  "pin_id": 6,
-                  "node_id": 3,
-                  "pin_name": "> LFO Hz",
-                  "pin_kind": 1,
-                  "pin_input_id": 2,
-                  "pin_mode": 0
-                },
-                {
-                  "pin_id": 7,
-                  "node_id": 3,
-                  "pin_name": "> LFO Amplitude",
-                  "pin_kind": 1,
-                  "pin_input_id": 3,
-                  "pin_mode": 0
                 }
               ],
               "node_outputs": [
