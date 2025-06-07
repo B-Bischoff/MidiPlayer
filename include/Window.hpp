@@ -6,9 +6,11 @@
 #include <GLFW/glfw3.h>
 #include <string>
 
+#include "stb_image.h"
+#include "imgui.h" // Used for ImVec
+
 #include "WindowContext.hpp"
 #include "Logger.hpp"
-#include "imgui.h" // Used for ImVec
 
 class Window {
 private:
