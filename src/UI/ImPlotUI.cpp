@@ -103,6 +103,7 @@ void ImPlotUI::handleControlPoints(std::queue<Message>& messages)
 		ImPlot::GetColormapColor(2),
 		{1, 1, 1, 1},
 	};
+	constexpr double controlMaxY = 20.0;
 
 	bool adsrChanged = false;
 
@@ -121,7 +122,7 @@ void ImPlotUI::handleControlPoints(std::queue<Message>& messages)
 			double xMax = (i == 7) ? 10 : _controlPoints[i + 1].x;
 			double xMin = (i == 0) ? 0 : _controlPoints[i - 1].x;
 			_controlPoints[i].x = std::clamp(mousePos.x, xMin, xMax);
-			_controlPoints[i].y = std::clamp(mousePos.y, 0.0, 2.0);
+			_controlPoints[i].y = std::clamp(mousePos.y, 0.0, controlMaxY);
 
 			// Sustain _control points must have the same Y value
 			if (i == 4) _controlPoints[5].y = _controlPoints[4].y;
@@ -148,6 +149,10 @@ void ImPlotUI::handleControlPoints(std::queue<Message>& messages)
 void ImPlotUI::printEnvelopeEditor(std::queue<Message>& messages)
 {
 	bool windowOpen = true;
+
+	ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_FirstUseEver, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowSize(ImVec2(ImGui::GetMainViewport()->Size.x * 0.5, ImGui::GetMainViewport()->Size.y * 0.3), ImGuiCond_FirstUseEver);
+
 	if (ImGui::Begin("ADSR Envelope Editor", &windowOpen))
 	{
 		if (ImPlot::BeginPlot("##ADSRPlot", ImVec2(ImGui::GetContentRegionAvail())))
@@ -164,7 +169,7 @@ void ImPlotUI::printEnvelopeEditor(std::queue<Message>& messages)
 
 void ImPlotUI::printEnvelopeEditorPoints()
 {
-	const int numPoints = 200;
+	const int numPoints = 5000;
 	float X[numPoints];
 	float Y[numPoints];
 
