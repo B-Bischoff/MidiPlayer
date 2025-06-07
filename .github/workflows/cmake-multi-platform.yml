@@ -59,7 +59,7 @@ jobs:
         . ./ci-env
         docker exec docker-runner cmake -S . -B build_aarch64_linux -DCMAKE_TOOLCHAIN_FILE=./cmake/aarch64_Linux_toolchain.cmake
         docker exec docker-runner make -C build_aarch64_linux -j $(nproc)
-        mkdir -p $ARTIFACTS/builds && docker cp "$DOCKER_NAME:$REPO_NAME/build_aarch64_linux" $ARTIFACTS/builds
+        mkdir -p $ARTIFACTS/builds/build_aarch64_linux && docker cp "$DOCKER_NAME:$REPO_NAME/build_aarch64_linux" $ARTIFACTS/builds/build_aarch64_linux
 
     - name: "Compile project ${{ github.repository }} for x86_64 Linux"
       run: |
@@ -72,22 +72,38 @@ jobs:
         docker exec docker-runner apt-get install libglu1-mesa-dev:amd64 libasound2-dev:amd64 -y
         docker exec docker-runner cmake -S . -B build_x86_64_linux -DCMAKE_TOOLCHAIN_FILE=./cmake/x86_64_Linux_toolchain.cmake
         docker exec docker-runner make -C build_x86_64_linux -j $(nproc)
-        mkdir -p $ARTIFACTS/builds && docker cp "$DOCKER_NAME:$REPO_NAME/build_x86_64_linux" $ARTIFACTS/builds
+        mkdir -p $ARTIFACTS/builds/build_x86_64_linux && docker cp "$DOCKER_NAME:$REPO_NAME/build_x86_64_linux" $ARTIFACTS/builds/build_x86_64_linux
 
     - name: "Compile project ${{ github.repository }} for x86_64 Windows"
       run: |
         . ./ci-env
         docker exec docker-runner cmake -S . -B build_x86_64_windows -DCMAKE_TOOLCHAIN_FILE=./cmake/x86_64_Windows_toolchain.cmake -DCMAKE_CXX_FLAGS="-DPLATFORM_WINDOWS=1"
         docker exec docker-runner make -C build_x86_64_windows -j $(nproc)
-        mkdir -p $ARTIFACTS/builds && docker cp "$DOCKER_NAME:$REPO_NAME/build_x86_64_windows" $ARTIFACTS/builds
+        mkdir -p $ARTIFACTS/builds/build_x86_64_windows && docker cp "$DOCKER_NAME:$REPO_NAME/build_x86_64_windows" $ARTIFACTS/builds/build_x86_64_windows
 
-    - name: "Deploy builds"
+    - name: "Deploy aarch64 Linux build"
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.ARTIFACTS }}
+        name: build_aarch64_linux
         path: |
-          ${{ env.ARTIFACTS }}/
+          ${{ env.ARTIFACTS }}/builds/build_aarch64_linux
+
+    - name: "Deploy x86_64 Linux build"
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build_x86_64_linux
+        path: |
+          ${{ env.ARTIFACTS }}/builds/build_x86_64_linux
+
+    - name: "Deploy x86_64 Windows build"
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build_x86_64_windows
+        path: |
+          ${{ env.ARTIFACTS }}/builds/build_x86_64_windows
 
     - name: "Docker clean up"
       if: always()
@@ -111,17 +127,17 @@ jobs:
     - name: Remove previous artifacts
       run: |
         . ./ci-env
-        rm -rf builds
+        rm -rf build_aarch64_linux
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
-        name: ${{ env.ARTIFACTS }}
+        name: build_aarch64_linux
         path: ./
     - name: Copy build to docker
       run: |
         . ./ci-env
         docker exec docker-runner sh -c "rm -rf *"
-        docker cp builds/build_aarch64_linux docker-runner:/$REPO_NAME
+        docker cp ./build_aarch64_linux docker-runner:/$REPO_NAME
         docker exec docker-runner chown -R 0:0 ./build_aarch64_linux
         docker exec docker-runner chmod +x ./build_aarch64_linux/$BIN
     - name: Setup audio and video server
