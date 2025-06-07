@@ -45,9 +45,6 @@ struct sEnvelopeADSR;
 struct Master;
 class Instrument;
 
-// [TODO] Rename enums to OscSine, OscSquare, ... (?)
-enum OscType { Sine, Square, Triangle, Saw_Ana, Saw_Dig, Noise };
-
 struct MidiPlayerSettings {
 	bool useKeyboardAsInput = true;
 	bool splitBufferGraph = false;

@@ -319,8 +319,8 @@ struct OscNode : public Node
 {
 	OscType oscType;
 	bool doPopup = false;
-	static const int oscTypeNumber = 6;
-	std::string popupText[oscTypeNumber] = {"Sine", "Square", "Triangle", "Saw_Ana", "Saw_Dig", "Noise"};
+	static const int oscTypeNumber = 5;
+	std::string popupText[oscTypeNumber] = {"Sine", "Square", "Triangle", "Saw_Dig", "Noise"};
 
 	OscNode(IDManager* idManager = nullptr)
 	{
@@ -332,8 +332,6 @@ struct OscNode : public Node
 
 		inputs.push_back(createPin(idManager, "> freq", PinKind::Input, Oscillator::Inputs::frequency));
 		inputs.push_back(createPin(idManager, "> phase", PinKind::Input, Oscillator::Inputs::phase));
-		inputs.push_back(createPin(idManager, "> LFO Hz", PinKind::Input, Oscillator::Inputs::LFO_Hz));
-		inputs.push_back(createPin(idManager, "> LFO Amplitude", PinKind::Input, Oscillator::Inputs::LFO_Amplitude));
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 

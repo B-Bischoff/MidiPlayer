@@ -1,0 +1,1613 @@
+{
+    "nodes": [
+        {
+            "node": {
+                "polymorphic_id": 2147483649,
+                "polymorphic_name": "MasterNode",
+                "ptr_wrapper": {
+                    "id": 2147483649,
+                    "data": {
+                        "node_id": 1,
+                        "node_name": "Master",
+                        "node_type": 1,
+                        "node_inputs": [
+                            {
+                                "pin_id": 2,
+                                "node_id": 1,
+                                "pin_name": "> input",
+                                "pin_kind": 1,
+                                "pin_input_id": 0,
+                                "pin_mode": 0
+                            }
+                        ],
+                        "node_outputs": [],
+                        "node_hidden": false
+                    }
+                }
+            },
+            "position": {
+                "x": 1768.0,
+                "y": 25.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 2147483650,
+                "polymorphic_name": "OscNode",
+                "ptr_wrapper": {
+                    "id": 2147483650,
+                    "data": {
+                        "value0": {
+                            "node_id": 3,
+                            "node_name": "Osc",
+                            "node_type": 3,
+                            "node_inputs": [
+                                {
+                                    "pin_id": 4,
+                                    "node_id": 3,
+                                    "pin_name": "> freq",
+                                    "pin_kind": 1,
+                                    "pin_input_id": 0,
+                                    "pin_mode": 0
+                                },
+                                {
+                                    "pin_id": 5,
+                                    "node_id": 3,
+                                    "pin_name": "> phase",
+                                    "pin_kind": 1,
+                                    "pin_input_id": 1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_outputs": [
+                                {
+                                    "pin_id": 8,
+                                    "node_id": 3,
+                                    "pin_name": "output >",
+                                    "pin_kind": 0,
+                                    "pin_input_id": -1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_hidden": false
+                        },
+                        "value1": 0
+                    }
+                }
+            },
+            "position": {
+                "x": -508.0,
+                "y": 9.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 2,
+                "ptr_wrapper": {
+                    "id": 2147483651,
+                    "data": {
+                        "value0": {
+                            "node_id": 9,
+                            "node_name": "Osc",
+                            "node_type": 3,
+                            "node_inputs": [
+                                {
+                                    "pin_id": 10,
+                                    "node_id": 9,
+                                    "pin_name": "> freq",
+                                    "pin_kind": 1,
+                                    "pin_input_id": 0,
+                                    "pin_mode": 0
+                                },
+                                {
+                                    "pin_id": 11,
+                                    "node_id": 9,
+                                    "pin_name": "> phase",
+                                    "pin_kind": 1,
+                                    "pin_input_id": 1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_outputs": [
+                                {
+                                    "pin_id": 14,
+                                    "node_id": 9,
+                                    "pin_name": "output >",
+                                    "pin_kind": 0,
+                                    "pin_input_id": -1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_hidden": false
+                        },
+                        "value1": 0
+                    }
+                }
+            },
+            "position": {
+                "x": -28.0,
+                "y": 13.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 2147483651,
+                "polymorphic_name": "KeyboardFrequencyNode",
+                "ptr_wrapper": {
+                    "id": 2147483652,
+                    "data": {
+                        "node_id": 15,
+                        "node_name": "Keyboard Frequency",
+                        "node_type": 5,
+                        "node_inputs": [],
+                        "node_outputs": [
+                            {
+                                "pin_id": 16,
+                                "node_id": 15,
+                                "pin_name": "frequency >",
+                                "pin_kind": 0,
+                                "pin_input_id": -1,
+                                "pin_mode": 0
+                            }
+                        ],
+                        "node_hidden": false
+                    }
+                }
+            },
+            "position": {
+                "x": -624.0,
+                "y": -215.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 2147483652,
+                "polymorphic_name": "MultNode",
+                "ptr_wrapper": {
+                    "id": 2147483653,
+                    "data": {
+                        "node_id": 17,
+                        "node_name": "Multiplier",
+                        "node_type": 6,
+                        "node_inputs": [
+                            {
+                                "pin_id": 18,
+                                "node_id": 17,
+                                "pin_name": "> input A",
+                                "pin_kind": 1,
+                                "pin_input_id": 0,
+                                "pin_mode": 0
+                            },
+                            {
+                                "pin_id": 19,
+                                "node_id": 17,
+                                "pin_name": "> input B",
+                                "pin_kind": 1,
+                                "pin_input_id": 1,
+                                "pin_mode": 1
+                            }
+                        ],
+                        "node_outputs": [
+                            {
+                                "pin_id": 20,
+                                "node_id": 17,
+                                "pin_name": "output >",
+                                "pin_kind": 0,
+                                "pin_input_id": -1,
+                                "pin_mode": 0
+                            }
+                        ],
+                        "node_hidden": false
+                    }
+                }
+            },
+            "position": {
+                "x": -678.0,
+                "y": 19.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 2147483653,
+                "polymorphic_name": "NumberNode",
+                "ptr_wrapper": {
+                    "id": 2147483654,
+                    "data": {
+                        "base_node": {
+                            "node_id": 21,
+                            "node_name": "Number",
+                            "node_type": 2,
+                            "node_inputs": [],
+                            "node_outputs": [
+                                {
+                                    "pin_id": 22,
+                                    "node_id": 21,
+                                    "pin_name": "output >",
+                                    "pin_kind": 0,
+                                    "pin_input_id": -1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_hidden": true
+                        },
+                        "number_value": 1.0
+                    }
+                }
+            },
+            "position": {
+                "x": 3.4028234663852887e38,
+                "y": 3.4028234663852887e38
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 4,
+                "ptr_wrapper": {
+                    "id": 2147483655,
+                    "data": {
+                        "node_id": 24,
+                        "node_name": "Multiplier",
+                        "node_type": 6,
+                        "node_inputs": [
+                            {
+                                "pin_id": 25,
+                                "node_id": 24,
+                                "pin_name": "> input A",
+                                "pin_kind": 1,
+                                "pin_input_id": 0,
+                                "pin_mode": 0
+                            },
+                            {
+                                "pin_id": 26,
+                                "node_id": 24,
+                                "pin_name": "> input B",
+                                "pin_kind": 1,
+                                "pin_input_id": 1,
+                                "pin_mode": 1
+                            }
+                        ],
+                        "node_outputs": [
+                            {
+                                "pin_id": 27,
+                                "node_id": 24,
+                                "pin_name": "output >",
+                                "pin_kind": 0,
+                                "pin_input_id": -1,
+                                "pin_mode": 0
+                            }
+                        ],
+                        "node_hidden": false
+                    }
+                }
+            },
+            "position": {
+                "x": -182.0,
+                "y": -38.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 5,
+                "ptr_wrapper": {
+                    "id": 2147483656,
+                    "data": {
+                        "base_node": {
+                            "node_id": 28,
+                            "node_name": "Number",
+                            "node_type": 2,
+                            "node_inputs": [],
+                            "node_outputs": [
+                                {
+                                    "pin_id": 29,
+                                    "node_id": 28,
+                                    "pin_name": "output >",
+                                    "pin_kind": 0,
+                                    "pin_input_id": -1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_hidden": true
+                        },
+                        "number_value": 1.0
+                    }
+                }
+            },
+            "position": {
+                "x": 3.4028234663852887e38,
+                "y": 3.4028234663852887e38
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 4,
+                "ptr_wrapper": {
+                    "id": 2147483657,
+                    "data": {
+                        "node_id": 31,
+                        "node_name": "Multiplier",
+                        "node_type": 6,
+                        "node_inputs": [
+                            {
+                                "pin_id": 32,
+                                "node_id": 31,
+                                "pin_name": "> input A",
+                                "pin_kind": 1,
+                                "pin_input_id": 0,
+                                "pin_mode": 0
+                            },
+                            {
+                                "pin_id": 33,
+                                "node_id": 31,
+                                "pin_name": "> input B",
+                                "pin_kind": 1,
+                                "pin_input_id": 1,
+                                "pin_mode": 1
+                            }
+                        ],
+                        "node_outputs": [
+                            {
+                                "pin_id": 34,
+                                "node_id": 31,
+                                "pin_name": "output >",
+                                "pin_kind": 0,
+                                "pin_input_id": -1,
+                                "pin_mode": 0
+                            }
+                        ],
+                        "node_hidden": false
+                    }
+                }
+            },
+            "position": {
+                "x": -313.0,
+                "y": 16.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 5,
+                "ptr_wrapper": {
+                    "id": 2147483658,
+                    "data": {
+                        "base_node": {
+                            "node_id": 35,
+                            "node_name": "Number",
+                            "node_type": 2,
+                            "node_inputs": [],
+                            "node_outputs": [
+                                {
+                                    "pin_id": 36,
+                                    "node_id": 35,
+                                    "pin_name": "output >",
+                                    "pin_kind": 0,
+                                    "pin_input_id": -1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_hidden": true
+                        },
+                        "number_value": 1.274999976158142
+                    }
+                }
+            },
+            "position": {
+                "x": 3.4028234663852887e38,
+                "y": 3.4028234663852887e38
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 2147483654,
+                "polymorphic_name": "ADSR_Node",
+                "ptr_wrapper": {
+                    "id": 2147483659,
+                    "data": {
+                        "base_node": {
+                            "node_id": 52,
+                            "node_name": "ADSR",
+                            "node_type": 4,
+                            "node_inputs": [
+                                {
+                                    "pin_id": 53,
+                                    "node_id": 52,
+                                    "pin_name": "> input",
+                                    "pin_kind": 1,
+                                    "pin_input_id": 0,
+                                    "pin_mode": 0
+                                },
+                                {
+                                    "pin_id": 54,
+                                    "node_id": 52,
+                                    "pin_name": "> trigger",
+                                    "pin_kind": 1,
+                                    "pin_input_id": 1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_outputs": [
+                                {
+                                    "pin_id": 55,
+                                    "node_id": 52,
+                                    "pin_name": "output >",
+                                    "pin_kind": 0,
+                                    "pin_input_id": -1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_hidden": false
+                        },
+                        "control_points": {
+                            "value0": {
+                                "x": 0.0,
+                                "y": 0.0
+                            },
+                            "value1": {
+                                "x": 0.028816908597946168,
+                                "y": 0.0
+                            },
+                            "value2": {
+                                "x": 0.028816908597946168,
+                                "y": 1.0093340873718262
+                            },
+                            "value3": {
+                                "x": 0.35860177874565127,
+                                "y": 0.991950273513794
+                            },
+                            "value4": {
+                                "x": 0.35860177874565127,
+                                "y": 0.4446888267993927
+                            },
+                            "value5": {
+                                "x": 3.0,
+                                "y": 0.4446888267993927
+                            },
+                            "value6": {
+                                "x": 3.0,
+                                "y": 0.0
+                            },
+                            "value7": {
+                                "x": 3.259429931640625,
+                                "y": 0.0
+                            }
+                        }
+                    }
+                }
+            },
+            "position": {
+                "x": 203.0,
+                "y": 9.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 3,
+                "ptr_wrapper": {
+                    "id": 2147483660,
+                    "data": {
+                        "node_id": 57,
+                        "node_name": "Keyboard Frequency",
+                        "node_type": 5,
+                        "node_inputs": [],
+                        "node_outputs": [
+                            {
+                                "pin_id": 58,
+                                "node_id": 57,
+                                "pin_name": "frequency >",
+                                "pin_kind": 0,
+                                "pin_input_id": -1,
+                                "pin_mode": 0
+                            }
+                        ],
+                        "node_hidden": false
+                    }
+                }
+            },
+            "position": {
+                "x": -48.0,
+                "y": 297.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 2147483655,
+                "polymorphic_name": "LowPassFilterNode",
+                "ptr_wrapper": {
+                    "id": 2147483661,
+                    "data": {
+                        "node_id": 60,
+                        "node_name": "Low Pass Filter",
+                        "node_type": 7,
+                        "node_inputs": [
+                            {
+                                "pin_id": 61,
+                                "node_id": 60,
+                                "pin_name": "> input",
+                                "pin_kind": 1,
+                                "pin_input_id": 0,
+                                "pin_mode": 0
+                            },
+                            {
+                                "pin_id": 62,
+                                "node_id": 60,
+                                "pin_name": "> alpha",
+                                "pin_kind": 1,
+                                "pin_input_id": 1,
+                                "pin_mode": 0
+                            }
+                        ],
+                        "node_outputs": [
+                            {
+                                "pin_id": 63,
+                                "node_id": 60,
+                                "pin_name": "output >",
+                                "pin_kind": 0,
+                                "pin_input_id": -1,
+                                "pin_mode": 0
+                            }
+                        ],
+                        "node_hidden": false
+                    }
+                }
+            },
+            "position": {
+                "x": 479.0,
+                "y": 9.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 6,
+                "ptr_wrapper": {
+                    "id": 2147483662,
+                    "data": {
+                        "base_node": {
+                            "node_id": 69,
+                            "node_name": "ADSR",
+                            "node_type": 4,
+                            "node_inputs": [
+                                {
+                                    "pin_id": 70,
+                                    "node_id": 69,
+                                    "pin_name": "> input",
+                                    "pin_kind": 1,
+                                    "pin_input_id": 0,
+                                    "pin_mode": 1
+                                },
+                                {
+                                    "pin_id": 71,
+                                    "node_id": 69,
+                                    "pin_name": "> trigger",
+                                    "pin_kind": 1,
+                                    "pin_input_id": 1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_outputs": [
+                                {
+                                    "pin_id": 72,
+                                    "node_id": 69,
+                                    "pin_name": "output >",
+                                    "pin_kind": 0,
+                                    "pin_input_id": -1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_hidden": false
+                        },
+                        "control_points": {
+                            "value0": {
+                                "x": 0.0,
+                                "y": 0.0
+                            },
+                            "value1": {
+                                "x": 0.03271613270044327,
+                                "y": 0.0
+                            },
+                            "value2": {
+                                "x": 0.03271613270044327,
+                                "y": 0.9852505922317505
+                            },
+                            "value3": {
+                                "x": 0.40949350595474245,
+                                "y": 0.0631120428442955
+                            },
+                            "value4": {
+                                "x": 0.9184107184410095,
+                                "y": 0.017925316467881204
+                            },
+                            "value5": {
+                                "x": 2.8141274452209474,
+                                "y": 0.017925316467881204
+                            },
+                            "value6": {
+                                "x": 3.0,
+                                "y": 0.0
+                            },
+                            "value7": {
+                                "x": 3.259429931640625,
+                                "y": 0.0
+                            }
+                        }
+                    }
+                }
+            },
+            "position": {
+                "x": 299.0,
+                "y": 237.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 5,
+                "ptr_wrapper": {
+                    "id": 2147483663,
+                    "data": {
+                        "base_node": {
+                            "node_id": 68,
+                            "node_name": "Number",
+                            "node_type": 2,
+                            "node_inputs": [],
+                            "node_outputs": [
+                                {
+                                    "pin_id": 73,
+                                    "node_id": 68,
+                                    "pin_name": "output >",
+                                    "pin_kind": 0,
+                                    "pin_input_id": -1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_hidden": true
+                        },
+                        "number_value": 0.20000000298023225
+                    }
+                }
+            },
+            "position": {
+                "x": 3.4028234663852887e38,
+                "y": 3.4028234663852887e38
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 5,
+                "ptr_wrapper": {
+                    "id": 2147483664,
+                    "data": {
+                        "base_node": {
+                            "node_id": 75,
+                            "node_name": "Number",
+                            "node_type": 2,
+                            "node_inputs": [],
+                            "node_outputs": [
+                                {
+                                    "pin_id": 76,
+                                    "node_id": 75,
+                                    "pin_name": "output >",
+                                    "pin_kind": 0,
+                                    "pin_input_id": -1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_hidden": false
+                        },
+                        "number_value": 0.0020000000949949028
+                    }
+                }
+            },
+            "position": {
+                "x": 171.0,
+                "y": 137.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 2147483656,
+                "polymorphic_name": "HighPassFilterNode",
+                "ptr_wrapper": {
+                    "id": 2147483665,
+                    "data": {
+                        "node_id": 78,
+                        "node_name": "High Pass Filter",
+                        "node_type": 0,
+                        "node_inputs": [
+                            {
+                                "pin_id": 79,
+                                "node_id": 78,
+                                "pin_name": "> input",
+                                "pin_kind": 1,
+                                "pin_input_id": 0,
+                                "pin_mode": 0
+                            },
+                            {
+                                "pin_id": 80,
+                                "node_id": 78,
+                                "pin_name": "> alpha",
+                                "pin_kind": 1,
+                                "pin_input_id": 1,
+                                "pin_mode": 0
+                            }
+                        ],
+                        "node_outputs": [
+                            {
+                                "pin_id": 81,
+                                "node_id": 78,
+                                "pin_name": "output >",
+                                "pin_kind": 0,
+                                "pin_input_id": -1,
+                                "pin_mode": 0
+                            }
+                        ],
+                        "node_hidden": false
+                    }
+                }
+            },
+            "position": {
+                "x": 608.0,
+                "y": 201.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 6,
+                "ptr_wrapper": {
+                    "id": 2147483666,
+                    "data": {
+                        "base_node": {
+                            "node_id": 84,
+                            "node_name": "ADSR",
+                            "node_type": 4,
+                            "node_inputs": [
+                                {
+                                    "pin_id": 85,
+                                    "node_id": 84,
+                                    "pin_name": "> input",
+                                    "pin_kind": 1,
+                                    "pin_input_id": 0,
+                                    "pin_mode": 1
+                                },
+                                {
+                                    "pin_id": 86,
+                                    "node_id": 84,
+                                    "pin_name": "> trigger",
+                                    "pin_kind": 1,
+                                    "pin_input_id": 1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_outputs": [
+                                {
+                                    "pin_id": 87,
+                                    "node_id": 84,
+                                    "pin_name": "output >",
+                                    "pin_kind": 0,
+                                    "pin_input_id": -1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_hidden": false
+                        },
+                        "control_points": {
+                            "value0": {
+                                "x": 0.0,
+                                "y": 0.0
+                            },
+                            "value1": {
+                                "x": 0.03271613270044327,
+                                "y": 0.0
+                            },
+                            "value2": {
+                                "x": 0.03271613270044327,
+                                "y": 0.9852505922317505
+                            },
+                            "value3": {
+                                "x": 0.11833502352237702,
+                                "y": 0.061278000473976138
+                            },
+                            "value4": {
+                                "x": 0.33006590604782107,
+                                "y": 0.030495071783661844
+                            },
+                            "value5": {
+                                "x": 2.8141274452209474,
+                                "y": 0.030495071783661844
+                            },
+                            "value6": {
+                                "x": 3.0,
+                                "y": 0.0
+                            },
+                            "value7": {
+                                "x": 3.259429931640625,
+                                "y": 0.0
+                            }
+                        }
+                    }
+                }
+            },
+            "position": {
+                "x": 283.0,
+                "y": 518.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 5,
+                "ptr_wrapper": {
+                    "id": 2147483667,
+                    "data": {
+                        "base_node": {
+                            "node_id": 88,
+                            "node_name": "Number",
+                            "node_type": 2,
+                            "node_inputs": [],
+                            "node_outputs": [
+                                {
+                                    "pin_id": 89,
+                                    "node_id": 88,
+                                    "pin_name": "output >",
+                                    "pin_kind": 0,
+                                    "pin_input_id": -1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_hidden": true
+                        },
+                        "number_value": 1.0
+                    }
+                }
+            },
+            "position": {
+                "x": 3.4028234663852887e38,
+                "y": 3.4028234663852887e38
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 5,
+                "ptr_wrapper": {
+                    "id": 2147483668,
+                    "data": {
+                        "base_node": {
+                            "node_id": 91,
+                            "node_name": "Number",
+                            "node_type": 2,
+                            "node_inputs": [],
+                            "node_outputs": [
+                                {
+                                    "pin_id": 92,
+                                    "node_id": 91,
+                                    "pin_name": "output >",
+                                    "pin_kind": 0,
+                                    "pin_input_id": -1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_hidden": false
+                        },
+                        "number_value": 1.0
+                    }
+                }
+            },
+            "position": {
+                "x": 363.0,
+                "y": 393.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 4,
+                "ptr_wrapper": {
+                    "id": 2147483669,
+                    "data": {
+                        "node_id": 93,
+                        "node_name": "Multiplier",
+                        "node_type": 6,
+                        "node_inputs": [
+                            {
+                                "pin_id": 94,
+                                "node_id": 93,
+                                "pin_name": "> input A",
+                                "pin_kind": 1,
+                                "pin_input_id": 0,
+                                "pin_mode": 0
+                            },
+                            {
+                                "pin_id": 96,
+                                "node_id": 93,
+                                "pin_name": "> input B",
+                                "pin_kind": 1,
+                                "pin_input_id": 1,
+                                "pin_mode": 1
+                            }
+                        ],
+                        "node_outputs": [
+                            {
+                                "pin_id": 97,
+                                "node_id": 93,
+                                "pin_name": "output >",
+                                "pin_kind": 0,
+                                "pin_input_id": -1,
+                                "pin_mode": 0
+                            }
+                        ],
+                        "node_hidden": false
+                    }
+                }
+            },
+            "position": {
+                "x": 506.0,
+                "y": 505.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 5,
+                "ptr_wrapper": {
+                    "id": 2147483670,
+                    "data": {
+                        "base_node": {
+                            "node_id": 98,
+                            "node_name": "Number",
+                            "node_type": 2,
+                            "node_inputs": [],
+                            "node_outputs": [
+                                {
+                                    "pin_id": 99,
+                                    "node_id": 98,
+                                    "pin_name": "output >",
+                                    "pin_kind": 0,
+                                    "pin_input_id": -1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_hidden": true
+                        },
+                        "number_value": -1.0
+                    }
+                }
+            },
+            "position": {
+                "x": 3.4028234663852887e38,
+                "y": 3.4028234663852887e38
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 4,
+                "ptr_wrapper": {
+                    "id": 2147483671,
+                    "data": {
+                        "node_id": 83,
+                        "node_name": "Multiplier",
+                        "node_type": 6,
+                        "node_inputs": [
+                            {
+                                "pin_id": 104,
+                                "node_id": 83,
+                                "pin_name": "> input A",
+                                "pin_kind": 1,
+                                "pin_input_id": 0,
+                                "pin_mode": 0
+                            },
+                            {
+                                "pin_id": 105,
+                                "node_id": 83,
+                                "pin_name": "> input B",
+                                "pin_kind": 1,
+                                "pin_input_id": 1,
+                                "pin_mode": 1
+                            }
+                        ],
+                        "node_outputs": [
+                            {
+                                "pin_id": 106,
+                                "node_id": 83,
+                                "pin_name": "output >",
+                                "pin_kind": 0,
+                                "pin_input_id": -1,
+                                "pin_mode": 0
+                            }
+                        ],
+                        "node_hidden": false
+                    }
+                }
+            },
+            "position": {
+                "x": 807.0,
+                "y": 208.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 5,
+                "ptr_wrapper": {
+                    "id": 2147483672,
+                    "data": {
+                        "base_node": {
+                            "node_id": 107,
+                            "node_name": "Number",
+                            "node_type": 2,
+                            "node_inputs": [],
+                            "node_outputs": [
+                                {
+                                    "pin_id": 108,
+                                    "node_id": 107,
+                                    "pin_name": "output >",
+                                    "pin_kind": 0,
+                                    "pin_input_id": -1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_hidden": true
+                        },
+                        "number_value": 1.4500000476837159
+                    }
+                }
+            },
+            "position": {
+                "x": 3.4028234663852887e38,
+                "y": 3.4028234663852887e38
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 2147483657,
+                "polymorphic_name": "OverdriveNode",
+                "ptr_wrapper": {
+                    "id": 2147483673,
+                    "data": {
+                        "node_id": 110,
+                        "node_name": "Overdrive",
+                        "node_type": 0,
+                        "node_inputs": [
+                            {
+                                "pin_id": 112,
+                                "node_id": 110,
+                                "pin_name": "> input",
+                                "pin_kind": 1,
+                                "pin_input_id": 0,
+                                "pin_mode": 0
+                            },
+                            {
+                                "pin_id": 113,
+                                "node_id": 110,
+                                "pin_name": "> drive",
+                                "pin_kind": 1,
+                                "pin_input_id": 1,
+                                "pin_mode": 0
+                            }
+                        ],
+                        "node_outputs": [
+                            {
+                                "pin_id": 114,
+                                "node_id": 110,
+                                "pin_name": "output >",
+                                "pin_kind": 0,
+                                "pin_input_id": -1,
+                                "pin_mode": 0
+                            }
+                        ],
+                        "node_hidden": false
+                    }
+                }
+            },
+            "position": {
+                "x": 1124.0,
+                "y": 19.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 6,
+                "ptr_wrapper": {
+                    "id": 2147483674,
+                    "data": {
+                        "base_node": {
+                            "node_id": 124,
+                            "node_name": "ADSR",
+                            "node_type": 4,
+                            "node_inputs": [
+                                {
+                                    "pin_id": 125,
+                                    "node_id": 124,
+                                    "pin_name": "> input",
+                                    "pin_kind": 1,
+                                    "pin_input_id": 0,
+                                    "pin_mode": 1
+                                },
+                                {
+                                    "pin_id": 126,
+                                    "node_id": 124,
+                                    "pin_name": "> trigger",
+                                    "pin_kind": 1,
+                                    "pin_input_id": 1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_outputs": [
+                                {
+                                    "pin_id": 127,
+                                    "node_id": 124,
+                                    "pin_name": "output >",
+                                    "pin_kind": 0,
+                                    "pin_input_id": -1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_hidden": false
+                        },
+                        "control_points": {
+                            "value0": {
+                                "x": 0.0,
+                                "y": 0.0
+                            },
+                            "value1": {
+                                "x": 0.03271613270044327,
+                                "y": 0.0
+                            },
+                            "value2": {
+                                "x": 0.03271613270044327,
+                                "y": 0.9852505922317505
+                            },
+                            "value3": {
+                                "x": 0.11833502352237702,
+                                "y": 0.061278000473976138
+                            },
+                            "value4": {
+                                "x": 0.18809673190116883,
+                                "y": 0.045943859964609149
+                            },
+                            "value5": {
+                                "x": 2.8141274452209474,
+                                "y": 0.045943859964609149
+                            },
+                            "value6": {
+                                "x": 3.0,
+                                "y": 0.0
+                            },
+                            "value7": {
+                                "x": 3.259429931640625,
+                                "y": 0.0
+                            }
+                        }
+                    }
+                }
+            },
+            "position": {
+                "x": 958.0,
+                "y": 406.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 5,
+                "ptr_wrapper": {
+                    "id": 2147483675,
+                    "data": {
+                        "base_node": {
+                            "node_id": 128,
+                            "node_name": "Number",
+                            "node_type": 2,
+                            "node_inputs": [],
+                            "node_outputs": [
+                                {
+                                    "pin_id": 129,
+                                    "node_id": 128,
+                                    "pin_name": "output >",
+                                    "pin_kind": 0,
+                                    "pin_input_id": -1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_hidden": true
+                        },
+                        "number_value": 5.0
+                    }
+                }
+            },
+            "position": {
+                "x": 3.4028234663852887e38,
+                "y": 3.4028234663852887e38
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 5,
+                "ptr_wrapper": {
+                    "id": 2147483676,
+                    "data": {
+                        "base_node": {
+                            "node_id": 119,
+                            "node_name": "Number",
+                            "node_type": 2,
+                            "node_inputs": [],
+                            "node_outputs": [
+                                {
+                                    "pin_id": 120,
+                                    "node_id": 119,
+                                    "pin_name": "output >",
+                                    "pin_kind": 0,
+                                    "pin_input_id": -1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_hidden": false
+                        },
+                        "number_value": 0.5
+                    }
+                }
+            },
+            "position": {
+                "x": 987.0,
+                "y": 281.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 3,
+                "ptr_wrapper": {
+                    "id": 2147483677,
+                    "data": {
+                        "node_id": 118,
+                        "node_name": "Keyboard Frequency",
+                        "node_type": 5,
+                        "node_inputs": [],
+                        "node_outputs": [
+                            {
+                                "pin_id": 122,
+                                "node_id": 118,
+                                "pin_name": "frequency >",
+                                "pin_kind": 0,
+                                "pin_input_id": -1,
+                                "pin_mode": 0
+                            }
+                        ],
+                        "node_hidden": false
+                    }
+                }
+            },
+            "position": {
+                "x": 736.0,
+                "y": 441.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 4,
+                "ptr_wrapper": {
+                    "id": 2147483678,
+                    "data": {
+                        "node_id": 131,
+                        "node_name": "Multiplier",
+                        "node_type": 6,
+                        "node_inputs": [
+                            {
+                                "pin_id": 132,
+                                "node_id": 131,
+                                "pin_name": "> input A",
+                                "pin_kind": 1,
+                                "pin_input_id": 0,
+                                "pin_mode": 0
+                            },
+                            {
+                                "pin_id": 133,
+                                "node_id": 131,
+                                "pin_name": "> input B",
+                                "pin_kind": 1,
+                                "pin_input_id": 1,
+                                "pin_mode": 1
+                            }
+                        ],
+                        "node_outputs": [
+                            {
+                                "pin_id": 134,
+                                "node_id": 131,
+                                "pin_name": "output >",
+                                "pin_kind": 0,
+                                "pin_input_id": -1,
+                                "pin_mode": 0
+                            }
+                        ],
+                        "node_hidden": false
+                    }
+                }
+            },
+            "position": {
+                "x": 1575.0,
+                "y": 25.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 5,
+                "ptr_wrapper": {
+                    "id": 2147483679,
+                    "data": {
+                        "base_node": {
+                            "node_id": 135,
+                            "node_name": "Number",
+                            "node_type": 2,
+                            "node_inputs": [],
+                            "node_outputs": [
+                                {
+                                    "pin_id": 136,
+                                    "node_id": 135,
+                                    "pin_name": "output >",
+                                    "pin_kind": 0,
+                                    "pin_input_id": -1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_hidden": true
+                        },
+                        "number_value": 0.061000000685453418
+                    }
+                }
+            },
+            "position": {
+                "x": 3.4028234663852887e38,
+                "y": 3.4028234663852887e38
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 7,
+                "ptr_wrapper": {
+                    "id": 2147483680,
+                    "data": {
+                        "node_id": 46,
+                        "node_name": "Low Pass Filter",
+                        "node_type": 7,
+                        "node_inputs": [
+                            {
+                                "pin_id": 47,
+                                "node_id": 46,
+                                "pin_name": "> input",
+                                "pin_kind": 1,
+                                "pin_input_id": 0,
+                                "pin_mode": 0
+                            },
+                            {
+                                "pin_id": 48,
+                                "node_id": 46,
+                                "pin_name": "> alpha",
+                                "pin_kind": 1,
+                                "pin_input_id": 1,
+                                "pin_mode": 1
+                            }
+                        ],
+                        "node_outputs": [
+                            {
+                                "pin_id": 49,
+                                "node_id": 46,
+                                "pin_name": "output >",
+                                "pin_kind": 0,
+                                "pin_input_id": -1,
+                                "pin_mode": 0
+                            }
+                        ],
+                        "node_hidden": false
+                    }
+                }
+            },
+            "position": {
+                "x": 1316.0,
+                "y": 0.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 5,
+                "ptr_wrapper": {
+                    "id": 2147483681,
+                    "data": {
+                        "base_node": {
+                            "node_id": 50,
+                            "node_name": "Number",
+                            "node_type": 2,
+                            "node_inputs": [],
+                            "node_outputs": [
+                                {
+                                    "pin_id": 51,
+                                    "node_id": 50,
+                                    "pin_name": "output >",
+                                    "pin_kind": 0,
+                                    "pin_input_id": -1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_hidden": true
+                        },
+                        "number_value": 0.22699999809265138
+                    }
+                }
+            },
+            "position": {
+                "x": 3.4028234663852887e38,
+                "y": 3.4028234663852887e38
+            }
+        }
+    ],
+    "links": [
+        {
+            "link_id": 23,
+            "link_input_id": 19,
+            "link_output_id": 22
+        },
+        {
+            "link_id": 30,
+            "link_input_id": 26,
+            "link_output_id": 29
+        },
+        {
+            "link_id": 37,
+            "link_input_id": 33,
+            "link_output_id": 36
+        },
+        {
+            "link_id": 38,
+            "link_input_id": 25,
+            "link_output_id": 16
+        },
+        {
+            "link_id": 39,
+            "link_input_id": 18,
+            "link_output_id": 16
+        },
+        {
+            "link_id": 40,
+            "link_input_id": 4,
+            "link_output_id": 20
+        },
+        {
+            "link_id": 41,
+            "link_input_id": 32,
+            "link_output_id": 8
+        },
+        {
+            "link_id": 42,
+            "link_input_id": 10,
+            "link_output_id": 27
+        },
+        {
+            "link_id": 56,
+            "link_input_id": 53,
+            "link_output_id": 14
+        },
+        {
+            "link_id": 59,
+            "link_input_id": 54,
+            "link_output_id": 58
+        },
+        {
+            "link_id": 43,
+            "link_input_id": 11,
+            "link_output_id": 34
+        },
+        {
+            "link_id": 64,
+            "link_input_id": 61,
+            "link_output_id": 55
+        },
+        {
+            "link_id": 66,
+            "link_input_id": 62,
+            "link_output_id": 72
+        },
+        {
+            "link_id": 67,
+            "link_input_id": 71,
+            "link_output_id": 58
+        },
+        {
+            "link_id": 74,
+            "link_input_id": 70,
+            "link_output_id": 73
+        },
+        {
+            "link_id": 77,
+            "link_input_id": 62,
+            "link_output_id": 76
+        },
+        {
+            "link_id": 90,
+            "link_input_id": 85,
+            "link_output_id": 89
+        },
+        {
+            "link_id": 95,
+            "link_input_id": 86,
+            "link_output_id": 58
+        },
+        {
+            "link_id": 82,
+            "link_input_id": 79,
+            "link_output_id": 55
+        },
+        {
+            "link_id": 100,
+            "link_input_id": 96,
+            "link_output_id": 99
+        },
+        {
+            "link_id": 101,
+            "link_input_id": 94,
+            "link_output_id": 87
+        },
+        {
+            "link_id": 65,
+            "link_input_id": 80,
+            "link_output_id": 97
+        },
+        {
+            "link_id": 102,
+            "link_input_id": 80,
+            "link_output_id": 92
+        },
+        {
+            "link_id": 109,
+            "link_input_id": 105,
+            "link_output_id": 108
+        },
+        {
+            "link_id": 115,
+            "link_input_id": 104,
+            "link_output_id": 81
+        },
+        {
+            "link_id": 130,
+            "link_input_id": 125,
+            "link_output_id": 129
+        },
+        {
+            "link_id": 117,
+            "link_input_id": 113,
+            "link_output_id": 127
+        },
+        {
+            "link_id": 121,
+            "link_input_id": 113,
+            "link_output_id": 120
+        },
+        {
+            "link_id": 123,
+            "link_input_id": 126,
+            "link_output_id": 122
+        },
+        {
+            "link_id": 137,
+            "link_input_id": 133,
+            "link_output_id": 136
+        },
+        {
+            "link_id": 138,
+            "link_input_id": 112,
+            "link_output_id": 106
+        },
+        {
+            "link_id": 139,
+            "link_input_id": 112,
+            "link_output_id": 63
+        },
+        {
+            "link_id": 45,
+            "link_input_id": 2,
+            "link_output_id": 134
+        },
+        {
+            "link_id": 44,
+            "link_input_id": 47,
+            "link_output_id": 114
+        },
+        {
+            "link_id": 103,
+            "link_input_id": 48,
+            "link_output_id": 51
+        },
+        {
+            "link_id": 111,
+            "link_input_id": 132,
+            "link_output_id": 49
+        }
+    ]
+}
