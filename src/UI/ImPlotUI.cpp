@@ -84,7 +84,7 @@ void ImPlotUI::update(Audio& audio, std::queue<Message>& messages, MidiPlayerSet
 	}
 	else
 	{
-		if (ImPlot::BeginPlot("Buffer", ImVec2(ImGui::GetContentRegionAvail())))
+		if (ImPlot::BeginPlot("Buffer", ImVec2(ImGui::GetContentRegionAvail()), ImPlotFlags_NoTitle))
 			printPlot(audio, 0, true);
 	}
 

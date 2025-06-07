@@ -78,7 +78,7 @@ void AudioSpectrum::plot(const double* xAxis, const double* yAxis, const unsigne
 	const bool windowOpened = ImGui::Begin("Audio Spectrum");
 	ImGui::PopStyleVar(1);
 
-	if (windowOpened && ImPlot::BeginPlot("Plot", ImVec2(ImGui::GetContentRegionAvail())))
+	if (windowOpened && ImPlot::BeginPlot("Plot", ImVec2(ImGui::GetContentRegionAvail()), ImPlotFlags_NoTitle))
 	{
 		ImPlot::SetupAxis(ImAxis_X1, "Frequency (Hertz)");
 		ImPlot::SetupAxis(ImAxis_Y1, "Amplitude");

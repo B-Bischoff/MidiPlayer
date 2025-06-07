@@ -70,7 +70,11 @@ private:
 	void switchSelectedInstrument(Instrument& newInstrument);
 
 	void updateMenuBar();
+
 	void updateSavedInstruments(std::vector<Instrument>& instruments, std::string& selectedStoredInstrument);
+	void updateOverwritePopup(bool& saveInstrument);
+	void serializeInstrument(const fs::path& instrumentPath);
+
 	void updateLoadedInstruments(std::vector<Instrument>& instruments, int& selectedInstrument, bool& loadDefaultInstrument);
 	void updateSettings(Audio& audio, InputManager& inputManager, MidiPlayerSettings& settings);
 

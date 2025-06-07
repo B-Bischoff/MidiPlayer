@@ -370,7 +370,12 @@ void NodeEditorUI::serialize(std::stringstream& stream)
 void NodeEditorUI::loadFile(Master& master, const fs::path& path)
 {
 	std::ifstream file(path);
-	assert(file.is_open());
+	if (!file.is_open())
+	{
+		Logger::log("NodeEditor", Warning) << "File: " << path.string() << " does not exists." << std::endl;
+		ImGui::InsertNotification({ImGuiToastType::Warning, 5000, "File: %s does not exists.", path.string().c_str()});
+		return;
+	}
 
 	_nodeManager.removeAllNodes(_idManager);
 	_linkManager.removeAllLinks(_idManager);
