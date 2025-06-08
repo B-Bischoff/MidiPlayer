@@ -84,7 +84,7 @@ int main(int argc, char* argv[])
 	Timer midiPollingTimer(1.0);
 	double refreshCooldown = 0;
 	time_point lastFrameTime;
-	while (!window.shouldClose() && glfwGetKey(window.getWindow(), GLFW_KEY_ESCAPE) != GLFW_PRESS)
+	while (!window.shouldClose())
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
 		const std::chrono::duration<double> deltaTime = startTime - lastFrameTime;
