@@ -10,6 +10,7 @@
 #include "Audio.hpp"
 #include "Window.hpp"
 
+
 static void handleFrameProcessTime(const time_point& startTime, const std::chrono::duration<double>& targetFrameDuration, Audio& audio);
 
 double AudioComponent::time = 0.0;
@@ -63,7 +64,7 @@ int main(int argc, char* argv[])
 	Audio audio;
 	constexpr unsigned int SCREEN_WIDTH = 1920;
 	constexpr unsigned int SCREEN_HEIGHT = 1080;
-	Window window(ImVec2(SCREEN_WIDTH, SCREEN_HEIGHT), "MidiPlayer");
+	Window window(ImVec2(SCREEN_WIDTH, SCREEN_HEIGHT), "MidiPlayer", path.ressourceDirectory);
 
 	const std::chrono::duration<double> targetFrameDuration(1.0f / (double)audio.getTargetFPS());
 

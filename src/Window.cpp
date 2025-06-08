@@ -1,6 +1,6 @@
 #include "Window.hpp"
 
-Window::Window(const ImVec2& initialDimensions, const std::string& windowTitle)
+Window::Window(const ImVec2& initialDimensions, const std::string& windowTitle, const fs::path& resourceDirectory)
 	: _window(nullptr), _dimensions(initialDimensions)
 {
 	// GLFW init
@@ -39,6 +39,25 @@ Window::Window(const ImVec2& initialDimensions, const std::string& windowTitle)
 		glfwTerminate();
 		exit(1);
 	}
+
+	// Application logo
+	const fs::path logoPath(resourceDirectory / "logo" / _logoFilename);
+	if (!fs::exists(logoPath))
+	{
+		Logger::log("GLFW", Warning) << "Application logo not found: " << logoPath.string() << std::endl;
+		return;
+	}
+
+	GLFWimage icon;
+	icon.pixels = stbi_load(logoPath.c_str(), &icon.width, &icon.height, 0, 4);
+	if (!icon.pixels)
+	{
+		Logger::log("GLFW", Warning) << "Failed to load application logo: " << logoPath.string() << std::endl;
+		return;
+	}
+
+	glfwSetWindowIcon(_window, 1, &icon);
+	stbi_image_free(icon.pixels);
 }
 
 void Window::windowResizeCallback(GLFWwindow* glfwWindow, int width, int height)
