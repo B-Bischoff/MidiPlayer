@@ -108,7 +108,7 @@ private:
 	// Keyboard data
 	KeyData keys[GLFW_KEY_LAST] = {};
 	unsigned int octave = 4;
-	static constexpr unsigned int maxOctave = 8;
+	static constexpr unsigned int maxOctave = 7;
 
 	// Mouse
 	static constexpr int GLFW_MAX_MOUSE_BTN = 8;

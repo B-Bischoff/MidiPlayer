@@ -22,7 +22,7 @@ struct KeyboardFrequency : public AudioComponent {
 		double A4Frequency = 440.0;
 
 		// Number of keys from A4 to the given key
-		int keysDifference = keyId - 49;
+		int keysDifference = keyId - 69;
 
 		// Frequency multiplier for each semitone
 		double semitoneRatio = pow(2.0, 1.0/12.0);
