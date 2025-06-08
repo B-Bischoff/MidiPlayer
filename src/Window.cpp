@@ -49,7 +49,7 @@ Window::Window(const ImVec2& initialDimensions, const std::string& windowTitle, 
 	}
 
 	GLFWimage icon;
-	icon.pixels = stbi_load(logoPath.c_str(), &icon.width, &icon.height, 0, 4);
+	icon.pixels = stbi_load(logoPath.string().c_str(), &icon.width, &icon.height, 0, 4);
 	if (!icon.pixels)
 	{
 		Logger::log("GLFW", Warning) << "Failed to load application logo: " << logoPath.string() << std::endl;
