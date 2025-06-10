@@ -14,6 +14,7 @@ typedef unsigned int MessageId;
 #define MESSAGE_CUT 0x06
 #define MESSAGE_PASTE 0x07
 #define UI_CREATE_INSTRUMENT 0x08
+#define UI_CLEAR_FOCUS 0x09
 
 struct Message {
 	MessageId id;

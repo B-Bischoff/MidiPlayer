@@ -2,6 +2,7 @@
 
 #include <filesystem>
 
+#define LOGO_DIR "logo"
 #define INSTRUMENTS_DIR "instruments"
 #define INSTRUMENTS_EXTENSION ".json"
 

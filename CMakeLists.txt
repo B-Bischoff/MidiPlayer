@@ -25,10 +25,16 @@ target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
 target_link_libraries(${PROJECT_NAME} PRIVATE cereal)
 target_link_libraries(${PROJECT_NAME} PRIVATE stdc++fs)
 target_link_libraries(${PROJECT_NAME} PRIVATE kissfft)
+target_link_libraries(${PROJECT_NAME} PRIVATE stb)
 if (UNIX)
 	target_link_libraries(${PROJECT_NAME} PRIVATE GL)
 else()
 	target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
+endif()
+
+# Remove terminal window (Windows only)
+if (WIN32)
+	set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)
 endif()
 
 # Deploy ressources

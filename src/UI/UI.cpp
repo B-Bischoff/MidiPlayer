@@ -172,16 +172,6 @@ void UI::updateMenuBar()
 {
 	if (ImGui::BeginMenuBar())
 	{
-		if (ImGui::BeginMenu("File"))
-		{
-			if (ImGui::MenuItem("Exit"))
-			{
-				std::cerr << "Unfortunately, exiting the application is not a feature yet :/" << std::endl;
-			}
-
-			ImGui::EndMenu();
-		}
-
 		// Apply Menu style to buttons
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 3)); // matches menu button padding
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0);
@@ -372,6 +362,12 @@ void UI::processEventQueue(std::queue<Message>& messageQueue)
 			case UI_CREATE_INSTRUMENT : {
 				std::vector<Instrument>* instruments = (std::vector<Instrument>*)message.data;
 				createNewInstrument(*instruments);
+				break;
+			}
+			case UI_CLEAR_FOCUS : {
+				ImGui::SetKeyboardFocusHere(-1);
+				ImGui::ClosePopupsOverWindow(nullptr, false);
+				ed::ClearSelection();
 				break;
 			}
 			default: {

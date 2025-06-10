@@ -123,6 +123,8 @@ void InputManager::createKeysEvents(std::queue<Message>& messageQueue)
 		messageQueue.push(Message(MESSAGE_PASTE, new ImVec2(cursorPos)));
 	if (keys[GLFW_MOD_CONTROL].isPressed() && keys[GLFW_KEY_X].isDown())
 		messageQueue.push(MESSAGE_CUT);
+	if (keys[GLFW_KEY_ESCAPE].isDown())
+		messageQueue.push(UI_CLEAR_FOCUS);
 }
 
 void InputManager::addKeyPressed(std::vector<MidiInfo>& keyPressed, int keyIndex, int velocity) const
