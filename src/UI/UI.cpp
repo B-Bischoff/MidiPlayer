@@ -20,7 +20,7 @@ UI::UI(GLFWwindow* window, Audio& audio, const ApplicationPath& path)
 	ImGui::SetCurrentContext(imguiContext);
 
 	// Search instruments
-	fs::path instrumentDir = _path.ressourceDirectory;
+	fs::path instrumentDir = _path.resourceDirectory;
 	instrumentDir.append(INSTRUMENTS_DIR);
 	for (const auto& file : fs::directory_iterator(instrumentDir))
 	{
@@ -201,7 +201,7 @@ void UI::updateSavedInstruments(std::vector<Instrument>& instruments, std::strin
 
 	updateOverwritePopup(saveInstrument);
 
-	fs::path newInstrumentPath = _path.ressourceDirectory;
+	fs::path newInstrumentPath = _path.resourceDirectory;
 	std::string filename = instrumentFilename + std::string(INSTRUMENTS_EXTENSION);
 	newInstrumentPath.append(INSTRUMENTS_DIR);
 	newInstrumentPath.append(filename);

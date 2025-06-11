@@ -37,12 +37,12 @@ if (WIN32)
 	set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)
 endif()
 
-# Deploy ressources
-set(RESSOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ressources)
-set(DEST_DIR $<TARGET_FILE_DIR:${PROJECT_NAME}>/ressources)
+# Deploy resources
+set(RESSOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/resources)
+set(DEST_DIR $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources)
 
 add_custom_target(deploy ALL
 	COMMAND ${CMAKE_COMMAND} -E make_directory ${DEST_DIR}
 	COMMAND ${CMAKE_COMMAND} -E copy_directory ${RESSOURCE_DIR} ${DEST_DIR}
-	COMMENT "Deploying ressources directory to ${DEST_DIR}"
+	COMMENT "Deploying resources directory to ${DEST_DIR}"
 )
