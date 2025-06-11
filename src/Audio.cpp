@@ -125,7 +125,7 @@ int Audio::uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBuf
 	//std::cout << "callback time : " << streamTime << std::endl;
 	if (status) Logger::log("Audio", Warning) << "Stream underflow detected." << std::endl;
 
-	audio->copyBufferData(buffer, nBufferFrames);
+	audio->copyBufferData(buffer, nBufferFrames, audio->mute);
 
 	if (audio->_syncCursors)
 	{
@@ -140,13 +140,13 @@ int Audio::uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBuf
 	return 0;
 }
 
-void Audio::copyBufferData(double* data, unsigned int sampleNumber)
+void Audio::copyBufferData(double* data, unsigned int sampleNumber, bool mute)
 {
 	for (int sample = 0; sample < sampleNumber; sample++)
 	{
-		*data++ = _buffer[_leftPhase];
+		*data++ = mute ? 0 : _buffer[_leftPhase];
 		if (_channels == 2)
-			*data++ = _buffer[_rightPhase];
+			*data++ = mute ? 0 : _buffer[_rightPhase];
 		incrementPhases();
 	}
 }

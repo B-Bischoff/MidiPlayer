@@ -24,6 +24,8 @@ public:
 
 	void update(std::vector<Instrument>& instruments, std::vector<MidiInfo>& keyPressed);
 
+	bool mute = false;
+
 	unsigned int getBufferSize() const;
 	unsigned int getLatency() const;
 	unsigned int getLatencyInSamplesPerUpdate() const;
@@ -83,7 +85,7 @@ private:
 	static int uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
 	void incrementPhases();
 	void incrementWriteCursor();
-	void copyBufferData(double* data, unsigned int sampleNumber);
+	void copyBufferData(double* data, unsigned int sampleNumber, bool mute = false);
 
 	void stopAndCloseStreamIfExist();
 };
