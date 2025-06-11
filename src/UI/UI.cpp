@@ -264,7 +264,7 @@ void UI::serializeInstrument(const fs::path& instrumentPath)
 	_nodeEditor.serialize(instrumentPath);
 
 	Logger::log("NodeEditor", Info) << "Saved file: " << instrumentPath.string() << std::endl;
-	ImGui::InsertNotification({ImGuiToastType::Info, 3000, "Saved file: %s", instrumentPath.string().c_str()});
+	ImGui::InsertNotification({ImGuiToastType::Info, 3000, "Saved file: %s", instrumentPath.filename().string().c_str()});
 
 	// Don't add already existing instrument
 	if (std::find_if(_instruments.begin(), _instruments.end(), \
