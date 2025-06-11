@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include "AudioComponent.hpp"
 #include "audio_backend.hpp"
 
@@ -13,10 +14,9 @@ struct CombFilter : public AudioComponent {
 
 	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
-		int delaySamplesValue = static_cast<int>(getInputsValue(delaySamples, audioInfos, keyPressed, currentKey));
-		double feedbackValue = getInputsValue(feedback, audioInfos, keyPressed, currentKey);
-		if (feedbackValue > 1.0) feedbackValue = 1.0;
-		double inputValue = getInputsValue(input, audioInfos, keyPressed, currentKey);
+		const int delaySamplesValue = static_cast<int>(getInputsValue(delaySamples, audioInfos, keyPressed, currentKey));
+		const double feedbackValue = std::clamp(getInputsValue(feedback, audioInfos, keyPressed, currentKey), 0.0, 1.0);
+		const double inputValue = getInputsValue(input, audioInfos, keyPressed, currentKey);
 
 		// Resize buffer on delaySamplesValue change
 		if (delaySamplesValue > 0 && delaySamplesValue != delayBuffer.size())
