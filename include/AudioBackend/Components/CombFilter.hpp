@@ -11,12 +11,12 @@ struct CombFilter : public AudioComponent {
 
 	CombFilter() : AudioComponent() { inputs.resize(3); componentName = "CombFilter"; }
 
-	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	double process(PipelineInfo& info) override
 	{
-		int delaySamplesValue = static_cast<int>(getInputsValue(delaySamples, keyPressed, currentKey));
-		double feedbackValue = getInputsValue(feedback, keyPressed, currentKey);
+		int delaySamplesValue = static_cast<int>(getInputsValue(delaySamples, info));
+		double feedbackValue = getInputsValue(feedback, info);
 		if (feedbackValue > 1.0) feedbackValue = 1.0;
-		double inputValue = getInputsValue(input, keyPressed, currentKey);
+		double inputValue = getInputsValue(input, info);
 
 		// Resize buffer on delaySamplesValue change
 		if (delaySamplesValue > 0 && delaySamplesValue != delayBuffer.size())
@@ -29,11 +29,11 @@ struct CombFilter : public AudioComponent {
 		if (delayBuffer.empty())
 			return 0.0;
 
-		if (currentKey == 0) // only increment bufferIndex on the first note (playing multiple notes must not increase index)
+		if (info.currentKey == 0) // only increment bufferIndex on the first note (playing multiple notes must not increase index)
 			bufferIndex = (bufferIndex + 1) % delayBuffer.size();
 
 		double output = inputValue;
-		if (currentKey == 0)
+		if (info.currentKey == 0)
 		{
 			output += feedbackValue * delayBuffer[bufferIndex]; // Add stored sound to the first note
 			delayBuffer[bufferIndex] = output; // Replace stored sound with current sound

@@ -8,5 +8,5 @@ public:
 	std::string name;
 	float volume = 1.0f;
 
-	double process(std::vector<MidiInfo>& keyPressed);
+	double process(PipelineInfo& info);
 };

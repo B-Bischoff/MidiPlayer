@@ -15,13 +15,13 @@ struct SoundFontPlayer : public AudioComponent {
 		inputs.resize(0); componentName = "SoundFontPlayer";
 	}
 
-	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	double process(PipelineInfo& info) override
 	{
-		if (currentKey != 0 || tinySoundFont == nullptr)
+		if (info.currentKey != 0 || tinySoundFont == nullptr)
 			return 0;
 
-		addNotes(keyPressed);
-		removeNotes(keyPressed);
+		addNotes(info.keyPressed);
+		removeNotes(info.keyPressed);
 
 		float synthValue = 0;
 		tsf_render_float(tinySoundFont, &synthValue, 1, 0);

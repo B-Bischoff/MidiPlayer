@@ -8,12 +8,12 @@ struct KeyboardFrequency : public AudioComponent {
 
 	KeyboardFrequency() : AudioComponent() { componentName = "KeyboardFrequency"; }
 
-	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	double process(PipelineInfo& info) override
 	{
-		if (!keyPressed.size())
+		if (!info.keyPressed.size())
 			return 0.0;
 
-		return pianoKeyFrequency(keyPressed[currentKey].keyIndex);
+		return pianoKeyFrequency(info.keyPressed[info.currentKey].keyIndex);
 	}
 
 	double pianoKeyFrequency(int keyId)

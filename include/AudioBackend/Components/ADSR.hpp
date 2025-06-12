@@ -20,21 +20,20 @@ public:
 
 	ADSR() : AudioComponent() { inputs.resize(2); componentName = "ADSR"; }
 
-	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	double process(PipelineInfo& info) override
 	{
 		if (!inputs.size())
 			return 0.0;
 
-		double inputValue = getInputsValue(input, keyPressed, currentKey);
-		double triggerValue = getInputsValue(trigger, keyPressed, currentKey);
+		double triggerValue = getInputsValue(trigger, info);
 
-		if (currentKey == 0)
+		if (info.currentKey == 0)
 		{
 			for (auto& e : envelopes)
 				e.playedThisFrame = false;
 		}
 
-		unsigned int envelopeIndex = keyPressed.size() ? keyPressed[currentKey].keyIndex : triggerValue;
+		unsigned int envelopeIndex = info.keyPressed.size() ? info.keyPressed[info.currentKey].keyIndex : triggerValue;
 
 		// add new envelopes
 		if (envelopeIndex != 0.0  && triggerValue != 0.0)
@@ -54,8 +53,8 @@ public:
 				envelopeInfo.id = envelopeIndex;
 				envelopeInfo.info = {};
 				envelopeInfo.envelope = reference;
-				if (keyPressed.size())
-					envelopeInfo.info = keyPressed[currentKey];
+				if (info.keyPressed.size())
+					envelopeInfo.info = info.keyPressed[info.currentKey];
 
 				envelopes.push_back(envelopeInfo);
 			}
@@ -63,19 +62,9 @@ public:
 
 		double value = 0.0;
 
-		// update envelopes
-		for (EnvelopeInfo& envelopeInfo : envelopes)
-		{
-			if (envelopeInfo.id == envelopeIndex && triggerValue != 0.0)
-			{
-				value += inputValue * envelopeInfo.envelope.GetAmplitude(time, true);
-				envelopeInfo.playedThisFrame = true;
-				break;
-			}
-		}
-
 		// Play envelope in release
-		if (currentKey == keyPressed.size() - 1 || keyPressed.empty())
+		double relaseEnvelopeInputValue = 0.0;
+		if (info.currentKey == info.keyPressed.size() - 1 || info.keyPressed.empty())
 		{
 			for (EnvelopeInfo& envelopeInfo : envelopes)
 			{
@@ -87,9 +76,24 @@ public:
 					std::vector<MidiInfo> newKeyPressed;
 					if (envelopeInfo.info.keyIndex != 0)
 						newKeyPressed.push_back(envelopeInfo.info);
-					inputValue = getInputsValue(input, newKeyPressed, 0);
-					value += envelopeInfo.envelope.GetAmplitude(time, false) * inputValue;
+					PipelineInfo newPipeline(newKeyPressed);
+					newPipeline.pipelineInitiator = 0;
+					newPipeline.currentKey = 0;
+					relaseEnvelopeInputValue = getInputsValue(input, newPipeline);
+					value += envelopeInfo.envelope.GetAmplitude(time, false) * relaseEnvelopeInputValue;
 				}
+			}
+		}
+
+		// update envelopes
+		double inputValue = getInputsValue(input, info) + relaseEnvelopeInputValue;
+		for (EnvelopeInfo& envelopeInfo : envelopes)
+		{
+			if (envelopeInfo.id == envelopeIndex && triggerValue != 0.0)
+			{
+				value += inputValue * envelopeInfo.envelope.GetAmplitude(time, true);
+				envelopeInfo.playedThisFrame = true;
+				break;
 			}
 		}
 

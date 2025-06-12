@@ -95,12 +95,14 @@ void Audio::update(std::vector<Instrument>& instruments, std::vector<MidiInfo>& 
 
 	const int samplesToGenerate = static_cast<int>(getSamplesPerUpdate()) + _samplesToAdjust;
 
+	PipelineInfo info(keyPressed);
+
 	for (int i = 0; i < samplesToGenerate; i++)
 	{
 		double value = 0.0;
 
 		for (Instrument& instrument : instruments)
-			value += instrument.process(keyPressed) * 1.0;
+			value += instrument.process(info) * 1.0;
 
 		_time += 1.0 / static_cast<double>(_sampleRate);
 		AudioComponent::time = _time;

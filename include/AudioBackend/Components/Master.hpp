@@ -38,7 +38,7 @@ public:
 		}
 	}
 
-	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	double process(PipelineInfo& info) override
 	{
 		if (!inputs.size())
 		{
@@ -55,13 +55,14 @@ public:
 		double value = 0.0;
 
 
+		info.pipelineInitiator = id;
 		for (AudioComponent* input : inputs[input])
 		{
-			int i = 0;
+			info.currentKey = 0;
 			do
 			{
-				value += input->process(keyPressed, i);
-			} while (++i < keyPressed.size());
+				value += input->process(info);
+			} while (++info.currentKey < info.keyPressed.size());
 		}
 
 		return value;

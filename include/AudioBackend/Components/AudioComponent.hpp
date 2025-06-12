@@ -1,9 +1,12 @@
 #pragma once
 
 #include "inc.hpp"
+#include "AudioBackend/PipelineInfo.hpp"
 #include <unordered_map>
 #include "Logger.hpp"
 #include <list>
+
+#define MASTER_COMPONENT_ID 1
 
 struct AudioComponent {
 	AudioComponent() : id(nextId++) { }
@@ -17,7 +20,7 @@ struct AudioComponent {
 
 	static double time;
 
-	virtual double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) = 0;
+	virtual double process(PipelineInfo& info) = 0;
 
 	Components getInputs() const
 	{
@@ -69,7 +72,7 @@ struct AudioComponent {
 		return deleted;
 	}
 
-	virtual double getInputsValue(const unsigned int& index, std::vector<MidiInfo>& keyPressed, int currentKey = 0)
+	virtual double getInputsValue(const unsigned int& index, PipelineInfo& info)
 	{
 		if (inputs.size() <= index)
 		{
@@ -81,7 +84,7 @@ struct AudioComponent {
 
 		double value = 0.0;
 		for (AudioComponent* component : input)
-			value += component->process(keyPressed, currentKey);
+			value += component->process(info);
 		return value;
 	}
 

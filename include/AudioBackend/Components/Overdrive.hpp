@@ -8,10 +8,10 @@ struct Overdrive : public AudioComponent {
 
 	Overdrive() : AudioComponent() { inputs.resize(2); componentName = "Overdrive"; }
 
-	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	double process(PipelineInfo& info) override
 	{
-		const double inputValue = getInputsValue(input, keyPressed, currentKey);
-		const double driveValue = getInputsValue(drive, keyPressed, currentKey);
+		const double inputValue = getInputsValue(input, info);
+		const double driveValue = getInputsValue(drive, info);
 
 		return std::tanh(inputValue * driveValue);
 	}

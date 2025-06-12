@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <cstdlib>
 #include "AudioComponent.hpp"
 #include "audio_backend.hpp"
@@ -12,17 +13,34 @@ struct Oscillator : public AudioComponent {
 
 	Oscillator() : AudioComponent() { inputs.resize(2); componentName = "Oscillator"; }
 
-	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	double process(PipelineInfo& info) override
 	{
 		if (inputs[frequency].size() <= 0)
 			return 0.0;
 
-		double frequencyValue = getInputsValue(frequency, keyPressed, currentKey);
-		double phaseValue = getInputsValue(phase, keyPressed, currentKey);
+		double frequencyValue = getInputsValue(frequency, info);
+		double phaseValue = getInputsValue(phase, info);
 
-		double value = osc(frequencyValue, M_PI * phaseValue, time, type);
+		static double previousTime = time;
+		static double phase = 0.0;
 
-		return value;
+		//double sampleRate = 44100.0;
+		double phaseIncrement = (2.0 * M_PI * frequencyValue) * (time - previousTime);
+		phase += phaseIncrement;
+
+		if (info.currentKey == info.keyPressed.size() - 1 && info.pipelineInitiator == MASTER_COMPONENT_ID)
+			previousTime = time;
+		std::cout << frequencyValue << " " << (previousTime - time) << std::endl;
+		std::cout << ">> " << info.currentKey << " " << info.keyPressed.size() << " " << info.pipelineInitiator << std::endl;
+
+		// Wrap phase between 0 and 2π
+		if (phase >= 2.0 * M_PI) phase -= 2.0 * M_PI;
+
+		return sin(phase);
+		
+	//	double value = osc(frequencyValue, M_PI * phaseValue, fmod(time, M_PI * 2.0) - M_PI, type);
+
+		//return value;
 	}
 
 	double freqToAngularVelocity(double hertz)
@@ -32,6 +50,7 @@ struct Oscillator : public AudioComponent {
 
 	double osc(double hertz, double phase, double time, OscType type)
 	{
+		//std::cout << time << std::endl;
 		double t = freqToAngularVelocity(hertz) * time + phase;
 
 		switch(type)

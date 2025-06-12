@@ -10,10 +10,10 @@ struct HighPassFilter : public AudioComponent {
 
 	HighPassFilter() : AudioComponent() { inputs.resize(2); componentName = "HighPassFilter"; }
 
-	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	double process(PipelineInfo& info) override
 	{
-		double alphaValue = std::clamp(getInputsValue(alpha, keyPressed, currentKey), 0.0, 1.0);
-		double signalValue = getInputsValue(input, keyPressed, currentKey);
+		double alphaValue = std::clamp(getInputsValue(alpha, info), 0.0, 1.0);
+		double signalValue = getInputsValue(input, info);
 
 		state = alphaValue * signalValue + (1.0 - alphaValue) * state;
 
