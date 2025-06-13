@@ -10,5 +10,5 @@ namespace fs = std::filesystem;
 
 struct ApplicationPath {
 	fs::path application;
-	fs::path ressourceDirectory;
+	fs::path resourceDirectory;
 };

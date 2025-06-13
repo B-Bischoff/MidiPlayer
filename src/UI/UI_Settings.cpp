@@ -13,6 +13,7 @@ void UI::updateSettings(Audio& audio, InputManager& inputManager, MidiPlayerSett
 		updateAudioSampleRate(audio);
 		updateAudioChannels(audio);
 		updateAudioLatency(audio);
+		updateMuteAudio(audio);
 		ImGui::Text("\n");
 		ImGui::Unindent();
 
@@ -134,6 +135,17 @@ void UI::updateAudioLatency(Audio& audio)
 	ImGui::PopID();
 	ImGui::SameLine();
 	helpMarker("Click and drag to edit value.\nHold SHIFT/ALT for faster/slower edit.");
+}
+
+void UI::updateMuteAudio(Audio& audio)
+{
+	ImGui::Text("Mute audio");
+	ImGui::SameLine();
+	ImGui::PushID("MuteAudioCheckbox");
+	ImGui::Checkbox("", &audio.mute);
+	ImGui::PopID();
+	ImGui::SameLine();
+	helpMarker("Does not output sound to system but keeps updating audio generation.");
 }
 
 void UI::updateMidiSettings(InputManager& inputManager, MidiPlayerSettings& settings)

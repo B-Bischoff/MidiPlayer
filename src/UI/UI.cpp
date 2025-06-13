@@ -20,7 +20,7 @@ UI::UI(GLFWwindow* window, Audio& audio, const ApplicationPath& path)
 	ImGui::SetCurrentContext(imguiContext);
 
 	// Search instruments
-	fs::path instrumentDir = _path.ressourceDirectory;
+	fs::path instrumentDir = _path.resourceDirectory;
 	instrumentDir.append(INSTRUMENTS_DIR);
 	for (const auto& file : fs::directory_iterator(instrumentDir))
 	{
@@ -201,7 +201,7 @@ void UI::updateSavedInstruments(std::vector<Instrument>& instruments, std::strin
 
 	updateOverwritePopup(saveInstrument);
 
-	fs::path newInstrumentPath = _path.ressourceDirectory;
+	fs::path newInstrumentPath = _path.resourceDirectory;
 	std::string filename = instrumentFilename + std::string(INSTRUMENTS_EXTENSION);
 	newInstrumentPath.append(INSTRUMENTS_DIR);
 	newInstrumentPath.append(filename);
@@ -264,7 +264,7 @@ void UI::serializeInstrument(const fs::path& instrumentPath)
 	_nodeEditor.serialize(instrumentPath);
 
 	Logger::log("NodeEditor", Info) << "Saved file: " << instrumentPath.string() << std::endl;
-	ImGui::InsertNotification({ImGuiToastType::Info, 3000, "Saved file: %s", instrumentPath.string().c_str()});
+	ImGui::InsertNotification({ImGuiToastType::Info, 3000, "Saved file: %s", instrumentPath.filename().string().c_str()});
 
 	// Don't add already existing instrument
 	if (std::find_if(_instruments.begin(), _instruments.end(), \
