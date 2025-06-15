@@ -26,6 +26,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE cereal)
 target_link_libraries(${PROJECT_NAME} PRIVATE stdc++fs)
 target_link_libraries(${PROJECT_NAME} PRIVATE kissfft)
 target_link_libraries(${PROJECT_NAME} PRIVATE stb)
+target_link_libraries(${PROJECT_NAME} PRIVATE libfluidsynth)
+
 if (UNIX)
 	target_link_libraries(${PROJECT_NAME} PRIVATE GL)
 else()

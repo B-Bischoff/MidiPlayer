@@ -539,6 +539,16 @@ struct OverdriveNode : public Node {
 	}
 };
 
+struct SoundFontPlayerNode : public Node {
+	SoundFontPlayerNode(IDManager* idManager = nullptr)
+	{
+		id = getId(idManager);
+		name = "SoundFont Player";
+
+		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
+	}
+};
+
 // Register every Node child classes
 CEREAL_REGISTER_TYPE(MasterNode)
 CEREAL_REGISTER_TYPE(NumberNode)
@@ -550,6 +560,7 @@ CEREAL_REGISTER_TYPE(LowPassFilterNode)
 CEREAL_REGISTER_TYPE(HighPassFilterNode)
 CEREAL_REGISTER_TYPE(CombFilterNode)
 CEREAL_REGISTER_TYPE(OverdriveNode)
+CEREAL_REGISTER_TYPE(SoundFontPlayerNode)
 
 // Register child class if it does not have serialization method.
 // This indicate cereal to use Node serialization method.
@@ -560,3 +571,4 @@ CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, LowPassFilterNode)
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, HighPassFilterNode)
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, CombFilterNode)
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, OverdriveNode)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, SoundFontPlayerNode)

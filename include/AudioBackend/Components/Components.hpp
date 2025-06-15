@@ -10,3 +10,4 @@
 #include "Oscillator.hpp"
 #include "CombFilter.hpp"
 #include "Overdrive.hpp"
+#include "SoundFontPlayer.hpp"

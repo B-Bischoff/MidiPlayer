@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <algorithm>
 #include <RtAudio.h>
+#include <fluidsynth.h>
 
 #include "AudioBackend/Instrument.hpp"
 #include "inc.hpp"
@@ -21,6 +22,8 @@ public:
 		unsigned int latency = 3
 	);
 	~Audio();
+
+	fluid_synth_t* synth = nullptr;
 
 	void update(std::vector<Instrument>& instruments, std::vector<MidiInfo>& keyPressed);
 
@@ -85,7 +88,7 @@ private:
 	static int uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
 	void incrementPhases();
 	void incrementWriteCursor();
-	void copyBufferData(double* data, unsigned int sampleNumber, bool mute = false);
+	void copyBufferData(float* data, unsigned int sampleNumber, bool mute = false);
 
 	void stopAndCloseStreamIfExist();
 };

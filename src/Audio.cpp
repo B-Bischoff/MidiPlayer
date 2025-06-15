@@ -65,7 +65,7 @@ bool Audio::initOutputDevice(unsigned int deviceId)
 	const unsigned int streamSampleRate = _sampleRate;
 	unsigned int bufferFrames = streamSampleRate / _targetFPS;
 
-	if (_stream.openStream(&parameters, NULL, RTAUDIO_FLOAT64, streamSampleRate, &bufferFrames, &uploadBuffer, this) != RTAUDIO_NO_ERROR)
+	if (_stream.openStream(&parameters, NULL, RTAUDIO_FLOAT32, streamSampleRate, &bufferFrames, &uploadBuffer, this) != RTAUDIO_NO_ERROR)
 	{
 		_deviceInfo = {};
 		Logger::log("RtAudio", Error) << "Failed to open stream." << std::endl;
@@ -120,7 +120,7 @@ int Audio::uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBuf
 {
 	Audio* audio = static_cast<Audio*>(userData);
 	assert(audio);
-	double *buffer = (double*)outputBuffer;
+	float *buffer = (float*)outputBuffer;
 
 	//std::cout << "callback time : " << streamTime << std::endl;
 	if (status) Logger::log("Audio", Warning) << "Stream underflow detected." << std::endl;
@@ -140,7 +140,7 @@ int Audio::uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBuf
 	return 0;
 }
 
-void Audio::copyBufferData(double* data, unsigned int sampleNumber, bool mute)
+void Audio::copyBufferData(float* data, unsigned int sampleNumber, bool mute)
 {
 	for (int sample = 0; sample < sampleNumber; sample++)
 	{
