@@ -10,8 +10,6 @@
 #include "Audio.hpp"
 #include "Window.hpp"
 
-#include <fluidsynth.h>
-
 static void handleFrameProcessTime(const time_point& startTime, const std::chrono::duration<double>& targetFrameDuration, Audio& audio);
 
 double AudioComponent::time = 0.0;
@@ -81,7 +79,6 @@ int main(int argc, char* argv[])
 	std::vector<MidiInfo> keyPressed = {};
 
 	std::queue<Message> messageQueue = {};
-
 
 	Timer midiPollingTimer(1.0);
 	double refreshCooldown = 0;

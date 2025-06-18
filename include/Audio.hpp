@@ -5,7 +5,6 @@
 #include <assert.h>
 #include <algorithm>
 #include <RtAudio.h>
-#include <fluidsynth.h>
 
 #include "AudioBackend/Instrument.hpp"
 #include "inc.hpp"
@@ -22,8 +21,6 @@ public:
 		unsigned int latency = 3
 	);
 	~Audio();
-
-	fluid_synth_t* synth = nullptr;
 
 	void update(std::vector<Instrument>& instruments, std::vector<MidiInfo>& keyPressed);
 
