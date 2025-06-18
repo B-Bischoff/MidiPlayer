@@ -540,12 +540,40 @@ struct OverdriveNode : public Node {
 };
 
 struct SoundFontPlayerNode : public Node {
+	bool needToUpdateSoundFontFile = false;
+	fs::path soundFontFilepath;
+
 	SoundFontPlayerNode(IDManager* idManager = nullptr)
 	{
 		id = getId(idManager);
 		name = "SoundFont Player";
 
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
+	}
+
+	void render(std::queue<Message>& messages) override
+	{
+		Node::startRender();
+		Node::renderNameAndPins();
+
+		if (needToUpdateSoundFontFile)
+		{
+			needToUpdateSoundFontFile = false;
+		}
+
+		ImGui::PushID(appendId("LoadSoundFontButton").c_str());
+		if (ImGui::Button("Load SoundFont"))
+			messages.push(Message(UI_SHOW_FILE_BROWSER, new FileBrowserOpenData({"Load SoundFont file", {".sf2"}, id})));
+		ImGui::PopID();
+		//ImGui::Text("%d", fileId);
+
+		Node::endRender();
+	}
+
+	void updateSoundFontFile(const fs::path& filepath)
+	{
+		needToUpdateSoundFontFile = true;
+		soundFontFilepath = filepath;
 	}
 };
 

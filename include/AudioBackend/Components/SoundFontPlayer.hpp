@@ -2,6 +2,7 @@
 
 #include <fluidsynth.h>
 #include <set>
+#include "path.hpp"
 #include "AudioComponent.hpp"
 #include "audio_backend.hpp"
 
@@ -12,25 +13,11 @@ struct SoundFontPlayer : public AudioComponent {
 	SoundFontPlayer() : AudioComponent()
 	{
 		inputs.resize(0); componentName = "SoundFontPlayer";
-
-		fluid_settings_t* fluidSettings = new_fluid_settings();
-		synth = new_fluid_synth(fluidSettings);
-		int sfid = fluid_synth_sfload(synth, "/home/bbischoff/Downloads/Yamaha_C7__Normalized_.sf2", 1);
-		if (sfid == FLUID_FAILED)
-		{
-			Logger::log("FLUID", Error) << "load error" << std::endl;
-			exit(1);
-		}
-		if (fluid_synth_program_select(synth, 0, sfid, 0, 0) != FLUID_OK)
-		{
-			Logger::log("FLUID", Error) << "synth select error" << std::endl;
-			exit(1);
-		}
 	}
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
-		if (currentKey != 0)
+		if (currentKey != 0 || synth == nullptr)
 			return 0;
 
 		addNotes(keyPressed);
@@ -88,5 +75,39 @@ struct SoundFontPlayer : public AudioComponent {
 			else
 				it++;
 		}
+	}
+
+	bool loadSoundFontFile(const fs::path& filepath)
+	{
+		// Clear previous notes on
+		for (const int& note : notesOn)
+			fluid_synth_noteoff(synth, 0, note);
+		notesOn.clear();
+
+		// Delete previous synth
+		if (synth != nullptr)
+			delete_fluid_synth(synth);
+
+		fluid_settings_t* fluidSettings = new_fluid_settings();
+		synth = new_fluid_synth(fluidSettings);
+		int sfid = fluid_synth_sfload(synth, "/home/bbischoff/Downloads/Yamaha_C7__Normalized_.sf2", 1);
+
+		if (sfid == FLUID_FAILED)
+		{
+			delete_fluid_settings(fluidSettings);
+			synth = nullptr;
+			Logger::log("SoundFont Node", Error) << "Unable to load file: " << fs::path(filepath).filename().string() << std::endl;
+			return true;
+		}
+		if (fluid_synth_program_select(synth, 0, sfid, 0, 0) != FLUID_OK)
+		{
+			delete_fluid_settings(fluidSettings);
+			delete_fluid_synth(synth);
+			Logger::log("SoundFont Node", Error) << "Synth selection error" << std::endl;
+			return true;
+		}
+
+		delete_fluid_settings(fluidSettings);
+		return false;
 	}
 };

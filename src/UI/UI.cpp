@@ -158,6 +158,7 @@ void UI::update(Window& window, Audio& audio, std::vector<Instrument>& instrumen
 	_nodeEditor.update(_selectedInstrument->master, messageQueue, instruments, _selectedInstrument);
 	_imPlot.update(audio, messageQueue, settings);
 	_audioSpectrum.update(audio);
+	_fileBrowser.update(messageQueue);
 
 	if (_windowsState.showLog)
 		_log.draw("Log", &_windowsState.showLog);
@@ -368,6 +369,18 @@ void UI::processEventQueue(std::queue<Message>& messageQueue)
 				ImGui::SetKeyboardFocusHere(-1);
 				ImGui::ClosePopupsOverWindow(nullptr, false);
 				ed::ClearSelection();
+				break;
+			}
+			case UI_SHOW_FILE_BROWSER : {
+				const FileBrowserOpenData* data = (FileBrowserOpenData*)message.data;
+				_fileBrowser.openFileBrowser(*data);
+				delete data;
+				break;
+			}
+			case SEND_NODE_FILEPATH : {
+				const NodeFilepathData* data = (NodeFilepathData*)message.data;
+				_nodeEditor.setNodeFilepathData(*data);
+				delete data;
 				break;
 			}
 			default: {

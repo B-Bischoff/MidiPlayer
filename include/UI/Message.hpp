@@ -1,6 +1,8 @@
 #pragma once
 
 #include <queue>
+#include <string>
+#include "path.hpp"
 #include <MidiMath.hpp>
 
 typedef unsigned int MessageId;
@@ -15,6 +17,8 @@ typedef unsigned int MessageId;
 #define MESSAGE_PASTE 0x07
 #define UI_CREATE_INSTRUMENT 0x08
 #define UI_CLEAR_FOCUS 0x09
+#define UI_SHOW_FILE_BROWSER 0xa
+#define SEND_NODE_FILEPATH 0xb
 
 struct Message {
 	MessageId id;
@@ -26,5 +30,16 @@ struct Message {
 
 struct MessageNodeIdAndControlPoints {
 	Vec2* controlPoints;
+	unsigned int nodeId;
+};
+
+struct FileBrowserOpenData {
+	std::string title;
+	std::vector<std::string> filter;
+	unsigned int nodeId; // node who made the call to get some file
+};
+
+struct NodeFilepathData {
+	fs::path filepath;
 	unsigned int nodeId;
 };

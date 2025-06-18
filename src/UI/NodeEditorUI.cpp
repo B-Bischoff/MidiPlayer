@@ -607,3 +607,19 @@ void NodeEditorUI::showLabel(const std::string& label) const
 	drawList->AddRectFilled(rectMin, rectMax, ImColor(45, 32, 32, 180), size.y * 0.15f);
 	ImGui::TextUnformatted(label.c_str());
 }
+
+void NodeEditorUI::setNodeFilepathData(const NodeFilepathData& data)
+{
+	std::shared_ptr<Node> node = _nodeManager.findNodeById(data.nodeId);
+
+	SoundFontPlayerNode* soundFontPlayerNode = dynamic_cast<SoundFontPlayerNode*>(node.get());
+	if (soundFontPlayerNode == nullptr)
+	{
+		Logger::log("NodeEditor", Warning) << "This type of node cannot receive filepath data." << std::endl;
+		return;
+	}
+
+	soundFontPlayerNode->updateSoundFontFile(data.filepath);
+
+	// In the futur other nodes such as mp3 players will also receive filepath data to load external sounds.
+}

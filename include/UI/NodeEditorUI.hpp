@@ -99,6 +99,8 @@ public:
 	void paste(const ImVec2& cursorPos);
 	void cut(std::queue<Message>& messages);
 
+	void setNodeFilepathData(const NodeFilepathData& data);
+
 private:
 	void initStyle();
 

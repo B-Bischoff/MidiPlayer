@@ -10,6 +10,7 @@
 #include "NodeEditorUI.hpp"
 #include "AudioSpectrum.hpp"
 #include "ImGuiNotify.hpp"
+#include "FileBrowser.hpp"
 #include "fa-solid-900.h"
 
 #include "AudioBackend/Instrument.hpp"
@@ -38,6 +39,7 @@ private:
 	ImPlotUI _imPlot;
 	NodeEditorUI _nodeEditor;
 	AudioSpectrum _audioSpectrum;
+	FileBrowser _fileBrowser;
 	const ApplicationPath& _path;
 
 	ImFont* _font;
