@@ -44,6 +44,7 @@ public:
 
 	std::shared_ptr<Node>& findNodeById(ed::NodeId id);
 	std::shared_ptr<Node>& findNodeByPinId(ed::PinId id);
+	std::shared_ptr<Node> findNodeByAudioComponentId(const unsigned int audioComponentId);
 	Pin& findPinById(ed::PinId id);
 	std::shared_ptr<Node>& getMasterNode();
 	std::list<std::shared_ptr<Node>> getHiddenNodes();

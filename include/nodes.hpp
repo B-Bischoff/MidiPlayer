@@ -77,11 +77,12 @@ struct Node
 	UI_NodeType type;
 	bool hidden;
 	unsigned int audioComponentId; // Used to identify audioComponent pointed by this node
+	AudioComponent* audioComponent; // Pointer to the underlying audio component
 
 	static bool propertyChanged;
 
 	Node()
-		: id(0), name(""), inputs(), outputs(), color(ImColor(0)), type(NodeUI), hidden(false), audioComponentId(0)
+		: id(0), name(""), inputs(), outputs(), color(ImColor(0)), type(NodeUI), hidden(false), audioComponentId(0), audioComponent(nullptr)
 	{ }
 
 	virtual ~Node() {}
@@ -222,6 +223,12 @@ struct Node
 			pin.node = this;
 		for (Pin& pin : outputs)
 			pin.node = this;
+	}
+
+	void clearAudioComponentPointerAndId()
+	{
+		audioComponent = nullptr;
+		audioComponentId = INVALID_ID;
 	}
 
 protected:
