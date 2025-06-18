@@ -8,11 +8,19 @@
 
 struct SoundFontPlayer : public AudioComponent {
 	fluid_synth_t* synth = nullptr;
+	fluid_settings_t* settings = nullptr;
+
 	std::set<int> notesOn;
 
 	SoundFontPlayer() : AudioComponent()
 	{
 		inputs.resize(0); componentName = "SoundFontPlayer";
+	}
+
+	~SoundFontPlayer()
+	{
+		if (synth) delete_fluid_synth(synth);
+		if (settings) delete_fluid_settings(settings);
 	}
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
@@ -84,30 +92,31 @@ struct SoundFontPlayer : public AudioComponent {
 			fluid_synth_noteoff(synth, 0, note);
 		notesOn.clear();
 
-		// Delete previous synth
+		// Delete previous loaded instrument
 		if (synth != nullptr)
 			delete_fluid_synth(synth);
+		if (settings != nullptr)
+			delete_fluid_settings(settings);
 
-		fluid_settings_t* fluidSettings = new_fluid_settings();
-		synth = new_fluid_synth(fluidSettings);
-		int sfid = fluid_synth_sfload(synth, "/home/bbischoff/Downloads/Yamaha_C7__Normalized_.sf2", 1);
+		settings = new_fluid_settings();
+		synth = new_fluid_synth(settings);
+		int sfid = fluid_synth_sfload(synth, filepath.string().c_str(), 1);
 
 		if (sfid == FLUID_FAILED)
 		{
-			delete_fluid_settings(fluidSettings);
-			synth = nullptr;
+			delete_fluid_synth(synth); synth = nullptr;
+			delete_fluid_settings(settings); settings = nullptr;
 			Logger::log("SoundFont Node", Error) << "Unable to load file: " << fs::path(filepath).filename().string() << std::endl;
 			return true;
 		}
 		if (fluid_synth_program_select(synth, 0, sfid, 0, 0) != FLUID_OK)
 		{
-			delete_fluid_settings(fluidSettings);
+			delete_fluid_settings(settings);
 			delete_fluid_synth(synth);
 			Logger::log("SoundFont Node", Error) << "Synth selection error" << std::endl;
 			return true;
 		}
 
-		delete_fluid_settings(fluidSettings);
 		return false;
 	}
 };

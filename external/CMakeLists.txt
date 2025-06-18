@@ -65,9 +65,8 @@ target_include_directories(imnodeeditor PUBLIC
 target_link_libraries(imnodeeditor PUBLIC imgui)
 
 # IMGUI FILEBROWSER
-
 add_library(imfilebrowser INTERFACE)
-target_include_directories(imfilebrowser INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/imgui-file-browser)
+target_include_directories(imfilebrowser INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/imgui-filebrowser)
 
 #CEREAL
 add_library(cereal INTERFACE)

@@ -563,16 +563,17 @@ struct SoundFontPlayerNode : public Node {
 		Node::startRender();
 		Node::renderNameAndPins();
 
-		if (needToUpdateSoundFontFile)
+		if (needToUpdateSoundFontFile && audioComponent)
 		{
 			needToUpdateSoundFontFile = false;
+			((SoundFontPlayer*)audioComponent)->loadSoundFontFile(soundFontFilepath);
 		}
 
 		ImGui::PushID(appendId("LoadSoundFontButton").c_str());
 		if (ImGui::Button("Load SoundFont"))
 			messages.push(Message(UI_SHOW_FILE_BROWSER, new FileBrowserOpenData({"Load SoundFont file", {".sf2"}, id})));
 		ImGui::PopID();
-		//ImGui::Text("%d", fileId);
+		ImGui::Text("Current file: %s", fs::path(soundFontFilepath).filename().string().c_str());
 
 		Node::endRender();
 	}
