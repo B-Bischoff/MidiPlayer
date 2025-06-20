@@ -13,6 +13,10 @@ struct Oscillator : public AudioComponent {
 
 	Oscillator() : AudioComponent() { inputs.resize(2); componentName = "Oscillator"; }
 
+	double previousTime = time;
+	double previouspreviousTime = previousTime;
+	double currentPhase = 0;
+
 	double process(PipelineInfo& info) override
 	{
 		if (inputs[frequency].size() <= 0)
@@ -21,23 +25,22 @@ struct Oscillator : public AudioComponent {
 		double frequencyValue = getInputsValue(frequency, info);
 		double phaseValue = getInputsValue(phase, info);
 
-		static double previousTime = time;
-		static double phase = 0.0;
+		double phaseIncrement = (2.0 * M_PI * frequencyValue) * (previousTime - previouspreviousTime);
 
-		//double sampleRate = 44100.0;
-		double phaseIncrement = (2.0 * M_PI * frequencyValue) * (time - previousTime);
-		phase += phaseIncrement;
-
-		if (info.currentKey == info.keyPressed.size() - 1 && info.pipelineInitiator == MASTER_COMPONENT_ID)
+		std::cout << frequencyValue << " " << (time - previousTime) << std::endl;
+		if ((info.currentKey == info.keyPressed.size() - 1 || info.keyPressed.size() == 0) && info.pipelineInitiator == MASTER_COMPONENT_ID)
+		{
+			currentPhase += phaseIncrement;
+			previouspreviousTime = previousTime;
 			previousTime = time;
-		std::cout << frequencyValue << " " << (previousTime - time) << std::endl;
+		}
 		std::cout << ">> " << info.currentKey << " " << info.keyPressed.size() << " " << info.pipelineInitiator << std::endl;
 
 		// Wrap phase between 0 and 2π
-		if (phase >= 2.0 * M_PI) phase -= 2.0 * M_PI;
+		if (currentPhase >= 2.0 * M_PI) currentPhase -= 2.0 * M_PI;
 
-		return sin(phase);
-		
+		return sin(currentPhase);
+
 	//	double value = osc(frequencyValue, M_PI * phaseValue, fmod(time, M_PI * 2.0) - M_PI, type);
 
 		//return value;

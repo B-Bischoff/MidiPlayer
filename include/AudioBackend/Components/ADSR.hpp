@@ -62,8 +62,19 @@ public:
 
 		double value = 0.0;
 
+		// update envelopes
+		double inputValue = getInputsValue(input, info);
+		for (EnvelopeInfo& envelopeInfo : envelopes)
+		{
+			if (envelopeInfo.id == envelopeIndex && triggerValue != 0.0)
+			{
+				value += inputValue * envelopeInfo.envelope.GetAmplitude(time, true);
+				envelopeInfo.playedThisFrame = true;
+				break;
+			}
+		}
+
 		// Play envelope in release
-		double relaseEnvelopeInputValue = 0.0;
 		if (info.currentKey == info.keyPressed.size() - 1 || info.keyPressed.empty())
 		{
 			for (EnvelopeInfo& envelopeInfo : envelopes)
@@ -79,21 +90,9 @@ public:
 					PipelineInfo newPipeline(newKeyPressed);
 					newPipeline.pipelineInitiator = 0;
 					newPipeline.currentKey = 0;
-					relaseEnvelopeInputValue = getInputsValue(input, newPipeline);
-					value += envelopeInfo.envelope.GetAmplitude(time, false) * relaseEnvelopeInputValue;
+					inputValue = getInputsValue(input, newPipeline);
+					value += envelopeInfo.envelope.GetAmplitude(time, false) * inputValue;
 				}
-			}
-		}
-
-		// update envelopes
-		double inputValue = getInputsValue(input, info) + relaseEnvelopeInputValue;
-		for (EnvelopeInfo& envelopeInfo : envelopes)
-		{
-			if (envelopeInfo.id == envelopeIndex && triggerValue != 0.0)
-			{
-				value += inputValue * envelopeInfo.envelope.GetAmplitude(time, true);
-				envelopeInfo.playedThisFrame = true;
-				break;
 			}
 		}
 
