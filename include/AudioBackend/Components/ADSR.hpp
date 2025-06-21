@@ -88,7 +88,7 @@ public:
 					if (envelopeInfo.info.keyIndex != 0)
 						newKeyPressed.push_back(envelopeInfo.info);
 					PipelineInfo newPipeline(newKeyPressed);
-					newPipeline.pipelineInitiator = 0;
+					newPipeline.pipelineInitiator = id;
 					newPipeline.currentKey = 0;
 					inputValue = getInputsValue(input, newPipeline);
 					value += envelopeInfo.envelope.GetAmplitude(time, false) * inputValue;
