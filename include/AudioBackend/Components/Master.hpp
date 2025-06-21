@@ -1,5 +1,6 @@
 #pragma once
 
+#include <unordered_set>
 #include "AudioComponent.hpp"
 #include "audio_backend.hpp"
 
@@ -14,9 +15,27 @@ public:
 
 	virtual ~Master()
 	{
-		Components inputs = getInputs();
-		for (auto& input : inputs)
-			deleteComponentAndInputs(input);
+		Components components = getInputs();
+		std::unordered_set<int> ids;
+
+		// Store all direct childs ids
+		for (AudioComponent* component : components)
+			ids.insert(component->id);
+
+		// It is important to check if child still exists before deleting it
+		// Following pattern shows why:
+		//
+		//  child2 ──────────────┐
+		//    │                  v
+		//    └──> child1 ───> master
+		//
+		// If Child 1 is deleted first, it would also delete child2
+		for (const int id : ids)
+		{
+			AudioComponent* component = getAudioComponent(id);
+			if (component)
+				deleteComponentAndInputs(component);
+		}
 	}
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
