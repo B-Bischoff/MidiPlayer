@@ -346,6 +346,7 @@ struct OscNode : public Node
 
 		inputs.push_back(createPin(idManager, "> freq", PinKind::Input, Oscillator::Inputs::frequency));
 		inputs.push_back(createPin(idManager, "> phase", PinKind::Input, Oscillator::Inputs::phase));
+		inputs.push_back(createPin(idManager, "> reset", PinKind::Input, Oscillator::Inputs::phase));
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 
