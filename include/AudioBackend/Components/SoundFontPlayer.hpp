@@ -8,9 +8,6 @@
 #include "audio_backend.hpp"
 
 struct SoundFontPlayer : public AudioComponent {
-	fluid_synth_t* synth = nullptr;
-	fluid_settings_t* settings = nullptr;
-
 	std::set<int> notesOn;
 	tsf* tinySoundFont = nullptr;
 
@@ -21,8 +18,12 @@ struct SoundFontPlayer : public AudioComponent {
 
 	~SoundFontPlayer()
 	{
-		if (synth) delete_fluid_synth(synth);
-		if (settings) delete_fluid_settings(settings);
+		// Delete previous loaded instrument
+		if (tinySoundFont != nullptr)
+		{
+			tsf_note_off_all(tinySoundFont);
+			tsf_close(tinySoundFont);
+		}
 	}
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
@@ -34,8 +35,6 @@ struct SoundFontPlayer : public AudioComponent {
 		removeNotes(keyPressed);
 
 		float synthValue = 0;
-		//if (fluid_synth_write_float(synth, 1, &synthValue, 0, 2, &synthValue, 0, 2) != FLUID_OK)
-		//	Logger::log("Fluidynth", Warning) << "write error" << std::endl;
 		tsf_render_float(tinySoundFont, &synthValue, 1, 0);
 
 		return static_cast<double>(synthValue);
@@ -80,38 +79,25 @@ struct SoundFontPlayer : public AudioComponent {
 
 	bool loadSoundFontFile(const fs::path& filepath)
 	{
-		tinySoundFont = tsf_load_filename(filepath.string().c_str());
-		tsf_set_output(tinySoundFont, TSF_MONO, 44100, 0); //sample rate
-
-		// Clear previous notes on
-		for (const int& note : notesOn)
-			fluid_synth_noteoff(synth, 0, note);
 		notesOn.clear();
 
 		// Delete previous loaded instrument
-		if (synth != nullptr)
-			delete_fluid_synth(synth);
-		if (settings != nullptr)
-			delete_fluid_settings(settings);
-
-		settings = new_fluid_settings();
-		synth = new_fluid_synth(settings);
-		int sfid = fluid_synth_sfload(synth, filepath.string().c_str(), 1);
-
-		if (sfid == FLUID_FAILED)
+		if (tinySoundFont != nullptr)
 		{
-			delete_fluid_synth(synth); synth = nullptr;
-			delete_fluid_settings(settings); settings = nullptr;
-			Logger::log("SoundFont Node", Error) << "Unable to load file: " << fs::path(filepath).filename().string() << std::endl;
+			tsf_note_off_all(tinySoundFont);
+			tsf_close(tinySoundFont);
+		}
+		tinySoundFont = nullptr;
+
+		tinySoundFont = tsf_load_filename(filepath.string().c_str());
+
+		if (tinySoundFont == nullptr)
+		{
+			Logger::log("SoundFontPlayer", Error) << "Could not open file: " << filepath.string() << std::endl;
 			return true;
 		}
-		if (fluid_synth_program_select(synth, 0, sfid, 0, 0) != FLUID_OK)
-		{
-			delete_fluid_settings(settings);
-			delete_fluid_synth(synth);
-			Logger::log("SoundFont Node", Error) << "Synth selection error" << std::endl;
-			return true;
-		}
+
+		tsf_set_output(tinySoundFont, TSF_MONO, 44100, 0); //sample rate
 
 		return false;
 	}
