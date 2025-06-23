@@ -1,7 +1,6 @@
 #pragma once
 
 #include <tsf.h>
-#include <fluidsynth.h>
 #include <set>
 #include "path.hpp"
 #include "AudioComponent.hpp"

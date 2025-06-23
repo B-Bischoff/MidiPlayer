@@ -35,9 +35,6 @@
 [submodule "external/stb"]
 	path = external/stb
 	url = git@github.com:nothings/stb.git
-[submodule "external/fluidsynth"]
-	path = external/fluidsynth
-	url = git@github.com:FluidSynth/fluidsynth.git
 [submodule "external/imgui-filebrowser"]
 	path = external/imgui-filebrowser
 	url = git@github.com:AirGuanZ/imgui-filebrowser.git

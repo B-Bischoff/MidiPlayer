@@ -83,7 +83,6 @@ int main(int argc, char* argv[])
 	Timer midiPollingTimer(1.0);
 	double refreshCooldown = 0;
 	time_point lastFrameTime;
-	static int ttt = 0;
 	while (!window.shouldClose())
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
