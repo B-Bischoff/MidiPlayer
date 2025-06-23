@@ -1,6 +1,7 @@
 #include "UI/NodeEditorUI.hpp"
 
 bool Node::propertyChanged = false;
+Node::AudioInfos Node::audioInfos = {};
 
 NodeEditorUI::NodeEditorUI()
 {
@@ -622,4 +623,17 @@ void NodeEditorUI::setNodeFilepathData(const NodeFilepathData& data)
 	soundFontPlayerNode->updateSoundFontFile(data.filepath);
 
 	// In the futur other nodes such as mp3 players will also receive filepath data to load external sounds.
+}
+
+void NodeEditorUI::updateNodeSampleRate(const unsigned int sampleRate)
+{
+	Node::audioInfos.sampleRate = sampleRate;
+
+	std::list<std::shared_ptr<Node>> nodes = _nodeManager.getNodeOfType<SoundFontPlayerNode>();
+	for (auto& node : nodes)
+	{
+		SoundFontPlayerNode* soundFontPlayerNode = dynamic_cast<SoundFontPlayerNode*>(node.get());
+		if (!soundFontPlayerNode->soundFontFilepath.empty())
+			soundFontPlayerNode->needToUpdateSoundFontFile = true;
+	}
 }

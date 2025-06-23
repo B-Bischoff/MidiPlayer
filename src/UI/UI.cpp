@@ -39,6 +39,11 @@ UI::UI(GLFWwindow* window, Audio& audio, const ApplicationPath& path)
 	_windowsState.showLog = false;
 	_windowsState.showSettings = false;
 
+	Node::audioInfos = {
+		.sampleRate = audio.getSampleRate(),
+		.channels = audio.getChannels()
+	};
+
 	initFonts();
 	initStyle();
 	initColors();
@@ -164,7 +169,7 @@ void UI::update(Window& window, Audio& audio, std::vector<Instrument>& instrumen
 		_log.draw("Log", &_windowsState.showLog);
 
 	if (_windowsState.showSettings)
-		updateSettings(audio, inputManager, settings);
+		updateSettings(audio, inputManager, settings, messageQueue);
 
 	endUpdate();
 }
@@ -381,6 +386,18 @@ void UI::processEventQueue(std::queue<Message>& messageQueue)
 				const NodeFilepathData* data = (NodeFilepathData*)message.data;
 				_nodeEditor.setNodeFilepathData(*data);
 				delete data;
+				break;
+			}
+			case AUDIO_SAMPLE_RATE_UPDATED : {
+				const unsigned int* sampleRate = (unsigned int*)message.data;
+				_nodeEditor.updateNodeSampleRate(*sampleRate);
+				delete sampleRate;
+				break;
+			}
+			case AUDIO_CHANNELS_UPDATED : {
+				const unsigned int* channels = (unsigned int*)message.data;
+				Node::audioInfos.channels = *channels;
+				delete channels;
 				break;
 			}
 			default: {

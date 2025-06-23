@@ -100,6 +100,7 @@ public:
 	void cut(std::queue<Message>& messages);
 
 	void setNodeFilepathData(const NodeFilepathData& data);
+	void updateNodeSampleRate(const unsigned int sampleRate);
 
 private:
 	void initStyle();

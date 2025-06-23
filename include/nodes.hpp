@@ -79,6 +79,12 @@ struct Node
 	unsigned int audioComponentId; // Used to identify audioComponent pointed by this node
 	AudioComponent* audioComponent; // Pointer to the underlying audio component
 
+	struct AudioInfos {
+		unsigned int sampleRate = {};
+		unsigned int channels = {};
+	};
+
+	static AudioInfos audioInfos;
 	static bool propertyChanged;
 
 	Node()
@@ -566,7 +572,7 @@ struct SoundFontPlayerNode : public Node {
 		if (needToUpdateSoundFontFile && audioComponent)
 		{
 			needToUpdateSoundFontFile = false;
-			((SoundFontPlayer*)audioComponent)->loadSoundFontFile(soundFontFilepath);
+			((SoundFontPlayer*)audioComponent)->loadSoundFontFile(soundFontFilepath, audioInfos.sampleRate);
 		}
 
 		ImGui::PushID(appendId("LoadSoundFontButton").c_str());

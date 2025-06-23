@@ -77,7 +77,7 @@ struct SoundFontPlayer : public AudioComponent {
 		}
 	}
 
-	bool loadSoundFontFile(const fs::path& filepath)
+	bool loadSoundFontFile(const fs::path& filepath, const int& sampleRate)
 	{
 		notesOn.clear();
 
@@ -97,7 +97,7 @@ struct SoundFontPlayer : public AudioComponent {
 			return true;
 		}
 
-		tsf_set_output(tinySoundFont, TSF_MONO, 44100, 0); //sample rate
+		tsf_set_output(tinySoundFont, TSF_MONO, sampleRate, 0);
 
 		return false;
 	}

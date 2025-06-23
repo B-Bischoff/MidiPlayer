@@ -17,8 +17,10 @@ typedef unsigned int MessageId;
 #define MESSAGE_PASTE 0x07
 #define UI_CREATE_INSTRUMENT 0x08
 #define UI_CLEAR_FOCUS 0x09
-#define UI_SHOW_FILE_BROWSER 0xa
-#define SEND_NODE_FILEPATH 0xb
+#define UI_SHOW_FILE_BROWSER 0x0a
+#define SEND_NODE_FILEPATH 0x0b
+#define AUDIO_SAMPLE_RATE_UPDATED 0x0c
+#define AUDIO_CHANNELS_UPDATED 0x0d
 
 struct Message {
 	MessageId id;
