@@ -77,11 +77,18 @@ struct Node
 	UI_NodeType type;
 	bool hidden;
 	unsigned int audioComponentId; // Used to identify audioComponent pointed by this node
+	AudioComponent* audioComponent; // Pointer to the underlying audio component
 
+	struct AudioInfos {
+		unsigned int sampleRate = {};
+		unsigned int channels = {};
+	};
+
+	static AudioInfos audioInfos;
 	static bool propertyChanged;
 
 	Node()
-		: id(0), name(""), inputs(), outputs(), color(ImColor(0)), type(NodeUI), hidden(false), audioComponentId(0)
+		: id(0), name(""), inputs(), outputs(), color(ImColor(0)), type(NodeUI), hidden(false), audioComponentId(0), audioComponent(nullptr)
 	{ }
 
 	virtual ~Node() {}
@@ -222,6 +229,12 @@ struct Node
 			pin.node = this;
 		for (Pin& pin : outputs)
 			pin.node = this;
+	}
+
+	void clearAudioComponentPointerAndId()
+	{
+		audioComponent = nullptr;
+		audioComponentId = INVALID_ID;
 	}
 
 protected:
@@ -539,6 +552,45 @@ struct OverdriveNode : public Node {
 	}
 };
 
+struct SoundFontPlayerNode : public Node {
+	bool needToUpdateSoundFontFile = false;
+	fs::path soundFontFilepath;
+
+	SoundFontPlayerNode(IDManager* idManager = nullptr)
+	{
+		id = getId(idManager);
+		name = "SoundFont Player";
+
+		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
+	}
+
+	void render(std::queue<Message>& messages) override
+	{
+		Node::startRender();
+		Node::renderNameAndPins();
+
+		if (needToUpdateSoundFontFile && audioComponent)
+		{
+			needToUpdateSoundFontFile = false;
+			((SoundFontPlayer*)audioComponent)->loadSoundFontFile(soundFontFilepath, audioInfos.sampleRate);
+		}
+
+		ImGui::PushID(appendId("LoadSoundFontButton").c_str());
+		if (ImGui::Button("Load SoundFont"))
+			messages.push(Message(UI_SHOW_FILE_BROWSER, new FileBrowserOpenData({"Load SoundFont file", {".sf2"}, id})));
+		ImGui::PopID();
+		ImGui::Text("Current file: %s", fs::path(soundFontFilepath).filename().string().c_str());
+
+		Node::endRender();
+	}
+
+	void updateSoundFontFile(const fs::path& filepath)
+	{
+		needToUpdateSoundFontFile = true;
+		soundFontFilepath = filepath;
+	}
+};
+
 // Register every Node child classes
 CEREAL_REGISTER_TYPE(MasterNode)
 CEREAL_REGISTER_TYPE(NumberNode)
@@ -550,6 +602,7 @@ CEREAL_REGISTER_TYPE(LowPassFilterNode)
 CEREAL_REGISTER_TYPE(HighPassFilterNode)
 CEREAL_REGISTER_TYPE(CombFilterNode)
 CEREAL_REGISTER_TYPE(OverdriveNode)
+CEREAL_REGISTER_TYPE(SoundFontPlayerNode)
 
 // Register child class if it does not have serialization method.
 // This indicate cereal to use Node serialization method.
@@ -560,3 +613,4 @@ CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, LowPassFilterNode)
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, HighPassFilterNode)
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, CombFilterNode)
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, OverdriveNode)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, SoundFontPlayerNode)

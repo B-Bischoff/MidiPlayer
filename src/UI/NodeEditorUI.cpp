@@ -1,6 +1,7 @@
 #include "UI/NodeEditorUI.hpp"
 
 bool Node::propertyChanged = false;
+Node::AudioInfos Node::audioInfos = {};
 
 NodeEditorUI::NodeEditorUI()
 {
@@ -18,6 +19,7 @@ NodeEditorUI::NodeEditorUI()
 	_nodeManager.registerNode<HighPassFilterNode, HighPassFilter>("High Pass Filter");
 	_nodeManager.registerNode<CombFilterNode, CombFilter>("Comb Filter");
 	_nodeManager.registerNode<OverdriveNode, Overdrive>("Overdrive");
+	_nodeManager.registerNode<SoundFontPlayerNode, SoundFontPlayer>("SoundFontPlayer");
 
 	_nodeManager.addNode<MasterNode>(_idManager);
 
@@ -605,4 +607,33 @@ void NodeEditorUI::showLabel(const std::string& label) const
 	auto drawList = ImGui::GetWindowDrawList();
 	drawList->AddRectFilled(rectMin, rectMax, ImColor(45, 32, 32, 180), size.y * 0.15f);
 	ImGui::TextUnformatted(label.c_str());
+}
+
+void NodeEditorUI::setNodeFilepathData(const NodeFilepathData& data)
+{
+	std::shared_ptr<Node> node = _nodeManager.findNodeById(data.nodeId);
+
+	SoundFontPlayerNode* soundFontPlayerNode = dynamic_cast<SoundFontPlayerNode*>(node.get());
+	if (soundFontPlayerNode == nullptr)
+	{
+		Logger::log("NodeEditor", Warning) << "This type of node cannot receive filepath data." << std::endl;
+		return;
+	}
+
+	soundFontPlayerNode->updateSoundFontFile(data.filepath);
+
+	// In the futur other nodes such as mp3 players will also receive filepath data to load external sounds.
+}
+
+void NodeEditorUI::updateNodeSampleRate(const unsigned int sampleRate)
+{
+	Node::audioInfos.sampleRate = sampleRate;
+
+	std::list<std::shared_ptr<Node>> nodes = _nodeManager.getNodeOfType<SoundFontPlayerNode>();
+	for (auto& node : nodes)
+	{
+		SoundFontPlayerNode* soundFontPlayerNode = dynamic_cast<SoundFontPlayerNode*>(node.get());
+		if (!soundFontPlayerNode->soundFontFilepath.empty())
+			soundFontPlayerNode->needToUpdateSoundFontFile = true;
+	}
 }

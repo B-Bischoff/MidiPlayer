@@ -10,6 +10,7 @@
 #include "NodeEditorUI.hpp"
 #include "AudioSpectrum.hpp"
 #include "ImGuiNotify.hpp"
+#include "FileBrowser.hpp"
 #include "fa-solid-900.h"
 
 #include "AudioBackend/Instrument.hpp"
@@ -38,6 +39,7 @@ private:
 	ImPlotUI _imPlot;
 	NodeEditorUI _nodeEditor;
 	AudioSpectrum _audioSpectrum;
+	FileBrowser _fileBrowser;
 	const ApplicationPath& _path;
 
 	ImFont* _font;
@@ -76,7 +78,7 @@ private:
 	void serializeInstrument(const fs::path& instrumentPath);
 
 	void updateLoadedInstruments(std::vector<Instrument>& instruments, int& selectedInstrument, bool& loadDefaultInstrument);
-	void updateSettings(Audio& audio, InputManager& inputManager, MidiPlayerSettings& settings);
+	void updateSettings(Audio& audio, InputManager& inputManager, MidiPlayerSettings& settings, std::queue<Message>& messages);
 
 	void processEventQueue(std::queue<Message>& messageQueue);
 
@@ -84,8 +86,8 @@ private:
 
 	// updateSettings helpers
 	void updateAudioOutput(Audio& audio);
-	void updateAudioSampleRate(Audio& audio);
-	void updateAudioChannels(Audio& audio);
+	void updateAudioSampleRate(Audio& audio, std::queue<Message>& messageQueue);
+	void updateAudioChannels(Audio& audio, std::queue<Message>& messageQueue);
 	void updateAudioLatency(Audio& audio);
 	void updateMuteAudio(Audio& audio);
 	void updateMidiSettings(InputManager& inputManager, MidiPlayerSettings& settings);

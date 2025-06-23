@@ -1,6 +1,6 @@
 #include "UI/UI.hpp"
 
-void UI::updateSettings(Audio& audio, InputManager& inputManager, MidiPlayerSettings& settings)
+void UI::updateSettings(Audio& audio, InputManager& inputManager, MidiPlayerSettings& settings, std::queue<Message>& messageQueue)
 {
 	ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_FirstUseEver, ImVec2(0.5f, 0.5f));
 	ImGui::SetNextWindowSize(ImVec2(ImGui::GetMainViewport()->Size.x * 0.5, ImGui::GetMainViewport()->Size.y * 0.8), ImGuiCond_FirstUseEver);
@@ -10,8 +10,8 @@ void UI::updateSettings(Audio& audio, InputManager& inputManager, MidiPlayerSett
 		ImGui::SeparatorText("Audio");
 		ImGui::Indent();
 		updateAudioOutput(audio);
-		updateAudioSampleRate(audio);
-		updateAudioChannels(audio);
+		updateAudioSampleRate(audio, messageQueue);
+		updateAudioChannels(audio, messageQueue);
 		updateAudioLatency(audio);
 		updateMuteAudio(audio);
 		ImGui::Text("\n");
@@ -78,7 +78,7 @@ void UI::updateAudioOutput(Audio& audio)
 	}
 }
 
-void UI::updateAudioSampleRate(Audio& audio)
+void UI::updateAudioSampleRate(Audio& audio, std::queue<Message>& messageQueue)
 {
 	const unsigned int freq[] = { 44100, 48000 };
 	const char* items[] = { "44100Hz", "48000Hz" };
@@ -93,11 +93,13 @@ void UI::updateAudioSampleRate(Audio& audio)
 		Logger::log("Settings") << "Changed sample rate to " << items[selectedItem] << std::endl;
 		if (audio.setSampleRate(freq[selectedItem]))
 			ImGui::InsertNotification({ImGuiToastType::Error, 5000, "Error changing sample rate to: %d", items[selectedItem]});
+		else
+			messageQueue.push(Message(AUDIO_SAMPLE_RATE_UPDATED, new unsigned int(audio.getSampleRate())));
 	}
 	ImGui::PopID();
 }
 
-void UI::updateAudioChannels(Audio& audio)
+void UI::updateAudioChannels(Audio& audio, std::queue<Message>& messageQueue)
 {
 	ImGui::Text("Number of channels");
 	ImGui::SameLine();
@@ -106,12 +108,16 @@ void UI::updateAudioChannels(Audio& audio)
 	{
 		if (audio.setChannelNumber(1))
 			ImGui::InsertNotification({ImGuiToastType::Error, 5000, "Error changing channel(s) number to: 1"});
+		else
+			messageQueue.push(Message(AUDIO_CHANNELS_UPDATED, new unsigned int(audio.getSampleRate())));
 	}
 	ImGui::SameLine();
 	if (ImGui::RadioButton("2 - Stereo", &selectedChannelMode, 2))
 	{
 		if (audio.setChannelNumber(2))
 			ImGui::InsertNotification({ImGuiToastType::Error, 5000, "Error changing channel(s) number to: 2"});
+		else
+			messageQueue.push(Message(AUDIO_CHANNELS_UPDATED, new unsigned int(audio.getSampleRate())));
 	}
 }
 

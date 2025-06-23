@@ -74,6 +74,18 @@ std::shared_ptr<Node>& NodeManager::findNodeByPinId(ed::PinId id)
 	return _nodes[0];
 }
 
+std::shared_ptr<Node> NodeManager::findNodeByAudioComponentId(const unsigned int audioComponentId)
+{
+	for (std::shared_ptr<Node>& node : _nodes)
+	{
+		if (node->audioComponentId == audioComponentId)
+			return node;
+	}
+
+	// Do not assert here, as this function might be called on non-existing node by UIToBackendAdapter
+	return nullptr;
+}
+
 Pin& NodeManager::findPinById(ed::PinId id)
 {
 	for (std::shared_ptr<Node>& node : _nodes)

@@ -64,6 +64,10 @@ target_include_directories(imnodeeditor PUBLIC
 )
 target_link_libraries(imnodeeditor PUBLIC imgui)
 
+# IMGUI FILEBROWSER
+add_library(imfilebrowser INTERFACE)
+target_include_directories(imfilebrowser INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/imgui-filebrowser)
+
 #CEREAL
 add_library(cereal INTERFACE)
 target_include_directories(cereal INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/cereal/include)
@@ -90,3 +94,7 @@ add_subdirectory(kissfft)
 # STB
 add_library(stb INTERFACE)
 target_include_directories(stb INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/stb)
+
+# TINYSOUNDFONT
+add_library(tinysoundfont INTERFACE)
+target_include_directories(tinysoundfont INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/tinysoundfont)

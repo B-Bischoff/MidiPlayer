@@ -85,7 +85,7 @@ private:
 	static int uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
 	void incrementPhases();
 	void incrementWriteCursor();
-	void copyBufferData(double* data, unsigned int sampleNumber, bool mute = false);
+	void copyBufferData(float* data, unsigned int sampleNumber, bool mute = false);
 
 	void stopAndCloseStreamIfExist();
 };

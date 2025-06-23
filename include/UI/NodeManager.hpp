@@ -44,9 +44,13 @@ public:
 
 	std::shared_ptr<Node>& findNodeById(ed::NodeId id);
 	std::shared_ptr<Node>& findNodeByPinId(ed::PinId id);
+	std::shared_ptr<Node> findNodeByAudioComponentId(const unsigned int audioComponentId);
 	Pin& findPinById(ed::PinId id);
 	std::shared_ptr<Node>& getMasterNode();
 	std::list<std::shared_ptr<Node>> getHiddenNodes();
+
+	template<typename T>
+	std::list<std::shared_ptr<Node>> getNodeOfType();
 
 	NodeInfo getNodeInfo(Node* node) const;
 
@@ -115,6 +119,18 @@ std::shared_ptr<Node> NodeManager::addNode(IDManager& idManager) {
 	std::shared_ptr<Node> node = std::make_shared<T>(&idManager);
 	_nodes.push_back(node);
 	return _nodes.back();
+}
+
+template<typename T>
+std::list<std::shared_ptr<Node>> NodeManager::getNodeOfType() {
+	std::list<std::shared_ptr<Node>> list;
+
+	for (std::shared_ptr<Node>& node : _nodes)
+	{
+		if (dynamic_cast<T*>(node.get()))
+			list.push_back(node);
+	}
+	return list;
 }
 
 // Serialization methods

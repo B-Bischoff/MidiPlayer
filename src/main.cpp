@@ -10,7 +10,6 @@
 #include "Audio.hpp"
 #include "Window.hpp"
 
-
 static void handleFrameProcessTime(const time_point& startTime, const std::chrono::duration<double>& targetFrameDuration, Audio& audio);
 
 double AudioComponent::time = 0.0;
