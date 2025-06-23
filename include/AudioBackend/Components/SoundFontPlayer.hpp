@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tsf.h>
 #include <fluidsynth.h>
 #include <set>
 #include "path.hpp"
@@ -11,6 +12,7 @@ struct SoundFontPlayer : public AudioComponent {
 	fluid_settings_t* settings = nullptr;
 
 	std::set<int> notesOn;
+	tsf* tinySoundFont = nullptr;
 
 	SoundFontPlayer() : AudioComponent()
 	{
@@ -25,15 +27,16 @@ struct SoundFontPlayer : public AudioComponent {
 
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
-		if (currentKey != 0 || synth == nullptr)
+		if (currentKey != 0 || tinySoundFont == nullptr)
 			return 0;
 
 		addNotes(keyPressed);
 		removeNotes(keyPressed);
 
 		float synthValue = 0;
-		if (fluid_synth_write_float(synth, 1, &synthValue, 0, 2, &synthValue, 0, 2) != FLUID_OK)
-			Logger::log("Fluidynth", Warning) << "write error" << std::endl;
+		//if (fluid_synth_write_float(synth, 1, &synthValue, 0, 2, &synthValue, 0, 2) != FLUID_OK)
+		//	Logger::log("Fluidynth", Warning) << "write error" << std::endl;
+		tsf_render_float(tinySoundFont, &synthValue, 1, 0);
 
 		return static_cast<double>(synthValue);
 	}
@@ -45,13 +48,7 @@ struct SoundFontPlayer : public AudioComponent {
 			if (notesOn.find(key.keyIndex) == notesOn.end())
 			{
 				notesOn.insert(key.keyIndex);
-				// Midiplayer velocity is ranged between 0 & 255, however fluisynth
-				// uses a range between 0 & 127.
-				if (fluid_synth_noteon(synth, 0, key.keyIndex, key.velocity / 2) != FLUID_OK)
-				{
-					Logger::log("FLUID", Error) << "synth noteon error" << std::endl;
-					exit(1);
-				}
+				tsf_note_on(tinySoundFont, 0, key.keyIndex, (double)key.velocity / 255.0);
 			}
 		}
 	}
@@ -73,11 +70,7 @@ struct SoundFontPlayer : public AudioComponent {
 
 			if (!noteStillPlayed)
 			{
-				if (fluid_synth_noteoff(synth, 0, *it) != FLUID_OK)
-				{
-					Logger::log("FLUID", Error) << "synth noteoff error" << std::endl;
-					exit(1);
-				}
+				tsf_note_off(tinySoundFont, 0, *it);
 				it = notesOn.erase(it);
 			}
 			else
@@ -87,6 +80,9 @@ struct SoundFontPlayer : public AudioComponent {
 
 	bool loadSoundFontFile(const fs::path& filepath)
 	{
+		tinySoundFont = tsf_load_filename(filepath.string().c_str());
+		tsf_set_output(tinySoundFont, TSF_MONO, 44100, 0); //sample rate
+
 		// Clear previous notes on
 		for (const int& note : notesOn)
 			fluid_synth_noteoff(synth, 0, note);

@@ -41,3 +41,6 @@
 [submodule "external/imgui-filebrowser"]
 	path = external/imgui-filebrowser
 	url = git@github.com:AirGuanZ/imgui-filebrowser.git
+[submodule "external/tinysoundfont"]
+	path = external/tinysoundfont
+	url = git@github.com:schellingb/TinySoundFont.git

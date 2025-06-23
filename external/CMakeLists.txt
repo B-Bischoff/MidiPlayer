@@ -102,3 +102,7 @@ set(ENABLE_SHARED OFF CACHE BOOL "Disable shared lib" FORCE)
 set(ENABLE_STATIC ON CACHE BOOL "Enable static lib" FORCE)
 set(ENABLE_FLUIDSYNTH_TOOLS OFF CACHE BOOL "Disable fluidsynth CLI build" FORCE)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/fluidsynth)
+
+# TINYSOUNDFONT
+add_library(tinysoundfont INTERFACE)
+target_include_directories(tinysoundfont INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/tinysoundfont)

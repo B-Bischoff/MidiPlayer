@@ -28,6 +28,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE stdc++fs)
 target_link_libraries(${PROJECT_NAME} PRIVATE kissfft)
 target_link_libraries(${PROJECT_NAME} PRIVATE stb)
 target_link_libraries(${PROJECT_NAME} PRIVATE libfluidsynth)
+target_link_libraries(${PROJECT_NAME} PRIVATE tinysoundfont)
 
 if (UNIX)
 	target_link_libraries(${PROJECT_NAME} PRIVATE GL)
