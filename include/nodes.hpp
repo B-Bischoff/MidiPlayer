@@ -7,6 +7,7 @@
 #include "inc.hpp"
 #include "UI/Message.hpp"
 #include "MidiMath.hpp"
+#include "SoundFont.hpp"
 
 #include "AudioBackend/Components/Components.hpp"
 
@@ -555,6 +556,7 @@ struct OverdriveNode : public Node {
 struct SoundFontPlayerNode : public Node {
 	bool needToUpdateSoundFontFile = false;
 	fs::path soundFontFilepath;
+	SoundFont soundFont;
 
 	SoundFontPlayerNode(IDManager* idManager = nullptr)
 	{
@@ -564,16 +566,35 @@ struct SoundFontPlayerNode : public Node {
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 
+	// Overload copy constructor to load a soundFont and not copy the existing one
+	SoundFontPlayerNode(const SoundFontPlayerNode& node)
+		: Node(node)
+	{
+		if (!node.soundFontFilepath.empty())
+		{
+			soundFontFilepath = node.soundFontFilepath;
+			needToUpdateSoundFontFile = true;
+			if (soundFont.loadSoundFontFile(soundFontFilepath, audioInfos.sampleRate))
+				soundFontFilepath.clear();
+		}
+	}
+
 	void render(std::queue<Message>& messages) override
 	{
 		Node::startRender();
 		Node::renderNameAndPins();
 
-		if (needToUpdateSoundFontFile && audioComponent)
+		if (needToUpdateSoundFontFile)
 		{
 			needToUpdateSoundFontFile = false;
-			((SoundFontPlayer*)audioComponent)->loadSoundFontFile(soundFontFilepath, audioInfos.sampleRate);
+			if (soundFont.loadSoundFontFile(soundFontFilepath, audioInfos.sampleRate))
+				soundFontFilepath.clear();
+			if (audioComponent)
+				((SoundFontPlayer*)audioComponent)->tinySoundFont = nullptr;
 		}
+
+		if (audioComponent && ((SoundFontPlayer*)audioComponent)->tinySoundFont == nullptr)
+			((SoundFontPlayer*)audioComponent)->tinySoundFont = soundFont.getSoundFont();
 
 		ImGui::PushID(appendId("LoadSoundFontButton").c_str());
 		if (ImGui::Button("Load SoundFont"))

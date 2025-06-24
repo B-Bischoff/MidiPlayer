@@ -97,8 +97,7 @@ void NodeManager::registerNode(const std::string& nodeName) {
 
 	// Register instantiation function based on an existing node
 	info.instantiateCopyFunction = [](const Node* node) -> Node* {
-		NodeType* newNode = new NodeType;
-		*newNode = *(dynamic_cast<const NodeType*>(node));
+		NodeType* newNode = new NodeType(*(dynamic_cast<const NodeType*>(node)));
 		return newNode;
 	};
 

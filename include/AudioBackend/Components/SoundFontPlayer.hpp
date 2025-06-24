@@ -15,16 +15,6 @@ struct SoundFontPlayer : public AudioComponent {
 		inputs.resize(0); componentName = "SoundFontPlayer";
 	}
 
-	~SoundFontPlayer()
-	{
-		// Delete previous loaded instrument
-		if (tinySoundFont != nullptr)
-		{
-			tsf_note_off_all(tinySoundFont);
-			tsf_close(tinySoundFont);
-		}
-	}
-
 	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
 		if (currentKey != 0 || tinySoundFont == nullptr)
@@ -74,30 +64,5 @@ struct SoundFontPlayer : public AudioComponent {
 			else
 				it++;
 		}
-	}
-
-	bool loadSoundFontFile(const fs::path& filepath, const int& sampleRate)
-	{
-		notesOn.clear();
-
-		// Delete previous loaded instrument
-		if (tinySoundFont != nullptr)
-		{
-			tsf_note_off_all(tinySoundFont);
-			tsf_close(tinySoundFont);
-		}
-		tinySoundFont = nullptr;
-
-		tinySoundFont = tsf_load_filename(filepath.string().c_str());
-
-		if (tinySoundFont == nullptr)
-		{
-			Logger::log("SoundFontPlayer", Error) << "Could not open file: " << filepath.string() << std::endl;
-			return true;
-		}
-
-		tsf_set_output(tinySoundFont, TSF_MONO, sampleRate, 0);
-
-		return false;
 	}
 };
