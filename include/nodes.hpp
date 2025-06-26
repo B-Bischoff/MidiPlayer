@@ -510,7 +510,8 @@ struct LowPassFilterNode : public Node {
 		type = LowPassUI;
 
 		inputs.push_back(createPin(idManager, "> input", PinKind::Input, LowPassFilter::Inputs::input));
-		inputs.push_back(createPin(idManager, "> alpha", PinKind::Input, LowPassFilter::Inputs::alpha));
+		inputs.push_back(createPin(idManager, "> cutoff", PinKind::Input, LowPassFilter::Inputs::cutoff));
+		inputs.push_back(createPin(idManager, "> resonance", PinKind::Input, LowPassFilter::Inputs::resonance));
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 };
@@ -521,8 +522,8 @@ struct HighPassFilterNode : public Node {
 		id = getId(idManager);
 		name = "High Pass Filter";
 
-		inputs.push_back(createPin(idManager, "> input", PinKind::Input, LowPassFilter::Inputs::input));
-		inputs.push_back(createPin(idManager, "> alpha", PinKind::Input, LowPassFilter::Inputs::alpha));
+		inputs.push_back(createPin(idManager, "> input", PinKind::Input, HighPassFilter::Inputs::input));
+		inputs.push_back(createPin(idManager, "> alpha", PinKind::Input, HighPassFilter::Inputs::alpha));
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 };
