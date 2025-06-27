@@ -1,7 +1,7 @@
 #include "UI/NodeEditorUI.hpp"
 
 bool Node::propertyChanged = false;
-Node::AudioInfos Node::audioInfos = {};
+AudioInfos Node::audioInfos = {};
 
 NodeEditorUI::NodeEditorUI()
 {

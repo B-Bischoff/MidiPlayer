@@ -8,10 +8,10 @@ struct Multiplier : public AudioComponent {
 
 	Multiplier() : AudioComponent() { inputs.resize(2); componentName = "Multiplier"; }
 
-	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
-		double valueA = getInputsValue(inputA, keyPressed, currentKey);
-		double valueB = getInputsValue(inputB, keyPressed, currentKey);
+		double valueA = getInputsValue(inputA, audioInfos, keyPressed, currentKey);
+		double valueB = getInputsValue(inputB, audioInfos, keyPressed, currentKey);
 		return valueA * valueB;
 	}
 };

@@ -1,6 +1,6 @@
 #include "AudioBackend/Instrument.hpp"
 
-double Instrument::process(std::vector<MidiInfo>& keyPressed)
+double Instrument::process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed)
 {
-	return master.process(keyPressed) * volume;
+	return master.process(audioInfos, keyPressed) * volume;
 }

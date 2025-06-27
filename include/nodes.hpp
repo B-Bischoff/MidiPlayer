@@ -80,11 +80,6 @@ struct Node
 	unsigned int audioComponentId; // Used to identify audioComponent pointed by this node
 	AudioComponent* audioComponent; // Pointer to the underlying audio component
 
-	struct AudioInfos {
-		unsigned int sampleRate = {};
-		unsigned int channels = {};
-	};
-
 	static AudioInfos audioInfos;
 	static bool propertyChanged;
 
