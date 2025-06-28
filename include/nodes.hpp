@@ -333,8 +333,8 @@ struct OscNode : public Node
 {
 	OscType oscType;
 	bool doPopup = false;
-	static const int oscTypeNumber = 5;
-	std::string popupText[oscTypeNumber] = {"Sine", "Square", "Triangle", "Saw_Dig", "Noise"};
+	static constexpr int oscTypeNumber = 7;
+	std::string popupText[oscTypeNumber] = {"Sine", "Square", "Triangle", "Saw_Dig", "White noise", "Pink noise", "Brownian noise"};
 
 	OscNode(IDManager* idManager = nullptr)
 	{
