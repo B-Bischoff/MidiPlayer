@@ -25,12 +25,13 @@ jobs:
         fi
         echo "BIN"="MidiPlayer" >> ci-env
 
-    - name: Remove existing docker
+    - name: Remove existing docker and artifacts
       run: |
         . ./ci-env
         # Force stop and remove existing docker
         docker stop $DOCKER_NAME > /dev/null || true
         docker rm $DOCKER_NAME > /dev/null || true
+        rm -rf $ARTIFACTS/builds
 
     - name: Docker build
       run: |
@@ -60,6 +61,11 @@ jobs:
         docker exec docker-runner cmake -S . -B build_aarch64_linux -DCMAKE_TOOLCHAIN_FILE=./cmake/aarch64_Linux_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
         docker exec docker-runner make -C build_aarch64_linux -j $(nproc)
         mkdir -p $ARTIFACTS/builds/build_aarch64_linux && docker cp "$DOCKER_NAME:$REPO_NAME/build_aarch64_linux" $ARTIFACTS/builds/build_aarch64_linux
+        find $ARTIFACTS/builds/build_aarch64_linux/build_aarch64_linux -mindepth 1 \
+          ! -path "$ARTIFACTS/builds/build_aarch64_linux/build_aarch64_linux/${BIN}" \
+          ! -path "$ARTIFACTS/builds/build_aarch64_linux/build_aarch64_linux/resources" \
+          ! -path "$ARTIFACTS/builds/build_aarch64_linux/build_aarch64_linux/resources/*" \
+          -exec rm -rf {} +
 
     - name: "Compile project ${{ github.repository }} for x86_64 Linux"
       run: |
@@ -73,6 +79,11 @@ jobs:
         docker exec docker-runner cmake -S . -B build_x86_64_linux -DCMAKE_TOOLCHAIN_FILE=./cmake/x86_64_Linux_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
         docker exec docker-runner make -C build_x86_64_linux -j $(nproc)
         mkdir -p $ARTIFACTS/builds/build_x86_64_linux && docker cp "$DOCKER_NAME:$REPO_NAME/build_x86_64_linux" $ARTIFACTS/builds/build_x86_64_linux
+        find $ARTIFACTS/builds/build_x86_64_linux/build_x86_64_linux -mindepth 1 \
+          ! -path "$ARTIFACTS/builds/build_x86_64_linux/build_x86_64_linux/${BIN}" \
+          ! -path "$ARTIFACTS/builds/build_x86_64_linux/build_x86_64_linux/resources" \
+          ! -path "$ARTIFACTS/builds/build_x86_64_linux/build_x86_64_linux/resources/*" \
+          -exec rm -rf {} +
 
     - name: "Compile project ${{ github.repository }} for x86_64 Windows"
       run: |
@@ -80,6 +91,11 @@ jobs:
         docker exec docker-runner cmake -S . -B build_x86_64_windows -DCMAKE_TOOLCHAIN_FILE=./cmake/x86_64_Windows_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
         docker exec docker-runner make -C build_x86_64_windows -j $(nproc)
         mkdir -p $ARTIFACTS/builds/build_x86_64_windows && docker cp "$DOCKER_NAME:$REPO_NAME/build_x86_64_windows" $ARTIFACTS/builds/build_x86_64_windows
+        find $ARTIFACTS/builds/build_x86_64_windows/build_x86_64_windows -mindepth 1 \
+          ! -path "$ARTIFACTS/builds/build_x86_64_windows/build_x86_64_windows/${BIN}.exe" \
+          ! -path "$ARTIFACTS/builds/build_x86_64_windows/build_x86_64_windows/resources" \
+          ! -path "$ARTIFACTS/builds/build_x86_64_windows/build_x86_64_windows/resources/*" \
+          -exec rm -rf {} +
 
     - name: "Deploy aarch64 Linux build"
       if: always()
