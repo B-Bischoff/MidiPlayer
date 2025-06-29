@@ -9,8 +9,8 @@ clear
 if [ ! -d $BUILD_DIRECTORY ]
 then
 	mkdir $BUILD_DIRECTORY;
-	cmake -S . -B $BUILD_DIRECTORY -DCMAKE_BUILD_TYPE=Debug
-	# cmake -S . -B $BUILD_DIRECTORY -DCMAKE_BUILD_TYPE=Release
+	# cmake -S . -B $BUILD_DIRECTORY -DCMAKE_BUILD_TYPE=Debug
+	cmake -S . -B $BUILD_DIRECTORY -DCMAKE_BUILD_TYPE=Release
 fi
 
 # Create application preset directory
