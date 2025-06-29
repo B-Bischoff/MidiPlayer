@@ -99,8 +99,13 @@ void Audio::update(std::vector<Instrument>& instruments, std::vector<MidiInfo>& 
 	{
 		double value = 0.0;
 
+		const AudioInfos audioInfos = {
+			.sampleRate = _sampleRate,
+			.channels = _channels
+		};
+
 		for (Instrument& instrument : instruments)
-			value += instrument.process(keyPressed) * 1.0;
+			value += instrument.process(audioInfos, keyPressed) * 1.0;
 
 		_time += 1.0 / static_cast<double>(_sampleRate);
 		AudioComponent::time = _time;

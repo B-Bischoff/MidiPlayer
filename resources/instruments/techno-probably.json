@@ -26,8 +26,8 @@
                 }
             },
             "position": {
-                "x": 1609.0,
-                "y": 57.0
+                "x": 2048.0,
+                "y": 1065.0
             }
         },
         {
@@ -156,8 +156,8 @@
                 }
             },
             "position": {
-                "x": 594.0,
-                "y": 64.0
+                "x": 512.0,
+                "y": 0.0
             }
         },
         {
@@ -444,8 +444,8 @@
                 }
             },
             "position": {
-                "x": -405.0,
-                "y": 280.0
+                "x": -384.0,
+                "y": 256.0
             }
         },
         {
@@ -490,8 +490,8 @@
                 }
             },
             "position": {
-                "x": -179.0,
-                "y": 281.0
+                "x": -128.0,
+                "y": 256.0
             }
         },
         {
@@ -568,8 +568,8 @@
                 }
             },
             "position": {
-                "x": -606.0,
-                "y": 272.0
+                "x": -640.0,
+                "y": 256.0
             }
         },
         {
@@ -1059,8 +1059,8 @@
                 }
             },
             "position": {
-                "x": -328.0,
-                "y": 983.0
+                "x": -316.0,
+                "y": 1017.0
             }
         },
         {
@@ -1183,8 +1183,8 @@
                 }
             },
             "position": {
-                "x": -540.0,
-                "y": 986.0
+                "x": -512.0,
+                "y": 1024.0
             }
         },
         {
@@ -1392,8 +1392,8 @@
                 }
             },
             "position": {
-                "x": -135.0,
-                "y": -240.0
+                "x": -128.0,
+                "y": -256.0
             }
         },
         {
@@ -1513,88 +1513,9 @@
         {
             "node": {
                 "polymorphic_id": 2147483654,
-                "polymorphic_name": "LowPassFilterNode",
-                "ptr_wrapper": {
-                    "id": 2147483683,
-                    "data": {
-                        "node_id": 174,
-                        "node_name": "Low Pass Filter",
-                        "node_type": 7,
-                        "node_inputs": [
-                            {
-                                "pin_id": 179,
-                                "node_id": 174,
-                                "pin_name": "> input",
-                                "pin_kind": 1,
-                                "pin_input_id": 0,
-                                "pin_mode": 0
-                            },
-                            {
-                                "pin_id": 180,
-                                "node_id": 174,
-                                "pin_name": "> alpha",
-                                "pin_kind": 1,
-                                "pin_input_id": 1,
-                                "pin_mode": 1
-                            }
-                        ],
-                        "node_outputs": [
-                            {
-                                "pin_id": 181,
-                                "node_id": 174,
-                                "pin_name": "output >",
-                                "pin_kind": 0,
-                                "pin_input_id": -1,
-                                "pin_mode": 0
-                            }
-                        ],
-                        "node_hidden": false
-                    }
-                }
-            },
-            "position": {
-                "x": 212.0,
-                "y": -224.0
-            }
-        },
-        {
-            "node": {
-                "polymorphic_id": 4,
-                "ptr_wrapper": {
-                    "id": 2147483684,
-                    "data": {
-                        "base_node": {
-                            "node_id": 184,
-                            "node_name": "Number",
-                            "node_type": 2,
-                            "node_inputs": [],
-                            "node_outputs": [
-                                {
-                                    "pin_id": 185,
-                                    "node_id": 184,
-                                    "pin_name": "output >",
-                                    "pin_kind": 0,
-                                    "pin_input_id": -1,
-                                    "pin_mode": 0
-                                }
-                            ],
-                            "node_hidden": true
-                        },
-                        "number_value": 0.10599999874830246
-                    }
-                }
-            },
-            "position": {
-                "x": -2147483648.0,
-                "y": -2147483648.0
-            }
-        },
-        {
-            "node": {
-                "polymorphic_id": 2147483655,
                 "polymorphic_name": "CombFilterNode",
                 "ptr_wrapper": {
-                    "id": 2147483685,
+                    "id": 2147483683,
                     "data": {
                         "node_id": 187,
                         "node_name": "Comb Filter",
@@ -1648,7 +1569,7 @@
             "node": {
                 "polymorphic_id": 3,
                 "ptr_wrapper": {
-                    "id": 2147483686,
+                    "id": 2147483684,
                     "data": {
                         "node_id": 192,
                         "node_name": "Multiplier",
@@ -1694,7 +1615,7 @@
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483687,
+                    "id": 2147483685,
                     "data": {
                         "base_node": {
                             "node_id": 196,
@@ -1726,7 +1647,7 @@
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483688,
+                    "id": 2147483686,
                     "data": {
                         "base_node": {
                             "node_id": 200,
@@ -1750,7 +1671,7 @@
                 }
             },
             "position": {
-                "x": -2147483648.0,
+                "x": -2147483520.0,
                 "y": -2147483648.0
             }
         },
@@ -1758,7 +1679,7 @@
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483689,
+                    "id": 2147483687,
                     "data": {
                         "base_node": {
                             "node_id": 203,
@@ -1790,7 +1711,7 @@
             "node": {
                 "polymorphic_id": 5,
                 "ptr_wrapper": {
-                    "id": 2147483690,
+                    "id": 2147483688,
                     "data": {
                         "value0": {
                             "node_id": 207,
@@ -1839,7 +1760,7 @@
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483691,
+                    "id": 2147483689,
                     "data": {
                         "base_node": {
                             "node_id": 213,
@@ -1871,7 +1792,7 @@
             "node": {
                 "polymorphic_id": 3,
                 "ptr_wrapper": {
-                    "id": 2147483692,
+                    "id": 2147483690,
                     "data": {
                         "node_id": 139,
                         "node_name": "Multiplier",
@@ -1917,7 +1838,7 @@
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483693,
+                    "id": 2147483691,
                     "data": {
                         "base_node": {
                             "node_id": 217,
@@ -1949,7 +1870,7 @@
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483694,
+                    "id": 2147483692,
                     "data": {
                         "base_node": {
                             "node_id": 220,
@@ -1981,7 +1902,7 @@
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483695,
+                    "id": 2147483693,
                     "data": {
                         "base_node": {
                             "node_id": 224,
@@ -2011,87 +1932,9 @@
         },
         {
             "node": {
-                "polymorphic_id": 6,
-                "ptr_wrapper": {
-                    "id": 2147483696,
-                    "data": {
-                        "node_id": 12,
-                        "node_name": "Low Pass Filter",
-                        "node_type": 7,
-                        "node_inputs": [
-                            {
-                                "pin_id": 141,
-                                "node_id": 12,
-                                "pin_name": "> input",
-                                "pin_kind": 1,
-                                "pin_input_id": 0,
-                                "pin_mode": 0
-                            },
-                            {
-                                "pin_id": 142,
-                                "node_id": 12,
-                                "pin_name": "> alpha",
-                                "pin_kind": 1,
-                                "pin_input_id": 1,
-                                "pin_mode": 1
-                            }
-                        ],
-                        "node_outputs": [
-                            {
-                                "pin_id": 143,
-                                "node_id": 12,
-                                "pin_name": "output >",
-                                "pin_kind": 0,
-                                "pin_input_id": -1,
-                                "pin_mode": 0
-                            }
-                        ],
-                        "node_hidden": false
-                    }
-                }
-            },
-            "position": {
-                "x": 1328.0,
-                "y": 48.0
-            }
-        },
-        {
-            "node": {
-                "polymorphic_id": 4,
-                "ptr_wrapper": {
-                    "id": 2147483697,
-                    "data": {
-                        "base_node": {
-                            "node_id": 150,
-                            "node_name": "Number",
-                            "node_type": 2,
-                            "node_inputs": [],
-                            "node_outputs": [
-                                {
-                                    "pin_id": 153,
-                                    "node_id": 150,
-                                    "pin_name": "output >",
-                                    "pin_kind": 0,
-                                    "pin_input_id": -1,
-                                    "pin_mode": 0
-                                }
-                            ],
-                            "node_hidden": true
-                        },
-                        "number_value": 0.12700000405311585
-                    }
-                }
-            },
-            "position": {
-                "x": -2147483648.0,
-                "y": -2147483648.0
-            }
-        },
-        {
-            "node": {
                 "polymorphic_id": 3,
                 "ptr_wrapper": {
-                    "id": 2147483698,
+                    "id": 2147483694,
                     "data": {
                         "node_id": 177,
                         "node_name": "Multiplier",
@@ -2129,15 +1972,15 @@
                 }
             },
             "position": {
-                "x": -498.0,
-                "y": 2539.0
+                "x": 278.0,
+                "y": 2096.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483699,
+                    "id": 2147483695,
                     "data": {
                         "base_node": {
                             "node_id": 230,
@@ -2169,7 +2012,7 @@
             "node": {
                 "polymorphic_id": 2,
                 "ptr_wrapper": {
-                    "id": 2147483700,
+                    "id": 2147483696,
                     "data": {
                         "base_node": {
                             "node_id": 233,
@@ -2243,15 +2086,15 @@
                 }
             },
             "position": {
-                "x": -742.0,
-                "y": 2542.0
+                "x": 34.0,
+                "y": 2099.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 5,
                 "ptr_wrapper": {
-                    "id": 2147483701,
+                    "id": 2147483697,
                     "data": {
                         "value0": {
                             "node_id": 237,
@@ -2292,15 +2135,15 @@
                 }
             },
             "position": {
-                "x": -1339.0,
-                "y": 1938.0
+                "x": -563.0,
+                "y": 1495.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483702,
+                    "id": 2147483698,
                     "data": {
                         "base_node": {
                             "node_id": 243,
@@ -2332,7 +2175,7 @@
             "node": {
                 "polymorphic_id": 5,
                 "ptr_wrapper": {
-                    "id": 2147483703,
+                    "id": 2147483699,
                     "data": {
                         "value0": {
                             "node_id": 246,
@@ -2373,15 +2216,15 @@
                 }
             },
             "position": {
-                "x": -1443.0,
-                "y": 2472.0
+                "x": -667.0,
+                "y": 2029.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 3,
                 "ptr_wrapper": {
-                    "id": 2147483704,
+                    "id": 2147483700,
                     "data": {
                         "node_id": 252,
                         "node_name": "Multiplier",
@@ -2419,15 +2262,15 @@
                 }
             },
             "position": {
-                "x": -1256.0,
-                "y": 2484.0
+                "x": -480.0,
+                "y": 2041.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483705,
+                    "id": 2147483701,
                     "data": {
                         "base_node": {
                             "node_id": 256,
@@ -2459,7 +2302,7 @@
             "node": {
                 "polymorphic_id": 5,
                 "ptr_wrapper": {
-                    "id": 2147483706,
+                    "id": 2147483702,
                     "data": {
                         "value0": {
                             "node_id": 259,
@@ -2500,15 +2343,15 @@
                 }
             },
             "position": {
-                "x": -1420.0,
-                "y": 3458.0
+                "x": -644.0,
+                "y": 3015.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 5,
                 "ptr_wrapper": {
-                    "id": 2147483707,
+                    "id": 2147483703,
                     "data": {
                         "value0": {
                             "node_id": 265,
@@ -2549,15 +2392,15 @@
                 }
             },
             "position": {
-                "x": -1497.0,
-                "y": 2755.0
+                "x": -721.0,
+                "y": 2312.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 3,
                 "ptr_wrapper": {
-                    "id": 2147483708,
+                    "id": 2147483704,
                     "data": {
                         "node_id": 271,
                         "node_name": "Multiplier",
@@ -2595,15 +2438,15 @@
                 }
             },
             "position": {
-                "x": -1698.0,
-                "y": 2747.0
+                "x": -922.0,
+                "y": 2304.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483709,
+                    "id": 2147483705,
                     "data": {
                         "base_node": {
                             "node_id": 275,
@@ -2635,7 +2478,7 @@
             "node": {
                 "polymorphic_id": 3,
                 "ptr_wrapper": {
-                    "id": 2147483710,
+                    "id": 2147483706,
                     "data": {
                         "node_id": 278,
                         "node_name": "Multiplier",
@@ -2673,15 +2516,15 @@
                 }
             },
             "position": {
-                "x": -1233.0,
-                "y": 3470.0
+                "x": -457.0,
+                "y": 3027.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483711,
+                    "id": 2147483707,
                     "data": {
                         "base_node": {
                             "node_id": 282,
@@ -2713,7 +2556,7 @@
             "node": {
                 "polymorphic_id": 3,
                 "ptr_wrapper": {
-                    "id": 2147483712,
+                    "id": 2147483708,
                     "data": {
                         "node_id": 285,
                         "node_name": "Multiplier",
@@ -2751,15 +2594,15 @@
                 }
             },
             "position": {
-                "x": -1271.0,
-                "y": 2756.0
+                "x": -495.0,
+                "y": 2313.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483713,
+                    "id": 2147483709,
                     "data": {
                         "base_node": {
                             "node_id": 289,
@@ -2791,7 +2634,7 @@
             "node": {
                 "polymorphic_id": 3,
                 "ptr_wrapper": {
-                    "id": 2147483714,
+                    "id": 2147483710,
                     "data": {
                         "node_id": 292,
                         "node_name": "Multiplier",
@@ -2829,15 +2672,15 @@
                 }
             },
             "position": {
-                "x": -1655.0,
-                "y": 2475.0
+                "x": -879.0,
+                "y": 2032.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483715,
+                    "id": 2147483711,
                     "data": {
                         "base_node": {
                             "node_id": 296,
@@ -2869,7 +2712,7 @@
             "node": {
                 "polymorphic_id": 3,
                 "ptr_wrapper": {
-                    "id": 2147483716,
+                    "id": 2147483712,
                     "data": {
                         "node_id": 299,
                         "node_name": "Multiplier",
@@ -2907,15 +2750,15 @@
                 }
             },
             "position": {
-                "x": -1271.0,
-                "y": 3003.0
+                "x": -495.0,
+                "y": 2560.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483717,
+                    "id": 2147483713,
                     "data": {
                         "base_node": {
                             "node_id": 303,
@@ -2947,7 +2790,7 @@
             "node": {
                 "polymorphic_id": 3,
                 "ptr_wrapper": {
-                    "id": 2147483718,
+                    "id": 2147483714,
                     "data": {
                         "node_id": 306,
                         "node_name": "Multiplier",
@@ -2985,15 +2828,15 @@
                 }
             },
             "position": {
-                "x": -1632.0,
-                "y": 3461.0
+                "x": -856.0,
+                "y": 3018.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483719,
+                    "id": 2147483715,
                     "data": {
                         "base_node": {
                             "node_id": 310,
@@ -3025,7 +2868,7 @@
             "node": {
                 "polymorphic_id": 3,
                 "ptr_wrapper": {
-                    "id": 2147483720,
+                    "id": 2147483716,
                     "data": {
                         "node_id": 313,
                         "node_name": "Multiplier",
@@ -3063,15 +2906,15 @@
                 }
             },
             "position": {
-                "x": -1234.0,
-                "y": 3275.0
+                "x": -458.0,
+                "y": 2832.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483721,
+                    "id": 2147483717,
                     "data": {
                         "base_node": {
                             "node_id": 317,
@@ -3103,7 +2946,7 @@
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483722,
+                    "id": 2147483718,
                     "data": {
                         "base_node": {
                             "node_id": 320,
@@ -3127,15 +2970,15 @@
                 }
             },
             "position": {
-                "x": -1353.0,
-                "y": 1828.0
+                "x": -577.0,
+                "y": 1385.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 5,
                 "ptr_wrapper": {
-                    "id": 2147483723,
+                    "id": 2147483719,
                     "data": {
                         "value0": {
                             "node_id": 322,
@@ -3176,15 +3019,15 @@
                 }
             },
             "position": {
-                "x": -1417.0,
-                "y": 3272.0
+                "x": -641.0,
+                "y": 2829.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 3,
                 "ptr_wrapper": {
-                    "id": 2147483724,
+                    "id": 2147483720,
                     "data": {
                         "node_id": 328,
                         "node_name": "Multiplier",
@@ -3222,15 +3065,15 @@
                 }
             },
             "position": {
-                "x": -1672.0,
-                "y": 3002.0
+                "x": -896.0,
+                "y": 2559.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483725,
+                    "id": 2147483721,
                     "data": {
                         "base_node": {
                             "node_id": 332,
@@ -3262,7 +3105,7 @@
             "node": {
                 "polymorphic_id": 3,
                 "ptr_wrapper": {
-                    "id": 2147483726,
+                    "id": 2147483722,
                     "data": {
                         "node_id": 335,
                         "node_name": "Multiplier",
@@ -3300,15 +3143,15 @@
                 }
             },
             "position": {
-                "x": -1653.0,
-                "y": 3275.0
+                "x": -877.0,
+                "y": 2832.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483727,
+                    "id": 2147483723,
                     "data": {
                         "base_node": {
                             "node_id": 339,
@@ -3340,7 +3183,7 @@
             "node": {
                 "polymorphic_id": 5,
                 "ptr_wrapper": {
-                    "id": 2147483728,
+                    "id": 2147483724,
                     "data": {
                         "value0": {
                             "node_id": 342,
@@ -3381,15 +3224,15 @@
                 }
             },
             "position": {
-                "x": -1460.0,
-                "y": 2999.0
+                "x": -684.0,
+                "y": 2556.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 3,
                 "ptr_wrapper": {
-                    "id": 2147483729,
+                    "id": 2147483725,
                     "data": {
                         "node_id": 348,
                         "node_name": "Multiplier",
@@ -3427,15 +3270,15 @@
                 }
             },
             "position": {
-                "x": -1115.0,
-                "y": 1924.0
+                "x": -339.0,
+                "y": 1481.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483730,
+                    "id": 2147483726,
                     "data": {
                         "base_node": {
                             "node_id": 352,
@@ -3467,7 +3310,7 @@
             "node": {
                 "polymorphic_id": 3,
                 "ptr_wrapper": {
-                    "id": 2147483731,
+                    "id": 2147483727,
                     "data": {
                         "node_id": 355,
                         "node_name": "Multiplier",
@@ -3505,15 +3348,15 @@
                 }
             },
             "position": {
-                "x": -69.0,
-                "y": 2411.0
+                "x": 707.0,
+                "y": 1968.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483732,
+                    "id": 2147483728,
                     "data": {
                         "base_node": {
                             "node_id": 359,
@@ -3545,7 +3388,7 @@
             "node": {
                 "polymorphic_id": 5,
                 "ptr_wrapper": {
-                    "id": 2147483733,
+                    "id": 2147483729,
                     "data": {
                         "value0": {
                             "node_id": 362,
@@ -3586,15 +3429,15 @@
                 }
             },
             "position": {
-                "x": -1473.0,
-                "y": 2194.0
+                "x": -697.0,
+                "y": 1751.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 2,
                 "ptr_wrapper": {
-                    "id": 2147483734,
+                    "id": 2147483730,
                     "data": {
                         "base_node": {
                             "node_id": 368,
@@ -3668,93 +3511,15 @@
                 }
             },
             "position": {
-                "x": -793.0,
-                "y": 3108.0
-            }
-        },
-        {
-            "node": {
-                "polymorphic_id": 6,
-                "ptr_wrapper": {
-                    "id": 2147483735,
-                    "data": {
-                        "node_id": 372,
-                        "node_name": "Low Pass Filter",
-                        "node_type": 7,
-                        "node_inputs": [
-                            {
-                                "pin_id": 373,
-                                "node_id": 372,
-                                "pin_name": "> input",
-                                "pin_kind": 1,
-                                "pin_input_id": 0,
-                                "pin_mode": 0
-                            },
-                            {
-                                "pin_id": 374,
-                                "node_id": 372,
-                                "pin_name": "> alpha",
-                                "pin_kind": 1,
-                                "pin_input_id": 1,
-                                "pin_mode": 1
-                            }
-                        ],
-                        "node_outputs": [
-                            {
-                                "pin_id": 375,
-                                "node_id": 372,
-                                "pin_name": "output >",
-                                "pin_kind": 0,
-                                "pin_input_id": -1,
-                                "pin_mode": 0
-                            }
-                        ],
-                        "node_hidden": false
-                    }
-                }
-            },
-            "position": {
-                "x": -880.0,
-                "y": 2251.0
-            }
-        },
-        {
-            "node": {
-                "polymorphic_id": 4,
-                "ptr_wrapper": {
-                    "id": 2147483736,
-                    "data": {
-                        "base_node": {
-                            "node_id": 376,
-                            "node_name": "Number",
-                            "node_type": 2,
-                            "node_inputs": [],
-                            "node_outputs": [
-                                {
-                                    "pin_id": 377,
-                                    "node_id": 376,
-                                    "pin_name": "output >",
-                                    "pin_kind": 0,
-                                    "pin_input_id": -1,
-                                    "pin_mode": 0
-                                }
-                            ],
-                            "node_hidden": true
-                        },
-                        "number_value": 0.10599999874830246
-                    }
-                }
-            },
-            "position": {
-                "x": -2147483648.0,
-                "y": -2147483648.0
+                "x": -17.0,
+                "y": 2665.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 3,
                 "ptr_wrapper": {
-                    "id": 2147483737,
+                    "id": 2147483731,
                     "data": {
                         "node_id": 379,
                         "node_name": "Multiplier",
@@ -3792,15 +3557,15 @@
                 }
             },
             "position": {
-                "x": -1227.0,
-                "y": 2235.0
+                "x": -451.0,
+                "y": 1792.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483738,
+                    "id": 2147483732,
                     "data": {
                         "base_node": {
                             "node_id": 383,
@@ -3832,7 +3597,7 @@
             "node": {
                 "polymorphic_id": 2,
                 "ptr_wrapper": {
-                    "id": 2147483739,
+                    "id": 2147483733,
                     "data": {
                         "base_node": {
                             "node_id": 386,
@@ -3906,15 +3671,15 @@
                 }
             },
             "position": {
-                "x": -649.0,
-                "y": 2260.0
+                "x": 127.0,
+                "y": 1817.0
             }
         },
         {
             "node": {
-                "polymorphic_id": 7,
+                "polymorphic_id": 6,
                 "ptr_wrapper": {
-                    "id": 2147483740,
+                    "id": 2147483734,
                     "data": {
                         "node_id": 390,
                         "node_name": "Comb Filter",
@@ -3960,15 +3725,15 @@
                 }
             },
             "position": {
-                "x": -308.0,
-                "y": 2404.0
+                "x": 468.0,
+                "y": 1961.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483741,
+                    "id": 2147483735,
                     "data": {
                         "base_node": {
                             "node_id": 395,
@@ -4000,7 +3765,7 @@
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483742,
+                    "id": 2147483736,
                     "data": {
                         "base_node": {
                             "node_id": 398,
@@ -4032,7 +3797,7 @@
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483743,
+                    "id": 2147483737,
                     "data": {
                         "base_node": {
                             "node_id": 401,
@@ -4056,41 +3821,50 @@
                 }
             },
             "position": {
-                "x": -1945.0,
-                "y": 2564.0
+                "x": -1169.0,
+                "y": 2121.0
             }
         },
         {
             "node": {
-                "polymorphic_id": 6,
+                "polymorphic_id": 2147483655,
+                "polymorphic_name": "LowPassFilterNode",
                 "ptr_wrapper": {
-                    "id": 2147483744,
+                    "id": 2147483738,
                     "data": {
-                        "node_id": 403,
+                        "node_id": 19,
                         "node_name": "Low Pass Filter",
                         "node_type": 7,
                         "node_inputs": [
                             {
-                                "pin_id": 404,
-                                "node_id": 403,
+                                "pin_id": 20,
+                                "node_id": 19,
                                 "pin_name": "> input",
                                 "pin_kind": 1,
                                 "pin_input_id": 0,
                                 "pin_mode": 0
                             },
                             {
-                                "pin_id": 405,
-                                "node_id": 403,
-                                "pin_name": "> alpha",
+                                "pin_id": 48,
+                                "node_id": 19,
+                                "pin_name": "> cutoff",
                                 "pin_kind": 1,
                                 "pin_input_id": 1,
                                 "pin_mode": 1
+                            },
+                            {
+                                "pin_id": 49,
+                                "node_id": 19,
+                                "pin_name": "> resonance",
+                                "pin_kind": 1,
+                                "pin_input_id": 2,
+                                "pin_mode": 0
                             }
                         ],
                         "node_outputs": [
                             {
-                                "pin_id": 406,
-                                "node_id": 403,
+                                "pin_id": 70,
+                                "node_id": 19,
                                 "pin_name": "output >",
                                 "pin_kind": 0,
                                 "pin_input_id": -1,
@@ -4102,25 +3876,111 @@
                 }
             },
             "position": {
-                "x": 235.0,
-                "y": 2523.0
+                "x": -116.0,
+                "y": 1804.0
             }
         },
         {
             "node": {
                 "polymorphic_id": 4,
                 "ptr_wrapper": {
-                    "id": 2147483745,
+                    "id": 2147483739,
                     "data": {
                         "base_node": {
-                            "node_id": 407,
+                            "node_id": 71,
                             "node_name": "Number",
                             "node_type": 2,
                             "node_inputs": [],
                             "node_outputs": [
                                 {
-                                    "pin_id": 408,
-                                    "node_id": 407,
+                                    "pin_id": 92,
+                                    "node_id": 71,
+                                    "pin_name": "output >",
+                                    "pin_kind": 0,
+                                    "pin_input_id": -1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_hidden": true
+                        },
+                        "number_value": 0.10599999874830246
+                    }
+                }
+            },
+            "position": {
+                "x": -1090.0,
+                "y": -311.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 7,
+                "ptr_wrapper": {
+                    "id": 2147483740,
+                    "data": {
+                        "node_id": 158,
+                        "node_name": "Low Pass Filter",
+                        "node_type": 7,
+                        "node_inputs": [
+                            {
+                                "pin_id": 159,
+                                "node_id": 158,
+                                "pin_name": "> input",
+                                "pin_kind": 1,
+                                "pin_input_id": 0,
+                                "pin_mode": 0
+                            },
+                            {
+                                "pin_id": 210,
+                                "node_id": 158,
+                                "pin_name": "> cutoff",
+                                "pin_kind": 1,
+                                "pin_input_id": 1,
+                                "pin_mode": 1
+                            },
+                            {
+                                "pin_id": 211,
+                                "node_id": 158,
+                                "pin_name": "> resonance",
+                                "pin_kind": 1,
+                                "pin_input_id": 2,
+                                "pin_mode": 0
+                            }
+                        ],
+                        "node_outputs": [
+                            {
+                                "pin_id": 240,
+                                "node_id": 158,
+                                "pin_name": "output >",
+                                "pin_kind": 0,
+                                "pin_input_id": -1,
+                                "pin_mode": 0
+                            }
+                        ],
+                        "node_hidden": false
+                    }
+                }
+            },
+            "position": {
+                "x": 950.0,
+                "y": 2085.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 4,
+                "ptr_wrapper": {
+                    "id": 2147483741,
+                    "data": {
+                        "base_node": {
+                            "node_id": 241,
+                            "node_name": "Number",
+                            "node_type": 2,
+                            "node_inputs": [],
+                            "node_outputs": [
+                                {
+                                    "pin_id": 249,
+                                    "node_id": 241,
                                     "pin_name": "output >",
                                     "pin_kind": 0,
                                     "pin_input_id": -1,
@@ -4130,6 +3990,178 @@
                             "node_hidden": true
                         },
                         "number_value": 0.12700000405311585
+                    }
+                }
+            },
+            "position": {
+                "x": 3.4028234663852887e38,
+                "y": 3.4028234663852887e38
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 7,
+                "ptr_wrapper": {
+                    "id": 2147483742,
+                    "data": {
+                        "node_id": 269,
+                        "node_name": "Low Pass Filter",
+                        "node_type": 7,
+                        "node_inputs": [
+                            {
+                                "pin_id": 325,
+                                "node_id": 269,
+                                "pin_name": "> input",
+                                "pin_kind": 1,
+                                "pin_input_id": 0,
+                                "pin_mode": 0
+                            },
+                            {
+                                "pin_id": 326,
+                                "node_id": 269,
+                                "pin_name": "> cutoff",
+                                "pin_kind": 1,
+                                "pin_input_id": 1,
+                                "pin_mode": 1
+                            },
+                            {
+                                "pin_id": 345,
+                                "node_id": 269,
+                                "pin_name": "> resonance",
+                                "pin_kind": 1,
+                                "pin_input_id": 2,
+                                "pin_mode": 0
+                            }
+                        ],
+                        "node_outputs": [
+                            {
+                                "pin_id": 346,
+                                "node_id": 269,
+                                "pin_name": "output >",
+                                "pin_kind": 0,
+                                "pin_input_id": -1,
+                                "pin_mode": 0
+                            }
+                        ],
+                        "node_hidden": false
+                    }
+                }
+            },
+            "position": {
+                "x": 1246.0,
+                "y": 57.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 4,
+                "ptr_wrapper": {
+                    "id": 2147483743,
+                    "data": {
+                        "base_node": {
+                            "node_id": 365,
+                            "node_name": "Number",
+                            "node_type": 2,
+                            "node_inputs": [],
+                            "node_outputs": [
+                                {
+                                    "pin_id": 366,
+                                    "node_id": 365,
+                                    "pin_name": "output >",
+                                    "pin_kind": 0,
+                                    "pin_input_id": -1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_hidden": true
+                        },
+                        "number_value": 0.12700000405311585
+                    }
+                }
+            },
+            "position": {
+                "x": 3.4028234663852887e38,
+                "y": 3.4028234663852887e38
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 7,
+                "ptr_wrapper": {
+                    "id": 2147483744,
+                    "data": {
+                        "node_id": 12,
+                        "node_name": "Low Pass Filter",
+                        "node_type": 7,
+                        "node_inputs": [
+                            {
+                                "pin_id": 141,
+                                "node_id": 12,
+                                "pin_name": "> input",
+                                "pin_kind": 1,
+                                "pin_input_id": 0,
+                                "pin_mode": 0
+                            },
+                            {
+                                "pin_id": 142,
+                                "node_id": 12,
+                                "pin_name": "> cutoff",
+                                "pin_kind": 1,
+                                "pin_input_id": 1,
+                                "pin_mode": 1
+                            },
+                            {
+                                "pin_id": 143,
+                                "node_id": 12,
+                                "pin_name": "> resonance",
+                                "pin_kind": 1,
+                                "pin_input_id": 2,
+                                "pin_mode": 0
+                            }
+                        ],
+                        "node_outputs": [
+                            {
+                                "pin_id": 144,
+                                "node_id": 12,
+                                "pin_name": "output >",
+                                "pin_kind": 0,
+                                "pin_input_id": -1,
+                                "pin_mode": 0
+                            }
+                        ],
+                        "node_hidden": false
+                    }
+                }
+            },
+            "position": {
+                "x": 180.0,
+                "y": -231.0
+            }
+        },
+        {
+            "node": {
+                "polymorphic_id": 4,
+                "ptr_wrapper": {
+                    "id": 2147483745,
+                    "data": {
+                        "base_node": {
+                            "node_id": 149,
+                            "node_name": "Number",
+                            "node_type": 2,
+                            "node_inputs": [],
+                            "node_outputs": [
+                                {
+                                    "pin_id": 150,
+                                    "node_id": 149,
+                                    "pin_name": "output >",
+                                    "pin_kind": 0,
+                                    "pin_input_id": -1,
+                                    "pin_mode": 0
+                                }
+                            ],
+                            "node_hidden": true
+                        },
+                        "number_value": 0.10599999874830246
                     }
                 }
             },
@@ -4306,21 +4338,6 @@
             "link_output_id": 148
         },
         {
-            "link_id": 182,
-            "link_input_id": 179,
-            "link_output_id": 165
-        },
-        {
-            "link_id": 183,
-            "link_input_id": 171,
-            "link_output_id": 181
-        },
-        {
-            "link_id": 186,
-            "link_input_id": 180,
-            "link_output_id": 185
-        },
-        {
             "link_id": 198,
             "link_input_id": 194,
             "link_output_id": 197
@@ -4411,26 +4428,6 @@
             "link_output_id": 216
         },
         {
-            "link_id": 144,
-            "link_input_id": 141,
-            "link_output_id": 195
-        },
-        {
-            "link_id": 149,
-            "link_input_id": 2,
-            "link_output_id": 143
-        },
-        {
-            "link_id": 154,
-            "link_input_id": 142,
-            "link_output_id": 153
-        },
-        {
-            "link_id": 175,
-            "link_input_id": 141,
-            "link_output_id": 10
-        },
-        {
             "link_id": 232,
             "link_input_id": 228,
             "link_output_id": 231
@@ -4501,11 +4498,6 @@
             "link_output_id": 360
         },
         {
-            "link_id": 378,
-            "link_input_id": 374,
-            "link_output_id": 377
-        },
-        {
             "link_id": 385,
             "link_input_id": 381,
             "link_output_id": 384
@@ -4519,11 +4511,6 @@
             "link_id": 400,
             "link_input_id": 393,
             "link_output_id": 399
-        },
-        {
-            "link_id": 409,
-            "link_input_id": 405,
-            "link_output_id": 408
         },
         {
             "link_id": 410,
@@ -4681,19 +4668,9 @@
             "link_output_id": 351
         },
         {
-            "link_id": 441,
-            "link_input_id": 373,
-            "link_output_id": 382
-        },
-        {
             "link_id": 442,
             "link_input_id": 380,
             "link_output_id": 367
-        },
-        {
-            "link_id": 443,
-            "link_input_id": 387,
-            "link_output_id": 375
         },
         {
             "link_id": 444,
@@ -4706,19 +4683,74 @@
             "link_output_id": 229
         },
         {
-            "link_id": 446,
-            "link_input_id": 404,
+            "link_id": 93,
+            "link_input_id": 48,
+            "link_output_id": 92
+        },
+        {
+            "link_id": 120,
+            "link_input_id": 387,
+            "link_output_id": 70
+        },
+        {
+            "link_id": 121,
+            "link_input_id": 20,
+            "link_output_id": 382
+        },
+        {
+            "link_id": 250,
+            "link_input_id": 210,
+            "link_output_id": 249
+        },
+        {
+            "link_id": 262,
+            "link_input_id": 159,
             "link_output_id": 358
         },
         {
-            "link_id": 447,
-            "link_input_id": 404,
+            "link_id": 263,
+            "link_input_id": 159,
             "link_output_id": 229
         },
         {
-            "link_id": 448,
+            "link_id": 268,
             "link_input_id": 2,
-            "link_output_id": 406
+            "link_output_id": 240
+        },
+        {
+            "link_id": 372,
+            "link_input_id": 326,
+            "link_output_id": 366
+        },
+        {
+            "link_id": 373,
+            "link_input_id": 325,
+            "link_output_id": 195
+        },
+        {
+            "link_id": 374,
+            "link_input_id": 325,
+            "link_output_id": 10
+        },
+        {
+            "link_id": 375,
+            "link_input_id": 2,
+            "link_output_id": 346
+        },
+        {
+            "link_id": 153,
+            "link_input_id": 142,
+            "link_output_id": 150
+        },
+        {
+            "link_id": 154,
+            "link_input_id": 141,
+            "link_output_id": 165
+        },
+        {
+            "link_id": 175,
+            "link_input_id": 171,
+            "link_output_id": 144
         }
     ]
 }

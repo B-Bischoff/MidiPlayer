@@ -4,19 +4,23 @@
 #include "AudioComponent.hpp"
 
 struct HighPassFilter : public AudioComponent {
-	enum Inputs { input, alpha };
+	enum Inputs { input, cutoff, resonance };
 
-	double state = 0.0;
+	double low = 0.0;
+	double band = 0.0;
 
-	HighPassFilter() : AudioComponent() { inputs.resize(2); componentName = "HighPassFilter"; }
+	HighPassFilter() : AudioComponent() { inputs.resize(3); componentName = "HighPassFilter"; }
 
-	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
-		double alphaValue = std::clamp(getInputsValue(alpha, keyPressed, currentKey), 0.0, 1.0);
-		double signalValue = getInputsValue(input, keyPressed, currentKey);
+		const double cutoffValue = std::clamp(getInputsValue(cutoff, audioInfos, keyPressed, currentKey), 0.01, 0.99);
+		const double resonanceValue = std::clamp(getInputsValue(resonance, audioInfos, keyPressed, currentKey), 0.00, 0.95);
+		const double inputValue = getInputsValue(input, audioInfos, keyPressed, currentKey);
 
-		state = alphaValue * signalValue + (1.0 - alphaValue) * state;
+		const double high = inputValue - low - (1.0 - resonanceValue) * band;
+		band += cutoffValue * high;
+		low += cutoffValue * band;
 
-		return signalValue - state; // This is the only difference with a low pass filter
+		return high;
 	}
 };

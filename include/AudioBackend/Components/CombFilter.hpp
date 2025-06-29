@@ -11,12 +11,12 @@ struct CombFilter : public AudioComponent {
 
 	CombFilter() : AudioComponent() { inputs.resize(3); componentName = "CombFilter"; }
 
-	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
-		int delaySamplesValue = static_cast<int>(getInputsValue(delaySamples, keyPressed, currentKey));
-		double feedbackValue = getInputsValue(feedback, keyPressed, currentKey);
+		int delaySamplesValue = static_cast<int>(getInputsValue(delaySamples, audioInfos, keyPressed, currentKey));
+		double feedbackValue = getInputsValue(feedback, audioInfos, keyPressed, currentKey);
 		if (feedbackValue > 1.0) feedbackValue = 1.0;
-		double inputValue = getInputsValue(input, keyPressed, currentKey);
+		double inputValue = getInputsValue(input, audioInfos, keyPressed, currentKey);
 
 		// Resize buffer on delaySamplesValue change
 		if (delaySamplesValue > 0 && delaySamplesValue != delayBuffer.size())

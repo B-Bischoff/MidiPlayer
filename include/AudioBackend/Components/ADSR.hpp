@@ -20,13 +20,13 @@ public:
 
 	ADSR() : AudioComponent() { inputs.resize(2); componentName = "ADSR"; }
 
-	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
 		if (!inputs.size())
 			return 0.0;
 
-		double inputValue = getInputsValue(input, keyPressed, currentKey);
-		double triggerValue = getInputsValue(trigger, keyPressed, currentKey);
+		double inputValue = getInputsValue(input, audioInfos, keyPressed, currentKey);
+		double triggerValue = getInputsValue(trigger, audioInfos, keyPressed, currentKey);
 
 		if (currentKey == 0)
 		{
@@ -87,7 +87,7 @@ public:
 					std::vector<MidiInfo> newKeyPressed;
 					if (envelopeInfo.info.keyIndex != 0)
 						newKeyPressed.push_back(envelopeInfo.info);
-					inputValue = getInputsValue(input, newKeyPressed, 0);
+					inputValue = getInputsValue(input, audioInfos, newKeyPressed, 0);
 					value += envelopeInfo.envelope.GetAmplitude(time, false) * inputValue;
 				}
 			}

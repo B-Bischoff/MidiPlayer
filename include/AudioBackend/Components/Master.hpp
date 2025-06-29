@@ -38,7 +38,7 @@ public:
 		}
 	}
 
-	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
 		if (!inputs.size())
 		{
@@ -60,7 +60,7 @@ public:
 			int i = 0;
 			do
 			{
-				value += input->process(keyPressed, i);
+				value += input->process(audioInfos, keyPressed, i);
 			} while (++i < keyPressed.size());
 		}
 

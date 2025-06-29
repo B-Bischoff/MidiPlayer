@@ -50,6 +50,11 @@ struct MidiPlayerSettings {
 	bool splitBufferGraph = false;
 };
 
+struct AudioInfos {
+	unsigned int sampleRate = {};
+	unsigned int channels = {};
+};
+
 struct MidiInfo
 {
 	int keyIndex;

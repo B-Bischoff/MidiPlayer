@@ -17,7 +17,7 @@ struct AudioComponent {
 
 	static double time;
 
-	virtual double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) = 0;
+	virtual double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) = 0;
 
 	Components getInputs() const
 	{
@@ -69,7 +69,7 @@ struct AudioComponent {
 		return deleted;
 	}
 
-	virtual double getInputsValue(const unsigned int& index, std::vector<MidiInfo>& keyPressed, int currentKey = 0)
+	virtual double getInputsValue(const unsigned int& index, const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0)
 	{
 		if (inputs.size() <= index)
 		{
@@ -81,7 +81,7 @@ struct AudioComponent {
 
 		double value = 0.0;
 		for (AudioComponent* component : input)
-			value += component->process(keyPressed, currentKey);
+			value += component->process(audioInfos, keyPressed, currentKey);
 		return value;
 	}
 

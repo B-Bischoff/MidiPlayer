@@ -14,13 +14,13 @@ struct Oscillator : public AudioComponent {
 	double pink_b0 = 0, pink_b1 = 0, pink_b2 = 0;
 	double brownLast = 0.0;
 
-	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
 		if (inputs[frequency].size() <= 0)
 			return 0.0;
 
-		double frequencyValue = getInputsValue(frequency, keyPressed, currentKey);
-		double phaseValue = getInputsValue(phase, keyPressed, currentKey);
+		double frequencyValue = getInputsValue(frequency, audioInfos, keyPressed, currentKey);
+		double phaseValue = getInputsValue(phase, audioInfos, keyPressed, currentKey);
 
 		double value = osc(frequencyValue, M_PI * phaseValue, time, type);
 

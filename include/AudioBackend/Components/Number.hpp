@@ -7,7 +7,7 @@ struct Number : public AudioComponent {
 
 	Number() : AudioComponent() { componentName = "Number"; }
 
-	double process(std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
 		return number;
 	}
