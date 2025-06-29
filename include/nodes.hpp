@@ -518,7 +518,8 @@ struct HighPassFilterNode : public Node {
 		name = "High Pass Filter";
 
 		inputs.push_back(createPin(idManager, "> input", PinKind::Input, HighPassFilter::Inputs::input));
-		inputs.push_back(createPin(idManager, "> alpha", PinKind::Input, HighPassFilter::Inputs::alpha));
+		inputs.push_back(createPin(idManager, "> cutoff", PinKind::Input, HighPassFilter::Inputs::cutoff));
+		inputs.push_back(createPin(idManager, "> resonance", PinKind::Input, HighPassFilter::Inputs::resonance));
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 };

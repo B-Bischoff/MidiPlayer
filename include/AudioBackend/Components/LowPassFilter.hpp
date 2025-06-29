@@ -14,11 +14,11 @@ struct LowPassFilter : public AudioComponent {
 
 	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
-		double cutoffValue = std::clamp(getInputsValue(cutoff, audioInfos, keyPressed, currentKey), 0.01, 0.99);
-		double resonanceValue = std::clamp(getInputsValue(resonance, audioInfos, keyPressed, currentKey), 0.05, 4.0);
-		double inputValue = getInputsValue(input, audioInfos, keyPressed, currentKey);
+		const double cutoffValue = std::clamp(getInputsValue(cutoff, audioInfos, keyPressed, currentKey), 0.01, 0.99);
+		const double resonanceValue = std::clamp(getInputsValue(resonance, audioInfos, keyPressed, currentKey), 0.00, 0.95);
+		const double inputValue = getInputsValue(input, audioInfos, keyPressed, currentKey);
 
-		double high = inputValue - low - resonanceValue * band;
+		const double high = inputValue - low - (1.0 - resonanceValue) * band;
 		band += cutoffValue * high;
 		low += cutoffValue * band;
 
