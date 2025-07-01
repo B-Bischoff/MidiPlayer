@@ -157,6 +157,8 @@ void ImPlotUI::printEnvelopeEditor(std::queue<Message>& messages)
 	{
 		if (ImPlot::BeginPlot("##ADSRPlot", ImVec2(ImGui::GetContentRegionAvail())))
 		{
+			ImPlot::SetupAxis(ImAxis_X1, "Time (seconds)");
+			ImPlot::SetupAxis(ImAxis_Y1, "Amplitude (coefficient)");
 			handleControlPoints(messages);
 			printEnvelopeEditorPoints();
 			ImPlot::EndPlot();
