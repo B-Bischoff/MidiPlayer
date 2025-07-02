@@ -8,7 +8,7 @@ https://github.com/user-attachments/assets/70f87e5a-f1b6-432a-90b1-c0006a99af0e
 ## Compile
 
 > [!NOTE]
-> Precompiled binaries are available in the Releases section.
+> Precompiled binaries are available in the [Releases section](https://github.com/B-Bischoff/MidiPlayer/releases/tag/0.1.0).
 
 To build the project from sources, first clone the repository with its dependencies, then use CMake and a C++ compiler to compile it.
 
@@ -262,5 +262,3 @@ Output a constant value.
 Value: The number to output, can be any value.
 
 </details>
-
-## License

@@ -1,43 +1,43 @@
 [submodule "external/portmidi"]
 	path = external/portmidi
-	url = git@github.com:PortMidi/portmidi.git
+	url = https://github.com/PortMidi/portmidi.git
 	tag = v2.0.1
 [submodule "external/rtaudio"]
 	path = external/rtaudio
-	url = git@github.com:thestk/rtaudio.git
+	url = https://github.com/thestk/rtaudio.git
 [submodule "external/imgui"]
 	path = external/imgui
-	url = git@github.com:ocornut/imgui.git
+	url = https://github.com/ocornut/imgui.git
 	branch = docking
 [submodule "external/implot"]
 	path = external/implot
-	url = git@github.com:epezent/implot.git
+	url = https://github.com/epezent/implot.git
 [submodule "external/imgui-node-editor"]
 	path = external/imgui-node-editor
-	url = git@github.com:thedmd/imgui-node-editor.git
+	url = https://github.com/thedmd/imgui-node-editor.git
 	branch = develop
 [submodule "external/glfw"]
 	path = external/glfw
-	url = git@github.com:glfw/glfw.git
+	url = https://github.com/glfw/glfw.git
 [submodule "external/glew"]
 	path = external/glew
-	url = git@github.com:nigels-com/glew.git
+	url = https://github.com/nigels-com/glew.git
 [submodule "external/cereal"]
 	path = external/cereal
-	url = git@github.com:USCiLab/cereal.git
+	url = https://github.com/USCiLab/cereal.git
 [submodule "external/kissfft"]
 	path = external/kissfft
-	url = git@github.com:mborgerding/kissfft.git
+	url = https://github.com/mborgerding/kissfft.git
 	tag = 131.1.0
 [submodule "external/imgui-notify"]
 	path = external/imgui-notify
-	url = git@github.com:TyomaVader/ImGuiNotify.git
+	url = https://github.com/TyomaVader/ImGuiNotify.git
 [submodule "external/stb"]
 	path = external/stb
-	url = git@github.com:nothings/stb.git
+	url = https://github.com/nothings/stb.git
 [submodule "external/imgui-filebrowser"]
 	path = external/imgui-filebrowser
-	url = git@github.com:AirGuanZ/imgui-filebrowser.git
+	url = https://github.com/AirGuanZ/imgui-filebrowser.git
 [submodule "external/tinysoundfont"]
 	path = external/tinysoundfont
-	url = git@github.com:schellingb/TinySoundFont.git
+	url = https://github.com/schellingb/TinySoundFont.git
