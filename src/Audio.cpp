@@ -97,24 +97,24 @@ void Audio::update(std::vector<Instrument>& instruments, std::vector<MidiInfo>& 
 
 	for (int i = 0; i < samplesToGenerate; i++)
 	{
-		double value = 0.0;
 
 		const AudioInfos audioInfos = {
 			.sampleRate = _sampleRate,
 			.channels = _channels
 		};
 
-		for (Instrument& instrument : instruments)
-			value += instrument.process(audioInfos, keyPressed) * 1.0;
-
-		_time += 1.0 / static_cast<double>(_sampleRate);
-		AudioComponent::time = _time;
-
 		for (int j = 0; j < _channels; j++)
 		{
+			double value = 0.0;
+			for (Instrument& instrument : instruments)
+				value += instrument.process(audioInfos, keyPressed) * 1.0;
+
 			_buffer[_writeCursor] = std::clamp(value, -1.0, 1.0);
 			incrementWriteCursor();
 		}
+
+		_time += 1.0 / static_cast<double>(_sampleRate);
+		AudioComponent::time = _time;
 	}
 
 	//assert(audio.syncCursors == false && "Audio callback did not reset syncCursors");
