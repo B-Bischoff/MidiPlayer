@@ -9,6 +9,9 @@
 struct SoundFontPlayer : public AudioComponent {
 	std::set<int> notesOn;
 	tsf* tinySoundFont = nullptr;
+	double previousTime;
+
+	float values[2];
 
 	SoundFontPlayer() : AudioComponent()
 	{
@@ -23,10 +26,13 @@ struct SoundFontPlayer : public AudioComponent {
 		addNotes(keyPressed);
 		removeNotes(keyPressed);
 
-		float synthValue = 0;
-		tsf_render_float(tinySoundFont, &synthValue, 1, 0);
-
-		return static_cast<double>(synthValue);
+		if (previousTime != time)
+		{
+			tsf_render_float(tinySoundFont, values, 1, 0);
+			previousTime = time;
+			return static_cast<double>(values[0]);
+		}
+		return static_cast<double>(values[1]);
 	}
 
 	void addNotes(std::vector<MidiInfo>& keyPressed)
