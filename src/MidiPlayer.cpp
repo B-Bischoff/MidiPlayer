@@ -2,7 +2,6 @@
 
 double AudioComponent::time = 0.0;
 unsigned int AudioComponent::nextId = 1;
-unsigned int KeyboardFrequency::keyIndex = 0;
 
 MidiPlayer::MidiPlayer(const char* executableName, unsigned int windowWidth, unsigned int windowHeight)
 	: _midiPollingTimer(1.0)
@@ -22,45 +21,46 @@ MidiPlayer::MidiPlayer(const char* executableName, unsigned int windowWidth, uns
 
 	_targetFrameDuration = std::chrono::duration<double>(1.0f / (double)_audio.getTargetFPS());
 
-	_window = std::make_unique<Window>(ImVec2(windowWidth, windowHeight), "MidiPlayer", _applicationPath.resourceDirectory);
-	_inputManager = std::make_unique<InputManager>(_window->getWindow());
-	_windowContext.window = _window.get();
-	_windowContext.inputManager = _inputManager.get();
-	_window->setUserPointer((void*)&_windowContext);
+	//_window = std::make_unique<Window>(ImVec2(windowWidth, windowHeight), "MidiPlayer", _applicationPath.resourceDirectory);
+	//_inputManager = std::make_unique<InputManager>(_window->getWindow());
+	//_windowContext.window = _window.get();
+	//_windowContext.inputManager = _inputManager.get();
+	//_window->setUserPointer((void*)&_windowContext);
 
-	_ui = std::make_unique<UI>(_window->getWindow(), _audio, _applicationPath);
-	Logger::subscribeStream(Log::getStream()); // Duplicate all logs to UI
-}
-
-MidiPlayer::~MidiPlayer()
-{
-	ImGui_ImplOpenGL3_Shutdown();
-	ImGui_ImplGlfw_Shutdown();
-	ImGui::DestroyContext();
-	glfwTerminate();
+	//_ui = std::make_unique<UI>(_window->getWindow(), _audio, _applicationPath);
+	//Logger::subscribeStream(Log::getStream()); // Duplicate all logs to UI
+	Logger::log("MidiPlayer", Info) << "Initialization complete." << std::endl;
 }
 
 void MidiPlayer::update()
 {
-	while (!_window->shouldClose())
+	_instruments.push_back(Instrument());
+	_instruments.back().name = "default_instrument";
+
+	Instrument& instrument = _instruments.back();
+	Oscillator* osc = new Oscillator();
+	osc->type = OscType::Sine;
+	instrument.master.addInput(0, osc);
+	Number* freq = new Number();
+	freq->number = 440.0;
+	osc->addInput(0, freq);
+
+	bool shouldClose = false;
+	while (!shouldClose)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
 		const std::chrono::duration<double> deltaTime = startTime - _lastFrameTime;
 
-		_window->beginFrame(ImVec4(0.1f, 0.1f, 0.1f, 1.0f), GL_COLOR_BUFFER_BIT);
+		//if (_midiPollingTimer.update(deltaTime.count()))
+		//	_inputManager->pollMidiDevices(true);
 
-		if (_midiPollingTimer.update(deltaTime.count()))
-			_inputManager->pollMidiDevices(true);
-
-		_inputManager->updateKeysState(_settings, _keyPressed);
-		_inputManager->createKeysEvents(_messageQueue);
+		//_inputManager->updateKeysState(_settings, _keyPressed);
+		//_inputManager->createKeysEvents(_messageQueue);
 
 		_audio.update(_instruments, _keyPressed);
 
-		_ui->update(*_window, _audio, _instruments, _settings, _messageQueue, *_inputManager);
-		_ui->render();
-
-		_window->endFrame();
+		//_ui->update(*_window, _audio, _instruments, _settings, _messageQueue, *_inputManager);
+		//_ui->render();
 
 		handleFrameProcessTime(startTime);
 		_lastFrameTime = startTime;

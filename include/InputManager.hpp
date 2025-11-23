@@ -1,16 +1,11 @@
 #pragma once
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
 #include <portmidi.h>
-#include <imgui.h> // [TODO] used for vec2 struct but please replace this
-#include "ImGuiNotify.hpp"
 
 #include <array>
 #include <vector>
 
 #include "inc.hpp" // MidiPlayerSettings struct
-#include "WindowContext.hpp"
 #include "Logger.hpp"
 
 // Keyboard
@@ -96,7 +91,7 @@ private:
 
 class InputManager {
 private:
-	GLFWwindow* _window; // Initialized by the Window class
+	//GLFWwindow* _window; // Initialized by the Window class
 
 	PmStream* _midiStream = nullptr;
 	PortMidiEvents _midiEvents;
@@ -106,7 +101,7 @@ private:
 	std::string _midiDeviceUsed;
 
 	// Keyboard data
-	KeyData keys[GLFW_KEY_LAST] = {};
+	//KeyData keys[GLFW_KEY_LAST] = {};
 	unsigned int octave = 4;
 	static constexpr unsigned int maxOctave = 7;
 
@@ -114,17 +109,15 @@ private:
 	static constexpr int GLFW_MAX_MOUSE_BTN = 8;
 	KeyData mouseButtons[GLFW_MAX_MOUSE_BTN];
 	// [TODO] use glm?
-	ImVec2 cursorPos;
-	ImVec2 cursorDir;
+	//ImVec2 cursorPos;
+	//ImVec2 cursorDir;
 	// [TODO] add scroll
 
 public:
-	InputManager(GLFWwindow* window);
+	InputManager();
 	~InputManager();
 
-	void updateModifierKey(unsigned int key, bool pressed);
 	void updateKeysState(const MidiPlayerSettings& settings, std::vector<MidiInfo>& keyPressed);
-	void createKeysEvents(std::queue<Message>& messageQueue);
 
 	void pollMidiDevices(bool log = false);
 
@@ -134,8 +127,6 @@ public:
 	void closeMidiDevice();
 
 private:
-	static void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-
 	void addKeyPressed(std::vector<MidiInfo>& keyPressed, int keyIndex, int velocity) const;
 	void removeKeyPressed(std::vector<MidiInfo>& keyPressed, int keyIndex) const;
 

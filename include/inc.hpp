@@ -1,20 +1,8 @@
 #pragma once
 
-// [TODO] Compile from source if not installed
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-
 #include <forward_list>
 #include <portmidi.h>
 #include <RtAudio.h>
-
-#ifndef NOTIFY_RENDER_OUTSIDE_MAIN_WINDOW
-#define NOTIFY_RENDER_OUTSIDE_MAIN_WINDOW false
-#endif
-
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include "imgui.h"
-#include "implot.h"
 
 #include <iostream>
 #include <chrono>
@@ -27,13 +15,7 @@
 #include <limits>
 #include <queue>
 
-#include <implot.h>
-#include <imgui_node_editor.h>
-
 #include <Logger.hpp>
-
-// [TODO] This should not be in UI
-#include <UI/Message.hpp>
 
 typedef std::chrono::time_point<std::chrono::high_resolution_clock> time_point;
 
