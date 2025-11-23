@@ -1,4 +1,5 @@
 #include "MidiPlayer.hpp"
+#include "SoundFont.hpp"
 
 double AudioComponent::time = 0.0;
 unsigned int AudioComponent::nextId = 1;
@@ -22,7 +23,7 @@ MidiPlayer::MidiPlayer(const char* executableName, unsigned int windowWidth, uns
 	_targetFrameDuration = std::chrono::duration<double>(1.0f / (double)_audio.getTargetFPS());
 
 	//_window = std::make_unique<Window>(ImVec2(windowWidth, windowHeight), "MidiPlayer", _applicationPath.resourceDirectory);
-	//_inputManager = std::make_unique<InputManager>(_window->getWindow());
+	_inputManager = std::make_unique<InputManager>();
 	//_windowContext.window = _window.get();
 	//_windowContext.inputManager = _inputManager.get();
 	//_window->setUserPointer((void*)&_windowContext);
@@ -34,16 +35,30 @@ MidiPlayer::MidiPlayer(const char* executableName, unsigned int windowWidth, uns
 
 void MidiPlayer::update()
 {
+	_audio.setLatency(2);
 	_instruments.push_back(Instrument());
 	_instruments.back().name = "default_instrument";
 
 	Instrument& instrument = _instruments.back();
-	Oscillator* osc = new Oscillator();
-	osc->type = OscType::Sine;
-	instrument.master.addInput(0, osc);
-	Number* freq = new Number();
-	freq->number = 440.0;
-	osc->addInput(0, freq);
+
+	// Build audio graph :
+	// SoundFont -> Mult -> Master
+	//              ^
+	//           Number
+	Multiplier gain;
+	instrument.master.addInput(0, &gain);
+
+	Number volume;
+	volume.number = 2.0;
+	gain.addInput(0, &volume);
+
+	SoundFont sf2File;
+	sf2File.loadSoundFontFile("/home/brice/Downloads/SalamanderGrandPiano-SF2-V3+20200602/SalamanderGrandPiano-V3+20200602.sf2", 44100);
+	SoundFontPlayer sfPlayer;
+	sfPlayer.tinySoundFont = sf2File.getSoundFont();
+	gain.addInput(1, &sfPlayer);
+
+	_inputManager->setMidiDeviceUsed("APC Key 25 MIDI 1");
 
 	bool shouldClose = false;
 	while (!shouldClose)
@@ -54,8 +69,7 @@ void MidiPlayer::update()
 		//if (_midiPollingTimer.update(deltaTime.count()))
 		//	_inputManager->pollMidiDevices(true);
 
-		//_inputManager->updateKeysState(_settings, _keyPressed);
-		//_inputManager->createKeysEvents(_messageQueue);
+		_inputManager->updateKeysState(_settings, _keyPressed);
 
 		_audio.update(_instruments, _keyPressed);
 

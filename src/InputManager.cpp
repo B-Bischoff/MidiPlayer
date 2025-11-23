@@ -89,6 +89,8 @@ void InputManager::pollMidiDevices(bool log)
 		if (info->input == 0) // Only register device whose input == 1
 			continue;
 
+		Logger::log("PortMidi", Info) << "Found midi device: " << info->name << " id " << i << std::endl;
+
 		MidiDevice device = { *info, info->name, i };
 		_detectedDevices.push_back(device);
 
