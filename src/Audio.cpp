@@ -12,7 +12,8 @@ Audio::Audio(unsigned int sampleRate, unsigned int channels, unsigned int buffer
 	std::this_thread::sleep_for(std::chrono::milliseconds(100)); // let rtaudio get more stable
 
 	// Read cursors might have already moved, so make write cursor point ahead of it.
-	_writeCursor = (_leftPhase + getLatencyInSamplesPerUpdate()) % getBufferSize();
+	_writeCursor = _leftPhase + 2;
+	//_writeCursor = (_leftPhase + static_cast<int>(getSampleRate() * 0.25)) % getBufferSize();
 }
 
 Audio::~Audio()

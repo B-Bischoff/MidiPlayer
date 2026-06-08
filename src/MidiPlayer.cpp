@@ -35,7 +35,7 @@ MidiPlayer::MidiPlayer(const char* executableName, unsigned int windowWidth, uns
 
 void MidiPlayer::update()
 {
-	_audio.setLatency(2);
+	//_audio.setLatency(2);
 	_instruments.push_back(Instrument());
 	_instruments.back().name = "default_instrument";
 
@@ -58,7 +58,7 @@ void MidiPlayer::update()
 	sfPlayer.tinySoundFont = sf2File.getSoundFont();
 	gain.addInput(1, &sfPlayer);
 
-	_inputManager->setMidiDeviceUsed("APC Key 25 MIDI 1");
+	_inputManager->setMidiDeviceUsed("Keystation 88 MIDI 1");
 
 	bool shouldClose = false;
 	while (!shouldClose)
