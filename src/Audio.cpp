@@ -1,4 +1,5 @@
 #include "Audio.hpp"
+#include <iomanip>
 
 Audio::Audio(unsigned int sampleRate, unsigned int channels, unsigned int bufferDuration, unsigned int latency)
 	: _sampleRate(sampleRate), _channels(channels), _bufferDuration(bufferDuration), _latency(latency),
@@ -93,7 +94,26 @@ void Audio::update(std::vector<Instrument>& instruments, std::vector<MidiInfo>& 
 {
 	std::chrono::duration<double> frameDuration(1.0 / static_cast<double>(_sampleRate));
 
-	const int samplesToGenerate = static_cast<int>(getSamplesPerUpdate()) + _samplesToAdjust;
+	//const int samplesToGenerate = static_cast<int>(getSamplesPerUpdate()) + _samplesToAdjust;
+
+	const auto startTime = std::chrono::high_resolution_clock::now();
+	static auto previousTime = startTime;
+
+	const std::chrono::duration<double> deltaTime = startTime - previousTime;
+	int samplesToGenerate = getSampleRate() * deltaTime.count();
+	if (samplesToGenerate < 0)
+		samplesToGenerate = 0;
+	static double accumulator = 0.0;
+	if (samplesToGenerate < 1.0)
+	{
+		accumulator += deltaTime.count() * static_cast<double>(getSampleRate());
+	}
+	if (accumulator >= 1.0)
+	{
+		samplesToGenerate = static_cast<int>(accumulator);
+		accumulator -= samplesToGenerate;
+	}
+	previousTime = startTime;
 
 	for (int i = 0; i < samplesToGenerate; i++)
 	{

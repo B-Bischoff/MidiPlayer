@@ -63,8 +63,8 @@ void MidiPlayer::update()
 	bool shouldClose = false;
 	while (!shouldClose)
 	{
-		auto startTime = std::chrono::high_resolution_clock::now();
-		const std::chrono::duration<double> deltaTime = startTime - _lastFrameTime;
+		//auto startTime = std::chrono::high_resolution_clock::now();
+		//const std::chrono::duration<double> deltaTime = startTime - _lastFrameTime;
 
 		//if (_midiPollingTimer.update(deltaTime.count()))
 		//	_inputManager->pollMidiDevices(true);
@@ -76,8 +76,8 @@ void MidiPlayer::update()
 		//_ui->update(*_window, _audio, _instruments, _settings, _messageQueue, *_inputManager);
 		//_ui->render();
 
-		handleFrameProcessTime(startTime);
-		_lastFrameTime = startTime;
+		//handleFrameProcessTime(startTime);
+		//_lastFrameTime = startTime;
 	}
 }
 
