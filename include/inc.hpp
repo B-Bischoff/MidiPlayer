@@ -35,6 +35,7 @@ struct MidiPlayerSettings {
 struct AudioInfos {
 	unsigned int sampleRate = {};
 	unsigned int channels = {};
+	unsigned int currentChannel = {};
 };
 
 struct MidiInfo

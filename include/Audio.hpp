@@ -18,7 +18,7 @@ public:
 		unsigned int sampleRate = 44100,
 		unsigned int channels = 2,
 		unsigned int bufferDuration = 1,
-		unsigned int latency = 3
+		unsigned int latency = 1
 	);
 	~Audio();
 

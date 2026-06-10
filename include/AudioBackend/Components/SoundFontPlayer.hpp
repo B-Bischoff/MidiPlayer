@@ -9,9 +9,9 @@
 struct SoundFontPlayer : public AudioComponent {
 	std::set<int> notesOn;
 	tsf* tinySoundFont = nullptr;
-	double previousTime;
+	double previousTime = -1.0;
 
-	float values[2];
+	float values[2] = {};
 
 	SoundFontPlayer() : AudioComponent()
 	{
@@ -26,13 +26,13 @@ struct SoundFontPlayer : public AudioComponent {
 		addNotes(keyPressed);
 		removeNotes(keyPressed);
 
+		// Render once per sample (on the first channel), then return the appropriate channel value
 		if (previousTime != time)
 		{
 			tsf_render_float(tinySoundFont, values, 1, 0);
 			previousTime = time;
-			return static_cast<double>(values[0]);
 		}
-		return static_cast<double>(values[1]);
+		return static_cast<double>(values[audioInfos.currentChannel]);
 	}
 
 	void addNotes(std::vector<MidiInfo>& keyPressed)

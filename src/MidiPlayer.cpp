@@ -63,21 +63,12 @@ void MidiPlayer::update()
 	bool shouldClose = false;
 	while (!shouldClose)
 	{
-		//auto startTime = std::chrono::high_resolution_clock::now();
-		//const std::chrono::duration<double> deltaTime = startTime - _lastFrameTime;
-
-		//if (_midiPollingTimer.update(deltaTime.count()))
-		//	_inputManager->pollMidiDevices(true);
-
 		_inputManager->updateKeysState(_settings, _keyPressed);
 
 		_audio.update(_instruments, _keyPressed);
 
-		//_ui->update(*_window, _audio, _instruments, _settings, _messageQueue, *_inputManager);
-		//_ui->render();
-
-		//handleFrameProcessTime(startTime);
-		//_lastFrameTime = startTime;
+		// Avoid busy-waiting when uncapped: sleep briefly to yield CPU
+		std::this_thread::sleep_for(std::chrono::microseconds(100));
 	}
 }
 

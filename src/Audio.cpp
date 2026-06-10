@@ -12,8 +12,7 @@ Audio::Audio(unsigned int sampleRate, unsigned int channels, unsigned int buffer
 	std::this_thread::sleep_for(std::chrono::milliseconds(100)); // let rtaudio get more stable
 
 	// Read cursors might have already moved, so make write cursor point ahead of it.
-	_writeCursor = _leftPhase + 2;
-	//_writeCursor = (_leftPhase + static_cast<int>(getSampleRate() * 0.25)) % getBufferSize();
+	_writeCursor = (_leftPhase + getLatencyInSamplesPerUpdate()) % getBufferSize();
 }
 
 Audio::~Audio()
@@ -93,42 +92,35 @@ bool Audio::initOutputDevice(unsigned int deviceId)
 
 void Audio::update(std::vector<Instrument>& instruments, std::vector<MidiInfo>& keyPressed)
 {
-	std::chrono::duration<double> frameDuration(1.0 / static_cast<double>(_sampleRate));
-
-	//const int samplesToGenerate = static_cast<int>(getSamplesPerUpdate()) + _samplesToAdjust;
-
 	const auto startTime = std::chrono::high_resolution_clock::now();
 	static auto previousTime = startTime;
 
 	const std::chrono::duration<double> deltaTime = startTime - previousTime;
-	int samplesToGenerate = getSampleRate() * deltaTime.count();
+	previousTime = startTime;
+
+	static double accumulator = 0.0;
+	accumulator += deltaTime.count() * static_cast<double>(getSampleRate());
+
+	int samplesToGenerate = static_cast<int>(accumulator);
 	if (samplesToGenerate < 0)
 		samplesToGenerate = 0;
-	static double accumulator = 0.0;
-	if (samplesToGenerate < 1.0)
-	{
-		accumulator += deltaTime.count() * static_cast<double>(getSampleRate());
-	}
-	if (accumulator >= 1.0)
-	{
-		samplesToGenerate = static_cast<int>(accumulator);
-		accumulator -= samplesToGenerate;
-	}
-	previousTime = startTime;
+	accumulator -= samplesToGenerate;
+
+	const AudioInfos baseAudioInfos = {
+		.sampleRate = _sampleRate,
+		.channels = _channels
+	};
 
 	for (int i = 0; i < samplesToGenerate; i++)
 	{
-
-		const AudioInfos audioInfos = {
-			.sampleRate = _sampleRate,
-			.channels = _channels
-		};
-
-		for (int j = 0; j < _channels; j++)
+		for (unsigned int j = 0; j < _channels; j++)
 		{
+			AudioInfos audioInfos = baseAudioInfos;
+			audioInfos.currentChannel = j;
+
 			double value = 0.0;
 			for (Instrument& instrument : instruments)
-				value += instrument.process(audioInfos, keyPressed) * 1.0;
+				value += instrument.process(audioInfos, keyPressed);
 
 			_buffer[_writeCursor] = std::clamp(value, -1.0, 1.0);
 			incrementWriteCursor();
