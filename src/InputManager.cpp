@@ -61,7 +61,7 @@ void InputManager::updateKeysState(const MidiPlayerSettings& settings, std::vect
 	cursorDir = ImVec2(xpos - cursorPos.x, ypos - cursorPos.y);
 	cursorPos = ImVec2(xpos, ypos);
 
-	unsigned int KbToPianoIndex[] = { GLFW_KEY_Z, GLFW_KEY_S, GLFW_KEY_X, GLFW_KEY_D, GLFW_KEY_C, GLFW_KEY_V, GLFW_KEY_G, GLFW_KEY_B, GLFW_KEY_H, GLFW_KEY_N, GLFW_KEY_J, GLFW_KEY_M };
+	constexpr unsigned int KbToPianoIndex[] = { GLFW_KEY_Z, GLFW_KEY_S, GLFW_KEY_X, GLFW_KEY_D, GLFW_KEY_C, GLFW_KEY_V, GLFW_KEY_G, GLFW_KEY_B, GLFW_KEY_H, GLFW_KEY_N, GLFW_KEY_J, GLFW_KEY_M };
 
 	// Get keyboard inputs
 	for (int i = GLFW_KEY_SPACE; i < GLFW_KEY_LAST; i++)

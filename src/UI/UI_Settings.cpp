@@ -12,7 +12,6 @@ void UI::updateSettings(Audio& audio, InputManager& inputManager, MidiPlayerSett
 		updateAudioOutput(audio);
 		updateAudioSampleRate(audio, messageQueue);
 		updateAudioChannels(audio, messageQueue);
-		updateAudioLatency(audio);
 		updateMuteAudio(audio);
 		ImGui::Text("\n");
 		ImGui::Unindent();
@@ -119,28 +118,6 @@ void UI::updateAudioChannels(Audio& audio, std::queue<Message>& messageQueue)
 		else
 			messageQueue.push(Message(AUDIO_CHANNELS_UPDATED, new unsigned int(audio.getSampleRate())));
 	}
-}
-
-void UI::updateAudioLatency(Audio& audio)
-{
-	ImGui::Text("Audio latency (ms)");
-	ImGui::SameLine();
-	helpMarker("Time between audio generation and playback (in milliseconds)");
-
-	const float space = 1.0 / 60.0 * 1000.0;
-	float latency = space * audio.getLatency();
-	ImGui::SameLine();
-	ImGui::SetNextItemWidth(300);
-	ImGui::PushID("LatencySettingSlider");
-	if (ImGui::SliderFloat("", &latency, space, space * 30, "%.3f", ImGuiSliderFlags_AlwaysClamp))
-	{
-		const unsigned int bufferFrameOffset = (latency / 1000.0) * 60.0;
-		audio.setLatency(bufferFrameOffset);
-	}
-
-	ImGui::PopID();
-	ImGui::SameLine();
-	helpMarker("Click and drag to edit value.\nHold SHIFT/ALT for faster/slower edit.");
 }
 
 void UI::updateMuteAudio(Audio& audio)

@@ -47,20 +47,21 @@ void ImPlotUI::printPlot(Audio& audio, unsigned int offset, bool stereo)
 	ImPlot::SetupAxis(ImAxis_X1, "Time (seconds)");
 	ImPlot::SetupAxis(ImAxis_Y1, "Amplitude");
 	ImPlot::SetupAxisLimits(ImAxis_Y1, -1.0, 1.0); // Set Y axis go from -1 to +1
+	const int bufferSize = static_cast<int>(audio.getBuffer().size());
 	if (!stereo)
-		ImPlot::PlotLine("value", audio.getBuffer() + offset, audio.getBufferSize() / audio.getChannels(), 1.0 / audio.getSampleRate(), 0, ImPlotLineFlags(), 0, audio.getChannels()*sizeof(float));
+		ImPlot::PlotLine("value", audio.getBuffer().data() + offset, bufferSize / audio.getChannels(), 1.0 / audio.getSampleRate(), 0, ImPlotLineFlags(), 0, audio.getChannels()*sizeof(float));
 	else
 	{
-		ImPlot::PlotLine("left", audio.getBuffer(), audio.getBufferSize() / audio.getChannels(), 1.0 / audio.getSampleRate(), 0, ImPlotLineFlags(), 0, audio.getChannels()*sizeof(float));
-		ImPlot::PlotLine("right", audio.getBuffer() + 1, audio.getBufferSize() / audio.getChannels(), 1.0 / audio.getSampleRate(), 0, ImPlotLineFlags(), 0, audio.getChannels()*sizeof(float));
+		ImPlot::PlotLine("left", audio.getBuffer().data(), bufferSize / audio.getChannels(), 1.0 / audio.getSampleRate(), 0, ImPlotLineFlags(), 0, audio.getChannels()*sizeof(float));
+		ImPlot::PlotLine("right", audio.getBuffer().data() + 1, bufferSize / audio.getChannels(), 1.0 / audio.getSampleRate(), 0, ImPlotLineFlags(), 0, audio.getChannels()*sizeof(float));
 	}
 	double writeCursorX = audio.getWriteCursorPos() / (double)audio.getSampleRate() / audio.getChannels();
 	double readCursorX = audio.getReadCursorPos() / (double)audio.getSampleRate() / audio.getChannels();
 	double writeCursorXArray[2] = { writeCursorX, writeCursorX };
 	double readCursorXArray[2] = { readCursorX, readCursorX };
 	double cursorY[2] = { 0.0, 1.0 };
-	ImPlot::PlotLine("write cursor", writeCursorXArray, cursorY, 2);
-	ImPlot::PlotLine("read cursor", readCursorXArray, cursorY, 2);
+	//ImPlot::PlotLine("write cursor", writeCursorXArray, cursorY, 2);
+	//ImPlot::PlotLine("read cursor", readCursorXArray, cursorY, 2);
 	ImPlot::EndPlot();
 }
 

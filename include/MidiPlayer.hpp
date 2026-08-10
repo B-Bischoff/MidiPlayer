@@ -34,8 +34,6 @@ private:
 
 	Timer _midiPollingTimer;
 	time_point _lastFrameTime = {};
-	std::chrono::duration<double> _targetFrameDuration;
 
-	void handleFrameProcessTime(const time_point& startTime);
 	fs::path findResourcesFolder(const fs::path& applicationPath, bool verbose = false);
 };
