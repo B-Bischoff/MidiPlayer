@@ -37,15 +37,17 @@ void AudioSpectrum::processAudioSpectrum(const Audio& audio)
 {
 	// Find in audio buffer, sound that will be played this update
 	// which is not directly at writeCursor because of the latency.
-	int dataStart = (int)audio.getWriteCursorPos() - (int)(audio.getSamplesPerUpdate() * audio.getLatency());
+	//int dataStart = (int)audio.getWriteCursorPos() - (int)(audio.getSamplesPerUpdate() * audio.getLatency());
+	int dataStart = static_cast<int>(audio.getWriteCursorPos());
 
 	// Make sure index is in buffer
-	dataStart = dataStart % (int)audio.getBufferSize();
-	if (dataStart < 0) dataStart = (int)audio.getBufferSize() - abs(dataStart);
+	const int bufferSize = static_cast<int>(audio.getBuffer().size());
+	dataStart = dataStart % bufferSize;
+	if (dataStart < 0) dataStart = bufferSize - abs(dataStart);
 
 	for (int i = 0; i < SAMPLE_NB; i++)
 	{
-		const int bufferIndex = (dataStart + i * audio.getChannels()) % audio.getBufferSize();
+		const int bufferIndex = (dataStart + i * audio.getChannels()) % bufferSize;
 
 		_arrayIn[i].r = hannWindowing(audio.getBuffer()[bufferIndex], i);
 		if (audio.getChannels() == 2)
