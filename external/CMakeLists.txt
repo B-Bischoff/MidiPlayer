@@ -98,3 +98,6 @@ target_include_directories(stb INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/stb)
 # TINYSOUNDFONT
 add_library(tinysoundfont INTERFACE)
 target_include_directories(tinysoundfont INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/tinysoundfont)
+
+# PUGIXML
+add_subdirectory(pugixml)

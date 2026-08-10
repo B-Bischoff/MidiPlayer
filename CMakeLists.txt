@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 4.0)
 
 project(MidiPlayer)
 
@@ -44,6 +44,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE stdc++fs)
 target_link_libraries(${PROJECT_NAME} PRIVATE kissfft)
 target_link_libraries(${PROJECT_NAME} PRIVATE stb)
 target_link_libraries(${PROJECT_NAME} PRIVATE tinysoundfont)
+target_link_libraries(${PROJECT_NAME} PRIVATE pugixml)
 
 if (UNIX)
 	target_link_libraries(${PROJECT_NAME} PRIVATE GL)
