@@ -21,10 +21,10 @@
 #include "NodeManager.hpp"
 #include "LinkManager.hpp"
 #include "UI/Colors.hpp"
-#include "inc.hpp"
 #include "Message.hpp"
-#include "AudioBackend/Components/Components.hpp"
 #include "path.hpp"
+#include "Compiler.hpp"
+#include "inc.hpp"
 
 #include "MidiMath.hpp"
 
@@ -90,7 +90,7 @@ public:
 	void loadFile(Master& master, const fs::path& path);
 	void loadFile(Master& master, std::stringstream& stream);
 
-	void updateBackend(Master& master);
+	void updateBackend(Instrument& instrument);
 
 	void copySelectedNode();
 	void paste(const ImVec2& cursorPos);
