@@ -97,7 +97,12 @@ void NodeEditorUI::update(Master& master, std::queue<Message>& messages, std::ve
 		ed::End();
 
 		if (_UIModified || Node::propertyChanged)
-			updateBackend(master);
+		{
+			if (selectedInstrument)
+				updateBackend(*selectedInstrument);
+			else
+				Logger::log("NodeEditor", Warning) << "No instrument selected, cannot update backend" << std::endl;
+		}
 
 		if (_navigateToContent)
 		{
@@ -431,12 +436,11 @@ void NodeEditorUI::loadFile(Master& master, std::stringstream& stream)
 	_navigateToContent = true;
 }
 
-void NodeEditorUI::updateBackend(Master& master)
+void NodeEditorUI::updateBackend(Instrument& instrument)
 {
 	_UIModified = false;
 	Node::propertyChanged = false;
-	//NodeUIManagers managers = {_nodeManager, _linkManager};
-	//UIToBackendAdapter::updateBackend(master, managers);
+	Compiler::compile(instrument, _nodeManager, _linkManager);
 }
 
 void NodeEditorUI::copySelectedNode()
