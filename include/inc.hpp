@@ -38,8 +38,8 @@
 typedef std::chrono::time_point<std::chrono::high_resolution_clock> time_point;
 
 struct AudioComponent;
-typedef std::forward_list<AudioComponent*> Components;
-typedef std::vector<AudioComponent*> ComponentInput;
+//typedef std::forward_list<AudioComponent*> Components;
+//typedef std::vector<AudioComponent*> ComponentInput;
 
 struct sEnvelopeADSR;
 struct Master;

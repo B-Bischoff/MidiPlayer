@@ -1,7 +1,6 @@
 #pragma once
 
 #include "AudioComponent.hpp"
-#include "audio_backend.hpp"
 #include "envelope.hpp"
 
 struct ADSR : public AudioComponent {

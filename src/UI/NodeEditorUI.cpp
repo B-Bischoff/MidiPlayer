@@ -435,8 +435,8 @@ void NodeEditorUI::updateBackend(Master& master)
 {
 	_UIModified = false;
 	Node::propertyChanged = false;
-	NodeUIManagers managers = {_nodeManager, _linkManager};
-	UIToBackendAdapter::updateBackend(master, managers);
+	//NodeUIManagers managers = {_nodeManager, _linkManager};
+	//UIToBackendAdapter::updateBackend(master, managers);
 }
 
 void NodeEditorUI::copySelectedNode()

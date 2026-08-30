@@ -1,7 +1,6 @@
 #pragma once
 
 #include "AudioComponent.hpp"
-#include "audio_backend.hpp"
 
 struct Multiplier : public AudioComponent {
 	enum Inputs { inputA, inputB };
