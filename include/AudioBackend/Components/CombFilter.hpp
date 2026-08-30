@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include "AudioComponent.hpp"
-#include "audio_backend.hpp"
 
 struct CombFilter : public AudioComponent {
 	enum Input { input, delaySamples, feedback };

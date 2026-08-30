@@ -4,7 +4,6 @@
 #include <set>
 #include "path.hpp"
 #include "AudioComponent.hpp"
-#include "audio_backend.hpp"
 
 struct SoundFontPlayer : public AudioComponent {
 	std::set<int> notesOn;

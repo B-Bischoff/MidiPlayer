@@ -1,7 +1,6 @@
 #pragma once
 
 #include "AudioComponent.hpp"
-#include "audio_backend.hpp"
 
 struct KeyboardFrequency : public AudioComponent {
 	static unsigned int keyIndex;

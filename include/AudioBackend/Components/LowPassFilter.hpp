@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include "AudioComponent.hpp"
-#include "audio_backend.hpp"
 
 struct LowPassFilter : public AudioComponent {
 	enum Inputs { input, cutoff, resonance };

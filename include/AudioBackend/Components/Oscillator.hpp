@@ -2,7 +2,6 @@
 
 #include <cstdlib>
 #include "AudioComponent.hpp"
-#include "audio_backend.hpp"
 
 enum OscType { Sine, Square, Triangle, Saw_Dig, WhiteNoise, PinkNoise, BrownianNoise };
 

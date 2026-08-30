@@ -1,15 +1,17 @@
 #pragma once
 
-#include "inc.hpp"
 #include <unordered_map>
 #include "Logger.hpp"
 #include <list>
+#include <memory>
+#include <algorithm>
+#include "inc.hpp"
 
 struct AudioComponent {
 	AudioComponent() : id(nextId++) { }
 	virtual ~AudioComponent() {};
 
-	std::vector<ComponentInput> inputs;
+	std::vector<std::vector<std::shared_ptr<AudioComponent>>> inputs; // Each input can have multiple components connected to it
 	std::string componentName; // Used to debug/log things
 
 	static unsigned int nextId;
@@ -19,24 +21,13 @@ struct AudioComponent {
 
 	virtual double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) = 0;
 
-	Components getInputs() const
-	{
-		Components result;
-		for (auto& input : inputs) // Loop over all inputs
-		{
-			for (AudioComponent* component : input) // Loop over all components plugged on that input
-				result.push_front(component);
-		}
-		return result;
-	}
-
 	void clearInputs()
 	{
 		for (auto& input : inputs)
 			input.clear();
 	}
 
-	void addInput(const unsigned int& index, AudioComponent* newInput)
+	void addInput(const unsigned int& index, std::shared_ptr<AudioComponent> newInput)
 	{
 		if (inputs.size() <= index)
 		{
@@ -47,26 +38,18 @@ struct AudioComponent {
 		inputs[index].push_back(newInput);
 	}
 
-	bool removeInput(AudioComponent* input)
+	bool removeInput(const std::shared_ptr<AudioComponent>& input)
 	{
-		bool deleted = false;
-		for (int i = 0; i < inputs.size(); i++)
+		for (auto& inputList : inputs)
 		{
-			ComponentInput& componentInput = inputs[i];
-			auto it = componentInput.begin();
-			while (it != componentInput.end())
+			auto it = std::find(inputList.begin(), inputList.end(), input);
+			if (it != inputList.end())
 			{
-				if (*it == input)
-				{
-					deleted = true;
-					componentInput.erase(it);
-					it = componentInput.begin();
-				}
-				else
-					it++;
+				inputList.erase(it);
+				return true;
 			}
 		}
-		return deleted;
+		return false;
 	}
 
 	virtual double getInputsValue(const unsigned int& index, const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0)
@@ -77,59 +60,11 @@ struct AudioComponent {
 			exit(1);
 		}
 
-		ComponentInput& input = inputs[index];
+		std::vector<std::shared_ptr<AudioComponent>>& input = inputs[index];
 
 		double value = 0.0;
-		for (AudioComponent* component : input)
+		for (auto& component : input)
 			value += component->process(audioInfos, keyPressed, currentKey);
 		return value;
-	}
-
-	bool idIsDirectChild(const unsigned int id) const
-	{
-		Components inputs = getInputs();
-		for (const AudioComponent* audioComponent : inputs)
-		{
-			if (audioComponent->id == id)
-				return true;
-		}
-		return false;
-	}
-
-	void removeComponentFromBranch(AudioComponent* componentToRemove, const bool deleteComponent, unsigned int depth = 0)
-	{
-		Components componentInputs = getInputs();
-		for (AudioComponent* input : componentInputs)
-			input->removeComponentFromBranch(componentToRemove, deleteComponent, depth + 1);
-
-		removeInput(componentToRemove);
-
-		if (deleteComponent && depth == 0)
-		{
-			// Logger::log("Remove Component from Backend") << "REMOVING " << componentToRemove->id << std::endl;
-			delete componentToRemove;
-		}
-	}
-
-	AudioComponent* getAudioComponent(const unsigned int id)
-	{
-		if (this->id == id)
-			return this;
-
-		for (const ComponentInput& componentInputs : inputs) // loop over component inputs
-		{
-			for (AudioComponent* input : componentInputs) // loop over all the component plugged to one input
-			{
-				AudioComponent* foundAudioComponent =  input->getAudioComponent(id);
-				if (foundAudioComponent != nullptr)
-					return foundAudioComponent;
-			}
-		}
-		return nullptr;
-	}
-
-	bool idExists(const unsigned int id)
-	{
-		return getAudioComponent(id) != nullptr;
 	}
 };
