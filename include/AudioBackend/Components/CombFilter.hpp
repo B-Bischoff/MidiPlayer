@@ -11,6 +11,10 @@ struct CombFilter : public AudioComponent {
 
 	CombFilter() : AudioComponent() { inputs.resize(3); componentName = "CombFilter"; }
 
+	std::shared_ptr<AudioComponent> clone() const override {
+		return std::make_shared<CombFilter>();
+	}
+
 	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
 		const int delaySamplesValue = static_cast<int>(getInputsValue(delaySamples, audioInfos, keyPressed, currentKey));

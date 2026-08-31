@@ -7,6 +7,10 @@ struct Multiplier : public AudioComponent {
 
 	Multiplier() : AudioComponent() { inputs.resize(2); componentName = "Multiplier"; }
 
+	std::shared_ptr<AudioComponent> clone() const override {
+		return std::make_shared<Multiplier>();
+	}
+
 	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
 		double valueA = getInputsValue(inputA, audioInfos, keyPressed, currentKey);

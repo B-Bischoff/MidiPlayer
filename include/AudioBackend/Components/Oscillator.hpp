@@ -10,6 +10,13 @@ struct Oscillator : public AudioComponent {
 	OscType type;
 
 	Oscillator() : AudioComponent() { inputs.resize(2); componentName = "Oscillator"; }
+
+	std::shared_ptr<AudioComponent> clone() const override {
+		auto c = std::make_shared<Oscillator>();
+		c->type = type;
+		return c;
+	}
+
 	double pink_b0 = 0, pink_b1 = 0, pink_b2 = 0;
 	double brownLast = 0.0;
 

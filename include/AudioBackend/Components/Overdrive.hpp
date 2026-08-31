@@ -8,6 +8,10 @@ struct Overdrive : public AudioComponent {
 
 	Overdrive() : AudioComponent() { inputs.resize(2); componentName = "Overdrive"; }
 
+	std::shared_ptr<AudioComponent> clone() const override {
+		return std::make_shared<Overdrive>();
+	}
+
 	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
 		const double inputValue = getInputsValue(input, audioInfos, keyPressed, currentKey);
