@@ -1,11 +1,11 @@
 #pragma once
 
-#include "AudioComponent.hpp"
+#include "MidiSourceComponent.hpp"
 
-struct KeyboardFrequency : public AudioComponent {
+struct KeyboardFrequency : public MidiSourceComponent {
 	static unsigned int keyIndex;
 
-	KeyboardFrequency() : AudioComponent() { componentName = "KeyboardFrequency"; }
+	KeyboardFrequency() : MidiSourceComponent() { componentName = "KeyboardFrequency"; }
 
 	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
