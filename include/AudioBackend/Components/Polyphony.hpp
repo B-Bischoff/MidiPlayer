@@ -118,9 +118,67 @@ struct Polyphony : public AudioComponent {
 
 	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
-		// Pass-through for now — voice context is not wired into the audio pull yet
-		if (inputs[audioTemplate].empty())
-			return 0.0;
-		return getInputsValue(audioTemplate, audioInfos, keyPressed, currentKey);
+		// Only process voice management once per sample (currentKey == 0)
+		if (currentKey == 0)
+			updateVoices(keyPressed);
+
+		// Pull audio from each active voice's cloned sub-graph
+		double sum = 0.0;
+		for (Voice& v : voices)
+		{
+			if ((!v.active && !v.releasing) || !v.graphRoot)
+				continue;
+
+			// Set voice context so downstream nodes use per-voice state
+			VoiceContext* prevContext = activeVoiceContext;
+			activeVoiceContext = &v.context;
+
+			v.context.noteInfo = v.info;
+			v.context.releasing = v.releasing;
+
+			// Pull from the cloned sub-graph (single voice, currentKey=0)
+			std::vector<MidiInfo> singleNote = { v.info };
+			double voiceValue = v.graphRoot->process(audioInfos, singleNote, 0);
+			sum += voiceValue;
+
+			// Deactivate releasing voices that have gone silent
+			if (v.releasing && std::abs(voiceValue) < 1e-10)
+				deactivateVoice(v);
+
+			activeVoiceContext = prevContext;
+		}
+
+		return sum;
+	}
+
+private:
+	std::vector<int> _previousNotes; // Track pressed notes for NoteOff detection
+
+	void updateVoices(const std::vector<MidiInfo>& keyPressed)
+	{
+		// NoteOn: assign voices for newly pressed keys
+		for (const MidiInfo& key : keyPressed)
+			assignVoice(key.keyIndex, key.velocity);
+
+		// NoteOff: release voices for keys no longer pressed
+		for (int prevNote : _previousNotes)
+		{
+			bool stillPressed = false;
+			for (const MidiInfo& key : keyPressed)
+			{
+				if (key.keyIndex == prevNote)
+				{
+					stillPressed = true;
+					break;
+				}
+			}
+			if (!stillPressed)
+				releaseVoice(prevNote);
+		}
+
+		// Update tracking
+		_previousNotes.clear();
+		for (const MidiInfo& key : keyPressed)
+			_previousNotes.push_back(key.keyIndex);
 	}
 };
