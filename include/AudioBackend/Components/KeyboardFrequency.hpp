@@ -7,6 +7,12 @@ struct KeyboardFrequency : public MidiSourceComponent {
 
 	KeyboardFrequency() : MidiSourceComponent() { componentName = "KeyboardFrequency"; }
 
+	std::vector<MidiInfo> processMidi(const AudioInfos& audioInfos) override
+	{
+		// Keyboard input is fed externally via the keyPressed parameter
+		return {};
+	}
+
 	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
 		if (!keyPressed.size())

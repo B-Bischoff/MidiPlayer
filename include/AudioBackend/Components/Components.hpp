@@ -11,3 +11,4 @@
 #include "CombFilter.hpp"
 #include "Overdrive.hpp"
 #include "SoundFontPlayer.hpp"
+#include "Polyphony.hpp"

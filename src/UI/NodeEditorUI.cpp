@@ -440,7 +440,7 @@ void NodeEditorUI::updateBackend(Instrument& instrument)
 {
 	_UIModified = false;
 	Node::propertyChanged = false;
-	Compiler::compile(instrument, _nodeManager, _linkManager);
+	_compiler.compile(instrument, _nodeManager, _linkManager);
 }
 
 void NodeEditorUI::copySelectedNode()
