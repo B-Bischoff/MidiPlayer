@@ -1,11 +1,11 @@
 #pragma once
 
 #include <unordered_map>
-#include "Logger.hpp"
 #include <list>
 #include <memory>
 #include <algorithm>
 #include "inc.hpp"
+#include "Logger.hpp"
 
 struct AudioComponent {
 	AudioComponent() : id(nextId++) { }
