@@ -2,6 +2,7 @@
 
 #include <unordered_set>
 #include "AudioComponent.hpp"
+#include "Polyphony.hpp"
 
 struct Master : public AudioComponent {
 private:
@@ -32,14 +33,22 @@ public:
 
 		double value = 0.0;
 
-
-		for (auto& input : inputs[input])
+		for (auto& child : inputs[input])
 		{
-			int i = 0;
-			do
+			// Polyphony nodes handle multi-voice internally — call once
+			if (dynamic_cast<Polyphony*>(child.get()))
 			{
-				value += input->process(audioInfos, keyPressed, i);
-			} while (++i < keyPressed.size());
+				value += child->process(audioInfos, keyPressed, 0);
+			}
+			else
+			{
+				// Legacy path: iterate keyPressed for non-polyphonic chains
+				int i = 0;
+				do
+				{
+					value += child->process(audioInfos, keyPressed, i);
+				} while (++i < keyPressed.size());
+			}
 		}
 
 		return value;

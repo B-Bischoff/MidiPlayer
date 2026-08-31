@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AudioComponent.hpp"
+#include "AudioBackend/VoiceContext.hpp"
 #include "envelope.hpp"
 
 struct ADSR : public AudioComponent {
@@ -15,7 +16,11 @@ public:
 	enum Inputs { input, trigger };
 
 	sEnvelopeADSR reference; // Used to store envelope settings value
-	std::vector<EnvelopeInfo> envelopes;
+	std::vector<EnvelopeInfo> envelopes; // Used by non-polyphonic path
+
+	// Used by polyphonic path (one envelope per clone)
+	sEnvelopeADSR voiceEnvelope;
+	bool voiceEnvelopeActive = false;
 
 	ADSR() : AudioComponent() { inputs.resize(2); componentName = "ADSR"; }
 
@@ -30,6 +35,39 @@ public:
 		if (!inputs.size())
 			return 0.0;
 
+		// Polyphonic path: single envelope per clone, driven by VoiceContext
+		if (activeVoiceContext)
+			return processPolyphonic(audioInfos, keyPressed);
+
+		// Non-polyphonic path: original multi-envelope system
+		return processLegacy(audioInfos, keyPressed, currentKey);
+	}
+
+private:
+	double processPolyphonic(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed)
+	{
+		double inputValue = getInputsValue(input, audioInfos, keyPressed, 0);
+
+		bool noteHeld = (activeVoiceContext->noteInfo.keyIndex != 0 && !activeVoiceContext->releasing);
+
+		// Start new envelope when note begins
+		if (noteHeld && !voiceEnvelopeActive)
+		{
+			voiceEnvelope = reference;
+			voiceEnvelopeActive = true;
+		}
+
+		double amplitude = voiceEnvelope.GetAmplitude(time, noteHeld);
+
+		// Deactivate when envelope finishes
+		if (voiceEnvelope.phase == Phase::Inactive)
+			voiceEnvelopeActive = false;
+
+		return inputValue * amplitude;
+	}
+
+	double processLegacy(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey)
+	{
 		double inputValue = getInputsValue(input, audioInfos, keyPressed, currentKey);
 		double triggerValue = getInputsValue(trigger, audioInfos, keyPressed, currentKey);
 
@@ -86,9 +124,6 @@ public:
 			{
 				if (!envelopeInfo.playedThisFrame)
 				{
-					// As the note must be extended, it is no longer in the keyPressed vector.
-					// This runs the pipeline from this ADSR node using a new keyPressed vector containing
-					// only the release note as if it were played by the user's midi keyboard.
 					std::vector<MidiInfo> newKeyPressed;
 					if (envelopeInfo.info.keyIndex != 0)
 						newKeyPressed.push_back(envelopeInfo.info);
@@ -101,7 +136,6 @@ public:
 		// remove finished envelopes
 		for (auto it = envelopes.begin(); it != envelopes.end(); it++)
 		{
-			//if (it->phase == Phase::Inactive)
 			if (it->envelope.phase == Phase::Inactive)
 			{
 				it = envelopes.erase(it);
@@ -113,4 +147,3 @@ public:
 		return value;
 	}
 };
-
