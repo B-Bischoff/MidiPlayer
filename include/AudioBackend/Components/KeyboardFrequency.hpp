@@ -7,6 +7,10 @@ struct KeyboardFrequency : public MidiSourceComponent {
 
 	KeyboardFrequency() : MidiSourceComponent() { componentName = "KeyboardFrequency"; }
 
+	std::shared_ptr<AudioComponent> clone() const override {
+		return std::make_shared<KeyboardFrequency>();
+	}
+
 	std::vector<MidiInfo> processMidi(const AudioInfos& audioInfos) override
 	{
 		// Keyboard input is fed externally via the keyPressed parameter

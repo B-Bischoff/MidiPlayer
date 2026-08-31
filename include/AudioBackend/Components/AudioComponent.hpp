@@ -21,6 +21,15 @@ struct AudioComponent {
 
 	virtual double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) = 0;
 
+	// Create a shallow clone (same type, same parameters, fresh state, no inputs wired)
+	virtual std::shared_ptr<AudioComponent> clone() const = 0;
+
+	// Deep clone: clone this node and recursively clone all its inputs.
+	// MidiSourceComponents are skipped (shared, not cloned).
+	std::shared_ptr<AudioComponent> deepClone() const;
+
+	bool isMidiSource() const;
+
 	void clearInputs()
 	{
 		for (auto& input : inputs)

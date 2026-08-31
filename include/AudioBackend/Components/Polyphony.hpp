@@ -16,6 +16,7 @@ struct Polyphony : public AudioComponent {
 		bool releasing = false;
 		MidiInfo info = {};
 		VoiceContext context;
+		std::shared_ptr<AudioComponent> graphRoot; // Cloned sub-graph for this voice
 	};
 
 	int maxVoices;
@@ -28,6 +29,29 @@ struct Polyphony : public AudioComponent {
 		inputs.resize(1);
 		componentName = "Polyphony";
 		voices.resize(maxVoices);
+	}
+
+	std::shared_ptr<AudioComponent> clone() const override {
+		return std::make_shared<Polyphony>(maxVoices);
+	}
+
+	// Deep-clone the audio template sub-graph for each voice.
+	// Called by the Compiler after wiring the template into inputs[audioTemplate].
+	void compileVoices()
+	{
+		if (inputs[audioTemplate].empty())
+			return;
+
+		auto& templateRoot = inputs[audioTemplate].front();
+
+		for (Voice& v : voices)
+		{
+			v.graphRoot = templateRoot->deepClone();
+			v.context.clear();
+			v.active = false;
+			v.releasing = false;
+			v.noteId = -1;
+		}
 	}
 
 	void assignVoice(int note, int velocity)

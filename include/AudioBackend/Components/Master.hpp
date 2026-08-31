@@ -12,6 +12,10 @@ public:
 
 	Master() : AudioComponent() { inputs.resize(1); componentName = "Master"; }
 
+	std::shared_ptr<AudioComponent> clone() const override {
+		return std::make_shared<Master>();
+	}
+
 	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
 		if (!inputs.size())

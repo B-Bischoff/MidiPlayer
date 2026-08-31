@@ -17,6 +17,12 @@ struct SoundFontPlayer : public AudioComponent {
 		inputs.resize(0); componentName = "SoundFontPlayer";
 	}
 
+	std::shared_ptr<AudioComponent> clone() const override {
+		auto c = std::make_shared<SoundFontPlayer>();
+		c->tinySoundFont = tinySoundFont; // Share the loaded soundfont
+		return c;
+	}
+
 	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
 		if (currentKey != 0 || tinySoundFont == nullptr)

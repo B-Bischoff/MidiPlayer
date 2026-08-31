@@ -19,6 +19,12 @@ public:
 
 	ADSR() : AudioComponent() { inputs.resize(2); componentName = "ADSR"; }
 
+	std::shared_ptr<AudioComponent> clone() const override {
+		auto c = std::make_shared<ADSR>();
+		c->reference = reference;
+		return c;
+	}
+
 	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
 		if (!inputs.size())

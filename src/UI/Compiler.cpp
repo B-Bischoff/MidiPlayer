@@ -40,15 +40,18 @@ void Compiler::compile(Instrument& instrument, NodeManager& nodeManager, LinkMan
 					// Reuse existing Polyphony (preserves voice state)
 					poly = polyIt->second;
 					poly->clearInputs();
+					poly->midiSource = findMidiSource(component);
+					poly->addInput(Polyphony::audioTemplate, component);
+					// Voice clones are preserved — no recompile needed
 				}
 				else
 				{
 					poly = std::make_shared<Polyphony>();
 					_polyMap[polyKey] = poly;
+					poly->midiSource = findMidiSource(component);
+					poly->addInput(Polyphony::audioTemplate, component);
+					poly->compileVoices();
 				}
-
-				poly->midiSource = findMidiSource(component);
-				poly->addInput(Polyphony::audioTemplate, component);
 				instrument.master.addInput(inputId, poly);
 			}
 			else
