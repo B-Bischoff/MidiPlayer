@@ -79,6 +79,8 @@ private:
 	};
 	CopiedNodesInfo _copiedNodesInfo;
 
+	Compiler _compiler;
+
 public:
 	NodeEditorUI();
 	~NodeEditorUI();
