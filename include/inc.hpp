@@ -63,6 +63,17 @@ struct MidiInfo
 	bool risingEdge; // Only true for the first frame, becomes false when holding key
 };
 
+struct MidiEvent
+{
+	enum Type { NoteOn, NoteOff };
+	Type type;
+	int note;
+	int velocity;
+
+	static MidiEvent noteOn(int note, int velocity) { return { NoteOn, note, velocity }; }
+	static MidiEvent noteOff(int note) { return { NoteOff, note, 0 }; }
+};
+
 // Move to a dedicated file
 struct Timer {
 public:

@@ -25,7 +25,6 @@ struct AudioComponent {
 	virtual std::shared_ptr<AudioComponent> clone() const = 0;
 
 	// Deep clone: clone this node and recursively clone all its inputs.
-	// MidiSourceComponents are skipped (shared, not cloned).
 	std::shared_ptr<AudioComponent> deepClone() const;
 
 	bool isMidiSource() const;
