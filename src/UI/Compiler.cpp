@@ -7,6 +7,7 @@ void Compiler::compile(Instrument& instrument, NodeManager& nodeManager, LinkMan
 	masterNode->audioComponent = &instrument.master;
 
 	std::unordered_set<unsigned int> activeNodes;
+	std::unordered_set<unsigned int> activePolyKeys;
 
 	// Clear Master's backend inputs — will be rebuilt from UI links
 	instrument.master.clearInputs();
@@ -28,11 +29,27 @@ void Compiler::compile(Instrument& instrument, NodeManager& nodeManager, LinkMan
 			// If sub-tree contains a MIDI source, wrap in Polyphony
 			if (containsMidiSource(component))
 			{
-				auto poly = std::make_shared<Polyphony>();
+				unsigned int polyKey = inputNode->id;
+				activePolyKeys.insert(polyKey);
+
+				auto polyIt = _polyMap.find(polyKey);
+				std::shared_ptr<Polyphony> poly;
+
+				if (polyIt != _polyMap.end())
+				{
+					// Reuse existing Polyphony (preserves voice state)
+					poly = polyIt->second;
+					poly->clearInputs();
+				}
+				else
+				{
+					poly = std::make_shared<Polyphony>();
+					_polyMap[polyKey] = poly;
+				}
+
 				poly->midiSource = findMidiSource(component);
 				poly->addInput(Polyphony::audioTemplate, component);
 				instrument.master.addInput(inputId, poly);
-				Logger::log("Compiler", Info) << "Wrapped sub-graph in Polyphony node" << std::endl;
 			}
 			else
 			{
@@ -46,6 +63,15 @@ void Compiler::compile(Instrument& instrument, NodeManager& nodeManager, LinkMan
 	{
 		if (!activeNodes.count(it->first))
 			it = _nodeMap.erase(it);
+		else
+			++it;
+	}
+
+	// Remove stale Polyphony nodes
+	for (auto it = _polyMap.begin(); it != _polyMap.end(); )
+	{
+		if (!activePolyKeys.count(it->first))
+			it = _polyMap.erase(it);
 		else
 			++it;
 	}

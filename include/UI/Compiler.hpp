@@ -22,6 +22,9 @@ private:
 	// Maps UI node ID → backend AudioComponent (persists across compile calls for diffing)
 	std::unordered_map<unsigned int, std::shared_ptr<AudioComponent>> _nodeMap;
 
+	// Maps sub-graph root UI node ID → Polyphony node (persists across compiles to preserve voice state)
+	std::unordered_map<unsigned int, std::shared_ptr<Polyphony>> _polyMap;
+
 	// Recursively compile a UI node and its inputs into AudioComponents
 	std::shared_ptr<AudioComponent> compileNode(
 		const std::shared_ptr<Node>& uiNode,
