@@ -14,10 +14,11 @@ struct Polyphony : public AudioComponent {
 		int noteId = -1;
 		bool active = false;
 		bool releasing = false;
-		int releaseSamples = 0; // How many samples since release started
+		int releaseSamples = 0;
+		unsigned int generation = 0; // Incremented on each voice assignment
 		MidiInfo info = {};
 		VoiceContext context;
-		std::shared_ptr<AudioComponent> graphRoot; // Cloned sub-graph for this voice
+		std::shared_ptr<AudioComponent> graphRoot;
 	};
 
 	int maxVoices;
@@ -67,6 +68,7 @@ struct Polyphony : public AudioComponent {
 				v.active = true;
 				v.releasing = false;
 				v.info = { note, velocity, true };
+				v.generation++;
 				return;
 			}
 		}
@@ -80,6 +82,7 @@ struct Polyphony : public AudioComponent {
 				v.releasing = false;
 				v.noteId = note;
 				v.info = { note, velocity, true };
+				v.generation++;
 				v.context.clear();
 				return;
 			}
@@ -93,6 +96,7 @@ struct Polyphony : public AudioComponent {
 				v.noteId = note;
 				v.info = { note, velocity, true };
 				v.releasing = false;
+				v.generation++;
 				v.context.clear();
 				return;
 			}
@@ -132,8 +136,8 @@ struct Polyphony : public AudioComponent {
 
 	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
-		// Get MIDI events from the connected MIDI source
-		if (midiSource)
+		// Only process MIDI events once per sample (skip on second channel in stereo)
+		if (midiSource && audioInfos.currentChannel == 0)
 		{
 			auto events = midiSource->processMidi(audioInfos);
 			for (const MidiEvent& e : events)
@@ -158,18 +162,25 @@ struct Polyphony : public AudioComponent {
 
 			v.context.noteInfo = v.info;
 			v.context.releasing = v.releasing;
+			v.context.generation = v.generation;
 
 			// Pull from the cloned sub-graph (single voice)
 			std::vector<MidiInfo> singleNote = { v.info };
 			double voiceValue = v.graphRoot->process(audioInfos, singleNote, 0);
 			sum += voiceValue;
 
-			// Deactivate releasing voices
+			// Deactivate releasing voices that have gone silent
 			if (v.releasing)
 			{
-				v.releaseSamples++;
-				// Deactivate when output is effectively silent (ADSR finished)
+				// Count consecutive near-silent samples to avoid false positives
+				// from oscillator zero-crossings
 				if (std::abs(voiceValue) < 1e-6)
+					v.releaseSamples++;
+				else
+					v.releaseSamples = 0;
+
+				// Require sustained silence (~5ms at 44100Hz) before deactivating
+				if (v.releaseSamples > 220)
 					deactivateVoice(v);
 			}
 

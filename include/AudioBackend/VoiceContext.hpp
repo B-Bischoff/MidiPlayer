@@ -13,8 +13,9 @@ struct NodeState {
 // Holds per-voice state for all nodes within a voice.
 // Each active voice in a Polyphony node owns one VoiceContext.
 struct VoiceContext {
-	MidiInfo noteInfo = {};     // The note assigned to this voice
-	bool releasing = false;     // True when note is released but envelope still playing
+	MidiInfo noteInfo = {};
+	bool releasing = false;
+	unsigned int generation = 0; // Incremented on each voice assignment
 
 	// Maps node ID → per-voice state for that node
 	std::unordered_map<unsigned int, std::unique_ptr<NodeState>> nodeStates;
@@ -35,6 +36,7 @@ struct VoiceContext {
 		nodeStates.clear();
 		noteInfo = {};
 		releasing = false;
+		generation = 0;
 	}
 };
 

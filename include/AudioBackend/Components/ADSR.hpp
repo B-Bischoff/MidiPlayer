@@ -20,7 +20,7 @@ public:
 
 	// Used by polyphonic path (one envelope per clone)
 	sEnvelopeADSR voiceEnvelope;
-	bool voiceEnvelopeActive = false;
+	unsigned int lastSeenGeneration = 0;
 
 	ADSR() : AudioComponent() { inputs.resize(2); componentName = "ADSR"; }
 
@@ -49,19 +49,31 @@ private:
 		double inputValue = getInputsValue(input, audioInfos, keyPressed, 0);
 
 		bool noteHeld = (activeVoiceContext->noteInfo.keyIndex != 0 && !activeVoiceContext->releasing);
+		unsigned int gen = activeVoiceContext->generation;
 
-		// Start new envelope when note begins
-		if (noteHeld && !voiceEnvelopeActive)
+		// Detect new voice assignment
+		if (gen != lastSeenGeneration)
 		{
-			voiceEnvelope = reference;
-			voiceEnvelopeActive = true;
+			bool wasActive = (lastSeenGeneration != 0);
+			lastSeenGeneration = gen;
+
+			if (wasActive)
+			{
+				// Retrigger: keep current envelope state (amplitude, phase)
+				// but update control points from reference in case they changed.
+				// The envelope's built-in retrigger logic will ramp from the
+				// current amplitude to peak.
+				for (int i = 0; i < 8; i++)
+					voiceEnvelope.controlPoints[i] = reference.controlPoints[i];
+			}
+			else
+			{
+				// Fresh voice (never used or fully deactivated): start clean
+				voiceEnvelope = reference;
+			}
 		}
 
 		double amplitude = voiceEnvelope.GetAmplitude(time, noteHeld);
-
-		// Deactivate when envelope finishes
-		if (voiceEnvelope.phase == Phase::Inactive)
-			voiceEnvelopeActive = false;
 
 		return inputValue * amplitude;
 	}

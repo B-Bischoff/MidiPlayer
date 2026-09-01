@@ -37,12 +37,13 @@ void Compiler::compile(Instrument& instrument, NodeManager& nodeManager, LinkMan
 
 				if (polyIt != _polyMap.end())
 				{
-					// Reuse existing Polyphony (preserves voice state)
+					// Reuse existing Polyphony (preserves voice allocation state)
 					poly = polyIt->second;
 					poly->clearInputs();
 					poly->midiSource = findMidiSource(component);
 					poly->addInput(Polyphony::audioTemplate, component);
-					// Voice clones are preserved — no recompile needed
+					// Recompile voice clones so they reflect the current template
+					poly->compileVoices();
 				}
 				else
 				{
