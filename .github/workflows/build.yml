@@ -1,0 +1,60 @@
+name: Build
+
+on:
+  pull_request:
+    branches: [ "master" ]
+  push:
+    branches: [ "master" ]
+
+env:
+  CI_IMAGE: ghcr.io/${{ github.repository }}-ci:latest
+
+jobs:
+  build:
+    runs-on: self-hosted
+    container:
+      image: ${{ env.CI_IMAGE }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x86_64
+            toolchain: cmake/x86_64_Linux_toolchain.cmake
+            build_dir: build_x86_64_linux
+            binary: MidiPlayer
+          - name: linux-aarch64
+            toolchain: cmake/aarch64_Linux_toolchain.cmake
+            build_dir: build_aarch64_linux
+            binary: MidiPlayer
+          - name: windows-x86_64
+            toolchain: cmake/x86_64_Windows_toolchain.cmake
+            build_dir: build_x86_64_windows
+            binary: MidiPlayer.exe
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Configure (${{ matrix.name }})
+        run: |
+          cmake -S . -B ${{ matrix.build_dir }} \
+            -DCMAKE_TOOLCHAIN_FILE=${{ matrix.toolchain }} \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DGLFW_BUILD_WAYLAND=OFF
+
+      - name: Build (${{ matrix.name }})
+        run: cmake --build ${{ matrix.build_dir }} -j "$(nproc)"
+
+      - name: Stage artifact
+        run: |
+          mkdir -p artifact/${{ matrix.build_dir }}
+          cp ${{ matrix.build_dir }}/${{ matrix.binary }} artifact/${{ matrix.build_dir }}/
+          cp -r ${{ matrix.build_dir }}/resources artifact/${{ matrix.build_dir }}/
+
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.build_dir }}
+          path: artifact/${{ matrix.build_dir }}
