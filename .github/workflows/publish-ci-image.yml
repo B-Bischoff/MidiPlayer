@@ -22,6 +22,5 @@ jobs:
 
       - name: Build and push
         run: |
-          IMAGE_ID=$(echo "ghcr.io/${{ github.repository }}-ci:latest" | tr '[:upper:]' '[:lower:]')
-          docker build -f .github/docker/Dockerfile -t "$IMAGE_ID" .
-          docker push "$IMAGE_ID"
+          docker build -f .github/docker/Dockerfile -t ghcr.io/b-bischoff/midiplayer-ci:latest .
+          docker push ghcr.io/b-bischoff/midiplayer-ci:latest
