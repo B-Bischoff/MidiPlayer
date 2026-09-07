@@ -1,0 +1,27 @@
+name: Publish CI Docker Image
+
+on:
+  push:
+    branches: [ "master" ]
+    paths:
+      - '.github/docker/Dockerfile'
+      - '.github/workflows/publish-ci-image.yml'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: self-hosted
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build and push
+        run: |
+          IMAGE_ID=$(echo "ghcr.io/${{ github.repository }}-ci:latest" | tr '[:upper:]' '[:lower:]')
+          docker build -f .github/docker/Dockerfile -t "$IMAGE_ID" .
+          docker push "$IMAGE_ID"
