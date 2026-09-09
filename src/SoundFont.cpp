@@ -18,7 +18,7 @@ bool SoundFont::loadSoundFontFile(const fs::path& filepath, const unsigned int& 
 		return true;
 	}
 
-	tsf_set_output(_tinySoundFont, TSF_MONO, sampleRate, 0);
+	tsf_set_output(_tinySoundFont, TSF_STEREO_INTERLEAVED, sampleRate, 0);
 
 	return false;
 }
