@@ -20,8 +20,6 @@ MidiPlayer::MidiPlayer(const char* executableName, unsigned int windowWidth, uns
 		.resourceDirectory = resourceDirectoryPath,
 	};
 
-	_targetFrameDuration = std::chrono::duration<double>(1.0f / (double)_audio.getTargetFPS());
-
 	_window = std::make_unique<Window>(ImVec2(windowWidth, windowHeight), "MidiPlayer", _applicationPath.resourceDirectory);
 	_inputManager = std::make_unique<InputManager>(_window->getWindow());
 	_windowContext.window = _window.get();
@@ -62,32 +60,9 @@ void MidiPlayer::update()
 
 		_window->endFrame();
 
-		handleFrameProcessTime(startTime);
 		_lastFrameTime = startTime;
-	}
-}
 
-void MidiPlayer::handleFrameProcessTime(const time_point& startTime)
-{
-	auto endTime = std::chrono::high_resolution_clock::now();
-	auto deltaTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
-
-	auto sleepDuration = _targetFrameDuration - deltaTime;
-
-	if (sleepDuration > std::chrono::duration<double>(0.0))
-	{
-		std::this_thread::sleep_for(sleepDuration * 0.9f);
-		endTime = std::chrono::high_resolution_clock::now();
-		while (endTime - startTime < _targetFrameDuration)
-			endTime = std::chrono::high_resolution_clock::now();
-	}
-	else
-	{
-		const double maxAllowedLag = (1.0 / _audio.getTargetFPS()) * _audio.getLatency();
-		if (deltaTime.count() - (1.0 / _audio.getTargetFPS()) > maxAllowedLag)
-		{
-			Logger::log("Audio", Warning) << "lag exceeded cursors safety gap" << std::endl;
-		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
 }
 

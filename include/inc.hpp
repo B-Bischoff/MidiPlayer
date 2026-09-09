@@ -53,6 +53,7 @@ struct MidiPlayerSettings {
 struct AudioInfos {
 	unsigned int sampleRate = {};
 	unsigned int channels = {};
+	unsigned int currentChannel = {};
 };
 
 struct MidiInfo
@@ -62,6 +63,7 @@ struct MidiInfo
 	bool risingEdge; // Only true for the first frame, becomes false when holding key
 };
 
+// Move to a dedicated file
 struct Timer {
 public:
 	double duration;

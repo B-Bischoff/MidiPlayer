@@ -1,17 +1,9 @@
 #include "Audio.hpp"
 
-Audio::Audio(unsigned int sampleRate, unsigned int channels, unsigned int bufferDuration, unsigned int latency)
-	: _sampleRate(sampleRate), _channels(channels), _bufferDuration(bufferDuration), _latency(latency),
-	_targetFPS(60), _buffer(nullptr), _leftPhase(0), _rightPhase(1), _writeCursor(0), _syncCursors(false),
-	_samplesToAdjust(0), _time(0.0)
+Audio::Audio(unsigned int sampleRate, unsigned int channels, unsigned int requestedBufferSizeFrames)
+	: _writeCursor(0), _readCursor(0), _availableSamples(0), _sampleRate(sampleRate), _channels(channels), _time(0.0)
 {
-	initBuffer();
-	initOutputDevice(0); // Open system default audio device
-
-	std::this_thread::sleep_for(std::chrono::milliseconds(100)); // let rtaudio get more stable
-
-	// Read cursors might have already moved, so make write cursor point ahead of it.
-	_writeCursor = (_leftPhase + getLatencyInSamplesPerUpdate()) % getBufferSize();
+	initOutputDevice(requestedBufferSizeFrames); // Open system default audio device
 }
 
 Audio::~Audio()
@@ -27,32 +19,11 @@ void Audio::stopAndCloseStreamIfExist()
 		_stream.closeStream();
 }
 
-void Audio::initBuffer()
-{
-	// Stop registered callback from reading buffer while it's being (re)allocated
-	if (_stream.isStreamRunning())
-		_stream.abortStream();
-
-	_buffer = std::make_unique<float[]>(getBufferSize());
-	if (_buffer == nullptr)
-	{
-		Logger::log("Audio", Error) << "Failed to allocate buffer (size: " << std::to_string(getBufferSize()) << ")" << std::endl;
-		exit(1);
-	}
-
-	std::memset((void*)_buffer.get(), 0, sizeof(float) * getBufferSize());
-
-	_leftPhase = 0;
-	_rightPhase = 1;
-	_writeCursor = (_leftPhase + getLatencyInSamplesPerUpdate()) % getBufferSize();
-}
-
-bool Audio::initOutputDevice(unsigned int deviceId)
+bool Audio::initOutputDevice(unsigned int requestedBufferSizeFrames, unsigned int deviceId)
 {
 	stopAndCloseStreamIfExist();
 
-	std::vector<unsigned int> deviceIds = _stream.getDeviceIds();
-	if (deviceIds.size() < 1)
+	if (_stream.getDeviceCount() < 1)
 	{
 		Logger::log("RtAudio", Error) << "No audio device found." << std::endl;
 		return true;
@@ -62,15 +33,26 @@ bool Audio::initOutputDevice(unsigned int deviceId)
 	parameters.deviceId = deviceId == 0 ? _stream.getDefaultOutputDevice() : deviceId;
 	parameters.nChannels = _channels;
 	parameters.firstChannel = 0; // left ear in stereo
-	const unsigned int streamSampleRate = _sampleRate;
-	unsigned int bufferFrames = streamSampleRate / _targetFPS;
 
-	if (_stream.openStream(&parameters, NULL, RTAUDIO_FLOAT32, streamSampleRate, &bufferFrames, &uploadBuffer, this) != RTAUDIO_NO_ERROR)
+	// RtAudio will overwrite this variable with the hardware's actual buffer size!
+	unsigned int actualBufferFrames = requestedBufferSizeFrames;
+
+	if (_stream.openStream(&parameters, NULL, RTAUDIO_FLOAT32, _sampleRate,
+				&actualBufferFrames, &uploadBuffer, this) != RTAUDIO_NO_ERROR)
 	{
 		_deviceInfo = {};
 		Logger::log("RtAudio", Error) << "Failed to open stream." << std::endl;
 		return true;
 	}
+
+	// Allocate the ring buffer. We make it 4x the callback size to easily absorb
+	// any OS scheduling jitter from the main thread.
+	_bufferCapacitySamples = actualBufferFrames * _channels * 4;
+	_ringBuffer.resize(_bufferCapacitySamples, 0.0f);
+
+	_writeCursor = 0;
+	_readCursor = 0;
+	_availableSamples.store(0, std::memory_order_release);
 
 	if (_stream.startStream() != RTAUDIO_NO_ERROR)
 	{
@@ -78,133 +60,98 @@ bool Audio::initOutputDevice(unsigned int deviceId)
 		return true;
 	}
 
-	Logger::log("Audio", Info) << "Successfully opened audio stream with the following properties:" << std::endl;
-	Logger::log("Audio", Info)  << "Sample rate: " << _stream.getStreamSampleRate() << "Hz" << std::endl;
-	Logger::log("Audio", Info)  << "Channel number: " << _channels << std::endl;
-	Logger::log("Audio", Info)  << "Buffer duration: " << _bufferDuration << " second(s)" << std::endl;
-
+	// Update internal state based on what the hardware actually gave us
 	_sampleRate = _stream.getStreamSampleRate();
 	_deviceInfo = _stream.getDeviceInfo(parameters.deviceId);
+
+	Logger::log("Audio", Info) << "Opened audio stream: " << _sampleRate << "Hz, "
+								<< _channels << " channels. Hardware buffer: "
+								<< actualBufferFrames << " frames.\n";
 
 	return false;
 }
 
+// ----------------------------------------------------------------------------
+// PRODUCER: Main Thread
+// ----------------------------------------------------------------------------
 void Audio::update(std::vector<Instrument>& instruments, std::vector<MidiInfo>& keyPressed)
 {
-	std::chrono::duration<double> frameDuration(1.0 / static_cast<double>(_sampleRate));
+	// Check available space in the buffer
+	int currentAvailable = _availableSamples.load(std::memory_order_acquire);
+	int freeSpace = _bufferCapacitySamples - currentAvailable;
 
-	const int samplesToGenerate = static_cast<int>(getSamplesPerUpdate()) + _samplesToAdjust;
+	// Only generate full frames (pairs of Left/Right samples)
+	int framesToGenerate = freeSpace / _channels;
 
-	for (int i = 0; i < samplesToGenerate; i++)
+	AudioInfos baseAudioInfos = { _sampleRate, _channels, 0 };
+
+	int samplesGenerated = 0;
+
+
+	for (int i = 0; i < framesToGenerate; i++)
 	{
-
-		const AudioInfos audioInfos = {
-			.sampleRate = _sampleRate,
-			.channels = _channels
-		};
-
-		for (int j = 0; j < _channels; j++)
+		for (unsigned int channel = 0; channel < _channels; channel++)
 		{
+			baseAudioInfos.currentChannel = channel;
+
 			double value = 0.0;
 			for (Instrument& instrument : instruments)
-				value += instrument.process(audioInfos, keyPressed) * 1.0;
+				value += instrument.process(baseAudioInfos, keyPressed);
 
-			_buffer[_writeCursor] = std::clamp(value, -1.0, 1.0);
-			incrementWriteCursor();
+			// Write to buffer and advance the write cursor
+			_ringBuffer[_writeCursor] = static_cast<float>(std::clamp(value, -1.0, 1.0));
+			_writeCursor = (_writeCursor + 1) % _bufferCapacitySamples;
+			samplesGenerated++;
 		}
 
 		_time += 1.0 / static_cast<double>(_sampleRate);
 		AudioComponent::time = _time;
 	}
 
-	//assert(audio.syncCursors == false && "Audio callback did not reset syncCursors");
-	_syncCursors = true;
+	// Safely notify the audio callback that new samples are ready
+	if (samplesGenerated > 0)
+	{
+		_availableSamples.fetch_add(samplesGenerated, std::memory_order_release);
+		// Logger::log("Audio", Debug) << "Generated " << samplesGenerated << " samples, "
+		// 							<< _availableSamples.load(std::memory_order_acquire)
+		// 							<< " samples available in buffer." << std::endl;;
+	}
 }
 
-int Audio::uploadBuffer(void *outputBuffer, void* inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData)
+// ----------------------------------------------------------------------------
+// CONSUMER: Hardware Audio Thread
+// ----------------------------------------------------------------------------
+int Audio::uploadBuffer(void* outputBuffer, void* /*inputBuffer*/, unsigned int nBufferFrames,
+						double /*streamTime*/, RtAudioStreamStatus status, void* userData)
 {
 	Audio* audio = static_cast<Audio*>(userData);
-	assert(audio);
-	float *buffer = (float*)outputBuffer;
+	float *out = static_cast<float*>(outputBuffer);
 
-	//std::cout << "callback time : " << streamTime << std::endl;
-	if (status) Logger::log("Audio", Warning) << "Stream underflow detected." << std::endl;
+	if (status)
+		Logger::log("Audio", Warning) << "Stream underflow detected." << std::endl;
 
-	audio->copyBufferData(buffer, nBufferFrames, audio->mute);
+	int samplesRequested = nBufferFrames * audio->_channels;
+	int availableSamples = audio->_availableSamples.load(std::memory_order_acquire);
 
-	if (audio->_syncCursors)
+	// If the main thread hasn't generated enough audio, output silence (underrun)
+	if (availableSamples < samplesRequested)
 	{
-		audio->_syncCursors = false;
-		int cursorsDelta = audio->_writeCursor - audio->_leftPhase;
-		if (cursorsDelta < 0)
-			cursorsDelta += audio->getBufferSize();
-
-		audio->_samplesToAdjust = audio->getLatencyInSamplesPerUpdate() - cursorsDelta;
+		std::fill(out, out + samplesRequested, 0.0f);
+		Logger::log("Audio", Warning) << "Buffer underrun! Main thread is too slow.\n";
+		return 0;
 	}
+
+	// Read requested samples into the hardware buffer
+	for (int i = 0; i < samplesRequested; i++)
+	{
+		out[i] = audio->_ringBuffer[audio->_readCursor];
+		audio->_readCursor = (audio->_readCursor + 1) % audio->_bufferCapacitySamples;
+	}
+
+	// Safely notify the main thread that space has freed up
+	audio->_availableSamples.fetch_sub(samplesRequested, std::memory_order_release);
 
 	return 0;
-}
-
-void Audio::copyBufferData(float* data, unsigned int sampleNumber, bool mute)
-{
-	for (int sample = 0; sample < sampleNumber; sample++)
-	{
-		*data++ = mute ? 0 : _buffer[_leftPhase];
-		if (_channels == 2)
-			*data++ = mute ? 0 : _buffer[_rightPhase];
-		incrementPhases();
-	}
-}
-
-unsigned int Audio::getBufferSize() const
-{
-	return _sampleRate * _bufferDuration * _channels;
-}
-
-void Audio::incrementPhases()
-{
-	_leftPhase = (_leftPhase + _channels) % getBufferSize();
-	_rightPhase = (_rightPhase + _channels) % getBufferSize();
-}
-
-void Audio::incrementWriteCursor()
-{
-	_writeCursor = (_writeCursor + 1) % getBufferSize();
-}
-
-double Audio::getSamplesPerUpdate() const
-{
-	return static_cast<double>(_sampleRate) / static_cast<double>(_targetFPS);
-}
-
-unsigned int Audio::getLatency() const
-{
-	return _latency;
-}
-
-bool Audio::setLatency(unsigned int bufferFrameOffset)
-{
-	if (bufferFrameOffset == _latency)
-		return false;
-
-	const double durationInSeconds = bufferFrameOffset * getSamplesPerUpdate() / _sampleRate;
-
-	// Arbitrary limits
-	if (bufferFrameOffset > 30 || bufferFrameOffset == 0)
-	{
-		Logger::log("Audio", Warning) << "Invalid latency: " << bufferFrameOffset << " (" << durationInSeconds << " seconds)" << std::endl;
-		return true;
-	}
-
-	Logger::log("Audio", Info) << "New latency: " << bufferFrameOffset << " buffer frame (" << durationInSeconds << " seconds)" << std::endl;
-	_latency = bufferFrameOffset;
-
-	return false;
-}
-
-unsigned int Audio::getLatencyInSamplesPerUpdate() const
-{
-	return _latency * getSamplesPerUpdate() * _channels;
 }
 
 bool Audio::setChannelNumber(unsigned int channelNumber)
@@ -213,8 +160,7 @@ bool Audio::setChannelNumber(unsigned int channelNumber)
 		return false;
 
 	_channels = channelNumber;
-	initBuffer();
-	return initOutputDevice(_deviceInfo.ID);
+	return initOutputDevice(DEFAULT_BUFFER_SIZE_FRAMES, _deviceInfo.ID);
 }
 
 unsigned int Audio::getChannels() const
@@ -233,8 +179,7 @@ bool Audio::setSampleRate(unsigned int sampleRate)
 		return false;
 
 	_sampleRate = sampleRate;
-	initBuffer();
-	return initOutputDevice(_deviceInfo.ID);
+	return initOutputDevice(DEFAULT_BUFFER_SIZE_FRAMES, _deviceInfo.ID);
 }
 
 unsigned int Audio::getWriteCursorPos() const
@@ -242,24 +187,14 @@ unsigned int Audio::getWriteCursorPos() const
 	return _writeCursor;
 }
 
-unsigned int Audio::getReadCursorPos(const unsigned int& cursor) const
+unsigned int Audio::getReadCursorPos() const
 {
-	if (cursor > 1)
-	{
-		Logger::log("Audio", Error) << "cursor should be 0 (left phase) or 1 (right phase)" << std::endl;
-		exit(1);
-	}
-	return cursor == 0 ? _leftPhase : _rightPhase;
+	return _readCursor;
 }
 
-const float* Audio::getBuffer() const
+const std::vector<float>& Audio::getBuffer() const
 {
-	return _buffer.get();
-}
-
-unsigned int Audio::getTargetFPS() const
-{
-	return _targetFPS;
+	return _ringBuffer;
 }
 
 std::vector<unsigned int> Audio::getDeviceIds()

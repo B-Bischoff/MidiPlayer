@@ -88,7 +88,6 @@ private:
 	void updateAudioOutput(Audio& audio);
 	void updateAudioSampleRate(Audio& audio, std::queue<Message>& messageQueue);
 	void updateAudioChannels(Audio& audio, std::queue<Message>& messageQueue);
-	void updateAudioLatency(Audio& audio);
 	void updateMuteAudio(Audio& audio);
 	void updateMidiSettings(InputManager& inputManager, MidiPlayerSettings& settings);
 	void updateUISettings(MidiPlayerSettings& settings);

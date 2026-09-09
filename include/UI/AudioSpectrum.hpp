@@ -7,6 +7,11 @@
 #include "Logger.hpp"
 
 class AudioSpectrum {
+public:
+	AudioSpectrum(const int& sampleNb = DEFAULT_BUFFER_SIZE_FRAMES, const int& fftSize = 4096);
+	~AudioSpectrum();
+	void update(const Audio& audio);
+
 private:
 	kiss_fft_cfg _config;
 	const int SAMPLE_NB;
@@ -21,9 +26,4 @@ private:
 	void processAudioSpectrum(const Audio& audio);
 	double hannWindowing(double v, unsigned int index);
 	void plot(const double* xAxis, const double* yAxis, const unsigned int& xMax);
-
-public:
-	AudioSpectrum(const int& sampleNb, const int& fftSize);
-	~AudioSpectrum();
-	void update(const Audio& audio);
 };
