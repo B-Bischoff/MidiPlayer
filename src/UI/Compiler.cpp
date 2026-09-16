@@ -12,6 +12,12 @@ void Compiler::compile(Instrument& instrument, NodeManager& nodeManager, LinkMan
 	// Clear Master's backend inputs — will be rebuilt from UI links
 	instrument.master.clearInputs();
 
+	// Clear the node and poly maps for this compile pass. We'll rebuild them as we traverse the UI graph.
+	// [TODO] This is a bit wasteful, but it ensures that we don't keep stale nodes around.
+	// We could optimize this by only removing nodes that are no longer in the graph, but that would require more bookkeeping.
+	_nodeMap.clear();
+	_polyMap.clear();
+
 	// Get UI nodes connected to Master's input pins
 	auto masterInputs = getNodeInputs(masterNode, nodeManager, linkManager);
 
@@ -193,7 +199,7 @@ void Compiler::debugPrintTree(const std::shared_ptr<AudioComponent>& node, int d
 {
 	if (!node) return;
 	std::string indent(depth * 2, ' ');
-	Logger::log("Compiler", Debug) << indent << node->componentName << " (id=" << node->id << ")" << std::endl;
+	// Logger::log("Compiler", Debug) << indent << node->componentName << " (id=" << node->id << ")" << std::endl;
 	for (size_t i = 0; i < node->inputs.size(); i++)
 		for (auto& child : node->inputs[i])
 			debugPrintTree(child, depth + 1);
