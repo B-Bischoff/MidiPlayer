@@ -47,12 +47,13 @@ private:
 	double processPolyphonic(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed)
 	{
 		double inputValue = getInputsValue(input, audioInfos, keyPressed, 0);
+		double triggerValue = getInputsValue(trigger, audioInfos, keyPressed, 0);
 
 		bool noteHeld = (activeVoiceContext->noteInfo.keyIndex != 0 && !activeVoiceContext->releasing);
 		unsigned int gen = activeVoiceContext->generation;
 
 		// Detect new voice assignment
-		if (gen != lastSeenGeneration)
+		if (gen != lastSeenGeneration && triggerValue != 0.0)
 		{
 			bool wasActive = (lastSeenGeneration != 0);
 			lastSeenGeneration = gen;
