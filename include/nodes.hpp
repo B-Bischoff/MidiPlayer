@@ -434,11 +434,6 @@ struct ADSR_Node : public Node {
 		ADSR* adsr = dynamic_cast<ADSR*>(audioComponent); assert(adsr);
 		for (int i = 0; i < 8; i++)
 			adsr->reference.controlPoints[i] = controlPoints[i];
-		for (auto& envelope : adsr->envelopes)
-		{
-			for (int i = 0; i < 8; i++)
-				envelope.envelope.controlPoints[i] = controlPoints[i];
-		}
 	}
 
 	void render(std::queue<Message>& messages) override
