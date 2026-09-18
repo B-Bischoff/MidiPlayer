@@ -18,22 +18,19 @@ struct KeyboardFrequency : public MidiSourceComponent {
 
 	void setKeyPressedRef(std::vector<MidiInfo>* ref) { keyPressedRef = ref; }
 
-	// Audio output: convert note to frequency
+	// Audio output: convert note to frequence
 	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
 		// Inside a polyphonic voice — use voice context note
 		if (activeVoiceContext && activeVoiceContext->noteInfo.keyIndex > 0)
-			return pianoKeyFrequency(activeVoiceContext->noteInfo.keyIndex);
+			return activeVoiceContext->noteInfo.keyIndex;
 
-		// Fallback: direct keyPressed (non-polyphonic path)
-		if (!keyPressed.empty())
-			return pianoKeyFrequency(keyPressed[currentKey].keyIndex);
+		assert(0 && "KeyboardFrequency should be used inside a Polyphony voice context or with a MIDI source upstream.");
 
 		return 0.0;
 	}
 
 	// MIDI output: generate NoteOn/NoteOff events for Polyphony
-
 	std::vector<MidiEvent> processMidi(const AudioInfos& audioInfos) override
 	{
 		std::vector<MidiEvent> events;
@@ -77,14 +74,6 @@ struct KeyboardFrequency : public MidiSourceComponent {
 			_previousNotes.push_back(key.keyIndex);
 
 		return events;
-	}
-
-	double pianoKeyFrequency(int keyId)
-	{
-		double A4Frequency = 440.0;
-		int keysDifference = keyId - 69;
-		double semitoneRatio = pow(2.0, 1.0/12.0);
-		return A4Frequency * pow(semitoneRatio, keysDifference);
 	}
 
 private:

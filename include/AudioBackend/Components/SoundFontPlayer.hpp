@@ -1,20 +1,36 @@
 #pragma once
 
 #include <tsf.h>
-#include <set>
 #include "path.hpp"
 #include "AudioComponent.hpp"
+#include "AudioBackend/VoiceContext.hpp"
 
+// Plays notes through a loaded SoundFont (.sf2) instrument. Works both
+// standalone (driven directly by a note-number input, e.g. a Number node)
+// and inside a Polyphony-cloned voice (driven by activeVoiceContext) through
+// a single unified trigger path — see process() below.
 struct SoundFontPlayer : public AudioComponent {
-	std::set<int> notesOn;
-	tsf* tinySoundFont = nullptr;
-	double previousTime;
+	enum Inputs { midiInput };
 
-	float values[2];
+	tsf* tinySoundFont = nullptr;
+	double previousTime = 0.0;
+	float values[2] = {};
+
+	int noteOn = 0; // Currently sounding note (0 = none)
+	unsigned int lastSeenGeneration = 0;
+	bool noteOffSent = false;
+
+	// Standalone fallback state (no Polyphony/MIDI source upstream): derive a
+	// synthetic generation from the input signal itself instead of relying on
+	// activeVoiceContext. A rising edge from silence, or a direct note-number
+	// change while held, both count as a new "voice assignment".
+	bool standaloneHeld = false;
+	int standaloneLastNote = 0;
+	unsigned int standaloneGeneration = 0;
 
 	SoundFontPlayer() : AudioComponent()
 	{
-		inputs.resize(0); componentName = "SoundFontPlayer";
+		inputs.resize(1); componentName = "SoundFontPlayer";
 	}
 
 	std::shared_ptr<AudioComponent> clone() const override {
@@ -26,10 +42,51 @@ struct SoundFontPlayer : public AudioComponent {
 	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
 	{
 		if (currentKey != 0 || tinySoundFont == nullptr)
-			return 0;
+			return 0.0;
 
-		addNotes(keyPressed);
-		removeNotes(keyPressed);
+		double midiValue = getInputsValue(midiInput, audioInfos, keyPressed, currentKey);
+
+		bool noteHeld;
+		unsigned int gen;
+
+		if (activeVoiceContext)
+		{
+			// Inside a Polyphony voice: the note value stays constant for the
+			// whole lifetime of the voice (release tail included), so we
+			// can't edge-detect note-off from the input value alone. Use the
+			// voice's own generation/releasing flags instead.
+			noteHeld = midiValue != 0.0 && !activeVoiceContext->releasing;
+			gen = activeVoiceContext->generation;
+		}
+		else
+		{
+			// Standalone usage: derive an equivalent generation/held pair
+			// directly from the input signal.
+			bool held = midiValue != 0.0;
+			bool changed = held && standaloneLastNote != (int)midiValue;
+			if ((held && !standaloneHeld) || changed)
+				standaloneGeneration++;
+			standaloneHeld = held;
+			if (held) standaloneLastNote = (int)midiValue;
+			noteHeld = held;
+			gen = standaloneGeneration;
+		}
+
+		// Single unified trigger path, regardless of polyphonic context.
+		if (gen != lastSeenGeneration && noteHeld)
+		{
+			lastSeenGeneration = gen;
+			if (noteOn != 0)
+				tsf_note_off(tinySoundFont, 0, noteOn); // Stop previous note before starting the new one
+			tsf_note_on(tinySoundFont, 0, (int)midiValue, 127.0f / 255.0f);
+			noteOn = (int)midiValue;
+			noteOffSent = false;
+		}
+		else if (!noteHeld && !noteOffSent && noteOn != 0)
+		{
+			tsf_note_off(tinySoundFont, 0, noteOn);
+			noteOffSent = true;
+		}
 
 		if (previousTime != time)
 		{
@@ -39,41 +96,5 @@ struct SoundFontPlayer : public AudioComponent {
 		}
 		return static_cast<double>(values[1]);
 	}
-
-	void addNotes(std::vector<MidiInfo>& keyPressed)
-	{
-		for (const MidiInfo& key : keyPressed)
-		{
-			if (notesOn.find(key.keyIndex) == notesOn.end())
-			{
-				notesOn.insert(key.keyIndex);
-				tsf_note_on(tinySoundFont, 0, key.keyIndex, (double)key.velocity / 255.0);
-			}
-		}
-	}
-
-	void removeNotes(std::vector<MidiInfo>& keyPressed)
-	{
-		auto it = notesOn.begin();
-		while (it != notesOn.end())
-		{
-			bool noteStillPlayed = false;
-			for (const MidiInfo& key : keyPressed)
-			{
-				if (key.keyIndex == *it)
-				{
-					noteStillPlayed = true;
-					break;
-				}
-			}
-
-			if (!noteStillPlayed)
-			{
-				tsf_note_off(tinySoundFont, 0, *it);
-				it = notesOn.erase(it);
-			}
-			else
-				it++;
-		}
-	}
 };
+

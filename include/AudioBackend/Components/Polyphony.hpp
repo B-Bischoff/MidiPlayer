@@ -46,7 +46,7 @@ struct Polyphony : public AudioComponent {
 			return;
 
 		auto& templateRoot = inputs[audioTemplate].front();
-		hasEnvelope = containsADSR(templateRoot);
+		hasEnvelope = containsEnvelope(templateRoot);
 
 		for (Voice& v : voices)
 		{
@@ -191,13 +191,20 @@ struct Polyphony : public AudioComponent {
 	}
 
 private:
-	static bool containsADSR(const std::shared_ptr<AudioComponent>& node)
+	// [TODO] Audio components that needs to play out their release tail should
+	// be marked with a flag, instead of hardcoding the check for specific component names.
+	//
+	// True if the sub-graph has its own release-tail mechanism, so on note-off
+	// we should let it fade out (releasing state) instead of cutting instantly.
+	// This covers both ADSR (explicit envelope) and SoundFontPlayer (whose
+	// underlying tsf/sf2 engine handles its own release stage internally).
+	static bool containsEnvelope(const std::shared_ptr<AudioComponent>& node)
 	{
 		if (!node) return false;
-		if (node->componentName == "ADSR") return true;
+		if (node->componentName == "ADSR" || node->componentName == "SoundFontPlayer") return true;
 		for (auto& slot : node->inputs)
 			for (auto& child : slot)
-				if (containsADSR(child)) return true;
+				if (containsEnvelope(child)) return true;
 		return false;
 	}
 };

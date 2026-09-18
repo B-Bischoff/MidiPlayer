@@ -12,3 +12,4 @@
 #include "Overdrive.hpp"
 #include "SoundFontPlayer.hpp"
 #include "Polyphony.hpp"
+#include "MidiToFreq.hpp"

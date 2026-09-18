@@ -20,6 +20,7 @@ NodeEditorUI::NodeEditorUI()
 	_nodeManager.registerNode<CombFilterNode, CombFilter>("Comb Filter");
 	_nodeManager.registerNode<OverdriveNode, Overdrive>("Overdrive");
 	_nodeManager.registerNode<SoundFontPlayerNode, SoundFontPlayer>("SoundFontPlayer");
+	_nodeManager.registerNode<MidiToFreqNode, MidiToFreq>("Midi To Frequency");
 
 	_nodeManager.addNode<MasterNode>(_idManager);
 
