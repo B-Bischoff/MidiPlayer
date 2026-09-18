@@ -9,7 +9,7 @@ public:
 	std::string name;
 	float volume = 1.0f;
 
-	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed);
+	double process(const AudioInfos& audioInfos);
 
 	// Set keyPressed reference on all KeyboardFrequency nodes in the graph
 	void updateMidiSources(std::vector<MidiInfo>& keyPressed);

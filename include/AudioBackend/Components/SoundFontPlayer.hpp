@@ -39,12 +39,12 @@ struct SoundFontPlayer : public AudioComponent {
 		return c;
 	}
 
-	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	double process(const AudioInfos& audioInfos) override
 	{
-		if (currentKey != 0 || tinySoundFont == nullptr)
+		if (tinySoundFont == nullptr)
 			return 0.0;
 
-		double midiValue = getInputsValue(midiInput, audioInfos, keyPressed, currentKey);
+		double midiValue = getInputsValue(midiInput, audioInfos);
 
 		bool noteHeld;
 		unsigned int gen;
@@ -88,6 +88,7 @@ struct SoundFontPlayer : public AudioComponent {
 			noteOffSent = true;
 		}
 
+		// Render audio only once per sample, even if process() is called multiple times for the same time step (e.g stereo channels)
 		if (previousTime != time)
 		{
 			tsf_render_float(tinySoundFont, values, 1, 0);

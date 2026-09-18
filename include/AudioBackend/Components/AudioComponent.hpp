@@ -19,7 +19,7 @@ struct AudioComponent {
 
 	static double time;
 
-	virtual double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) = 0;
+	virtual double process(const AudioInfos& audioInfos) = 0;
 
 	// Create a shallow clone (same type, same parameters, fresh state, no inputs wired)
 	virtual std::shared_ptr<AudioComponent> clone() const = 0;
@@ -60,7 +60,7 @@ struct AudioComponent {
 		return false;
 	}
 
-	virtual double getInputsValue(const unsigned int& index, const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0)
+	virtual double getInputsValue(const unsigned int& index, const AudioInfos& audioInfos)
 	{
 		if (inputs.size() <= index)
 		{
@@ -72,7 +72,7 @@ struct AudioComponent {
 
 		double value = 0.0;
 		for (auto& component : input)
-			value += component->process(audioInfos, keyPressed, currentKey);
+			value += component->process(audioInfos);
 		return value;
 	}
 };

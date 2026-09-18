@@ -29,13 +29,13 @@ public:
 		return c;
 	}
 
-	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	double process(const AudioInfos& audioInfos) override
 	{
 		if (!inputs.size())
 			return 0.0;
 
-		double inputValue = getInputsValue(input, audioInfos, keyPressed, 0);
-		double triggerValue = getInputsValue(trigger, audioInfos, keyPressed, 0);
+		double inputValue = getInputsValue(input, audioInfos);
+		double triggerValue = getInputsValue(trigger, audioInfos);
 
 		bool noteHeld;
 		unsigned int gen;

@@ -11,10 +11,10 @@ struct Multiplier : public AudioComponent {
 		return std::make_shared<Multiplier>();
 	}
 
-	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	double process(const AudioInfos& audioInfos) override
 	{
-		double valueA = getInputsValue(inputA, audioInfos, keyPressed, currentKey);
-		double valueB = getInputsValue(inputB, audioInfos, keyPressed, currentKey);
+		double valueA = getInputsValue(inputA, audioInfos);
+		double valueB = getInputsValue(inputB, audioInfos);
 		return valueA * valueB;
 	}
 };

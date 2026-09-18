@@ -13,7 +13,7 @@ struct Number : public AudioComponent {
 		return c;
 	}
 
-	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	double process(const AudioInfos& audioInfos) override
 	{
 		return number;
 	}

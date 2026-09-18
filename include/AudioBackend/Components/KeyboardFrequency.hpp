@@ -19,7 +19,7 @@ struct KeyboardFrequency : public MidiSourceComponent {
 	void setKeyPressedRef(std::vector<MidiInfo>* ref) { keyPressedRef = ref; }
 
 	// Audio output: convert note to frequence
-	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	double process(const AudioInfos& audioInfos) override
 	{
 		// Inside a polyphonic voice — use voice context note
 		if (activeVoiceContext && activeVoiceContext->noteInfo.keyIndex > 0)

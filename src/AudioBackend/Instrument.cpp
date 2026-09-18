@@ -2,9 +2,9 @@
 #include "AudioBackend/Components/Polyphony.hpp"
 #include <unordered_set>
 
-double Instrument::process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed)
+double Instrument::process(const AudioInfos& audioInfos)
 {
-	return master.process(audioInfos, keyPressed) * volume;
+	return master.process(audioInfos) * volume;
 }
 
 void Instrument::findKeyboardFrequencies(const std::shared_ptr<AudioComponent>& node,

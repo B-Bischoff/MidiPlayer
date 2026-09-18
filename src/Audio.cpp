@@ -99,7 +99,7 @@ void Audio::update(std::vector<Instrument>& instruments, std::vector<MidiInfo>& 
 
 			double value = 0.0;
 			for (Instrument& instrument : instruments)
-				value += instrument.process(baseAudioInfos, keyPressed);
+				value += instrument.process(baseAudioInfos);
 
 			// Write to buffer and advance the write cursor
 			_ringBuffer[_writeCursor] = static_cast<float>(std::clamp(value, -1.0, 1.0));

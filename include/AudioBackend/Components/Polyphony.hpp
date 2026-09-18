@@ -134,7 +134,7 @@ struct Polyphony : public AudioComponent {
 		v.noteId = -1;
 	}
 
-	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	double process(const AudioInfos& audioInfos) override
 	{
 		// Only process MIDI events once per sample (skip on second channel in stereo)
 		if (midiSource && audioInfos.currentChannel == 0)
@@ -165,8 +165,7 @@ struct Polyphony : public AudioComponent {
 			v.context.generation = v.generation;
 
 			// Pull from the cloned sub-graph (single voice)
-			std::vector<MidiInfo> singleNote = { v.info };
-			double voiceValue = v.graphRoot->process(audioInfos, singleNote, 0);
+			double voiceValue = v.graphRoot->process(audioInfos);
 			sum += voiceValue;
 
 			// Deactivate releasing voices that have gone silent

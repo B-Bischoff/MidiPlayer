@@ -16,7 +16,7 @@ public:
 		return std::make_shared<Master>();
 	}
 
-	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	double process(const AudioInfos& audioInfos) override
 	{
 		if (!inputs.size())
 		{
@@ -33,7 +33,7 @@ public:
 		double value = 0.0;
 
 		for (auto& child : inputs[input])
-			value += child->process(audioInfos, keyPressed, 0);
+			value += child->process(audioInfos);
 
 		return value;
 	}
