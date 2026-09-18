@@ -556,6 +556,7 @@ struct SoundFontPlayerNode : public Node {
 		name = "SoundFont Player";
 
 		inputs.push_back(createPin(idManager, "> midi note", PinKind::Input, SoundFontPlayer::Inputs::midiInput));
+		inputs.push_back(createPin(idManager, "> velocity", PinKind::Input, SoundFontPlayer::Inputs::velocityInput));
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 

@@ -10,7 +10,7 @@
 // and inside a Polyphony-cloned voice (driven by activeVoiceContext) through
 // a single unified trigger path — see process() below.
 struct SoundFontPlayer : public AudioComponent {
-	enum Inputs { midiInput };
+	enum Inputs { midiInput, velocityInput };
 
 	tsf* tinySoundFont = nullptr;
 	double previousTime = 0.0;
@@ -30,7 +30,7 @@ struct SoundFontPlayer : public AudioComponent {
 
 	SoundFontPlayer() : AudioComponent()
 	{
-		inputs.resize(1); componentName = "SoundFontPlayer";
+		inputs.resize(2); componentName = "SoundFontPlayer";
 	}
 
 	std::shared_ptr<AudioComponent> clone() const override {
@@ -45,6 +45,7 @@ struct SoundFontPlayer : public AudioComponent {
 			return 0.0;
 
 		double midiValue = getInputsValue(midiInput, audioInfos);
+		double velocityValue = getInputsValue(velocityInput, audioInfos);
 
 		bool noteHeld;
 		unsigned int gen;
@@ -78,7 +79,7 @@ struct SoundFontPlayer : public AudioComponent {
 			lastSeenGeneration = gen;
 			if (noteOn != 0)
 				tsf_note_off(tinySoundFont, 0, noteOn); // Stop previous note before starting the new one
-			tsf_note_on(tinySoundFont, 0, (int)midiValue, 127.0f / 255.0f);
+			tsf_note_on(tinySoundFont, 0, (int)midiValue, (double)velocityValue / 255.0f);
 			noteOn = (int)midiValue;
 			noteOffSent = false;
 		}
