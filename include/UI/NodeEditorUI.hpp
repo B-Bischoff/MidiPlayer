@@ -17,17 +17,14 @@
 #include <imgui_node_editor.h>
 
 #include "ImGuiNotify.hpp"
-#include "audio_backend.hpp"
 #include "IDManager.hpp"
 #include "NodeManager.hpp"
 #include "LinkManager.hpp"
-#include "UIToBackendAdapter.hpp"
 #include "UI/Colors.hpp"
-#include "inc.hpp"
 #include "Message.hpp"
-#include "audio_backend.hpp"
-#include "AudioBackend/Components/Components.hpp"
 #include "path.hpp"
+#include "Compiler.hpp"
+#include "inc.hpp"
 
 #include "MidiMath.hpp"
 
@@ -82,6 +79,8 @@ private:
 	};
 	CopiedNodesInfo _copiedNodesInfo;
 
+	Compiler _compiler;
+
 public:
 	NodeEditorUI();
 	~NodeEditorUI();
@@ -93,7 +92,7 @@ public:
 	void loadFile(Master& master, const fs::path& path);
 	void loadFile(Master& master, std::stringstream& stream);
 
-	void updateBackend(Master& master);
+	void updateBackend(Instrument& instrument);
 
 	void copySelectedNode();
 	void paste(const ImVec2& cursorPos);

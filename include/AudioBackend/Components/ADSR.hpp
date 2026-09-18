@@ -1,111 +1,88 @@
 #pragma once
 
 #include "AudioComponent.hpp"
-#include "audio_backend.hpp"
+#include "AudioBackend/VoiceContext.hpp"
 #include "envelope.hpp"
 
 struct ADSR : public AudioComponent {
-private:
-	struct EnvelopeInfo {
-		sEnvelopeADSR envelope;
-		MidiInfo info;
-		unsigned int id;
-		bool playedThisFrame = false;
-	};
 public:
 	enum Inputs { input, trigger };
 
 	sEnvelopeADSR reference; // Used to store envelope settings value
-	std::vector<EnvelopeInfo> envelopes;
+
+	// One envelope per clone (each polyphonic voice gets its own ADSR clone)
+	sEnvelopeADSR voiceEnvelope;
+	unsigned int lastSeenGeneration = 0;
+
+	// Fallback state used when this ADSR isn't inside a Polyphony-cloned
+	// voice (no MIDI source upstream, e.g. driven directly by a trigger
+	// signal). Derives a synthetic "note held" gate + generation from the
+	// trigger input's sign instead of relying on activeVoiceContext.
+	bool standaloneHeld = false;
+	unsigned int standaloneGeneration = 0;
 
 	ADSR() : AudioComponent() { inputs.resize(2); componentName = "ADSR"; }
 
-	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	std::shared_ptr<AudioComponent> clone() const override {
+		auto c = std::make_shared<ADSR>();
+		c->reference = reference;
+		return c;
+	}
+
+	double process(const AudioInfos& audioInfos) override
 	{
 		if (!inputs.size())
 			return 0.0;
 
-		double inputValue = getInputsValue(input, audioInfos, keyPressed, currentKey);
-		double triggerValue = getInputsValue(trigger, audioInfos, keyPressed, currentKey);
+		double inputValue = getInputsValue(input, audioInfos);
+		double triggerValue = getInputsValue(trigger, audioInfos);
 
-		if (currentKey == 0)
+		bool noteHeld;
+		unsigned int gen;
+
+		if (activeVoiceContext)
 		{
-			for (auto& e : envelopes)
-				e.playedThisFrame = false;
+			noteHeld = activeVoiceContext->noteInfo.keyIndex != 0 && !activeVoiceContext->releasing;
+			gen = activeVoiceContext->generation;
+		}
+		else
+		{
+			// Standalone usage (no Polyphony/MIDI source upstream): use the
+			// trigger input itself as a gate signal. Positive values hold the
+			// note; a rising edge (false -> true) starts a new generation so
+			// the envelope retriggers just like a fresh voice assignment.
+			bool held = triggerValue > 0.0;
+			if (held && !standaloneHeld)
+				standaloneGeneration++;
+			standaloneHeld = held;
+			noteHeld = held;
+			gen = standaloneGeneration;
 		}
 
-		unsigned int envelopeIndex = keyPressed.size() ? keyPressed[currentKey].keyIndex : triggerValue;
-
-		// add new envelopes
-		if (envelopeIndex != 0.0  && triggerValue != 0.0)
+		// Detect new voice assignment
+		if (gen != lastSeenGeneration && triggerValue != 0.0)
 		{
-			bool envelopeAlreadyExists = false;
-			for (EnvelopeInfo& envelopeInfo : envelopes)
+			bool wasActive = (lastSeenGeneration != 0);
+			lastSeenGeneration = gen;
+
+			if (wasActive)
 			{
-				if (envelopeInfo.id == envelopeIndex)
-				{
-					envelopeAlreadyExists = true;
-					break;
-				}
+				// Retrigger: keep current envelope state (amplitude, phase)
+				// but update control points from reference in case they changed.
+				// The envelope's built-in retrigger logic will ramp from the
+				// current amplitude to peak.
+				for (int i = 0; i < 8; i++)
+					voiceEnvelope.controlPoints[i] = reference.controlPoints[i];
 			}
-			if (!envelopeAlreadyExists)
+			else
 			{
-				EnvelopeInfo envelopeInfo;
-				envelopeInfo.id = envelopeIndex;
-				envelopeInfo.info = {};
-				envelopeInfo.envelope = reference;
-				if (keyPressed.size())
-					envelopeInfo.info = keyPressed[currentKey];
-
-				envelopes.push_back(envelopeInfo);
-			}
-		}
-
-		double value = 0.0;
-
-		// update envelopes
-		for (EnvelopeInfo& envelopeInfo : envelopes)
-		{
-			if (envelopeInfo.id == envelopeIndex && triggerValue != 0.0)
-			{
-				value += inputValue * envelopeInfo.envelope.GetAmplitude(time, true);
-				envelopeInfo.playedThisFrame = true;
-				break;
+				// Fresh voice (never used or fully deactivated): start clean
+				voiceEnvelope = reference;
 			}
 		}
 
-		// Play envelope in release
-		if (currentKey == keyPressed.size() - 1 || keyPressed.empty())
-		{
-			for (EnvelopeInfo& envelopeInfo : envelopes)
-			{
-				if (!envelopeInfo.playedThisFrame)
-				{
-					// As the note must be extended, it is no longer in the keyPressed vector.
-					// This runs the pipeline from this ADSR node using a new keyPressed vector containing
-					// only the release note as if it were played by the user's midi keyboard.
-					std::vector<MidiInfo> newKeyPressed;
-					if (envelopeInfo.info.keyIndex != 0)
-						newKeyPressed.push_back(envelopeInfo.info);
-					inputValue = getInputsValue(input, audioInfos, newKeyPressed, 0);
-					value += envelopeInfo.envelope.GetAmplitude(time, false) * inputValue;
-				}
-			}
-		}
+		double amplitude = voiceEnvelope.GetAmplitude(time, noteHeld);
 
-		// remove finished envelopes
-		for (auto it = envelopes.begin(); it != envelopes.end(); it++)
-		{
-			//if (it->phase == Phase::Inactive)
-			if (it->envelope.phase == Phase::Inactive)
-			{
-				it = envelopes.erase(it);
-				if (it == envelopes.end())
-					break;
-			}
-		}
-
-		return value;
+		return inputValue * amplitude;
 	}
 };
-

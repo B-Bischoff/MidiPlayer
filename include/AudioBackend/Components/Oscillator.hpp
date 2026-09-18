@@ -2,7 +2,6 @@
 
 #include <cstdlib>
 #include "AudioComponent.hpp"
-#include "audio_backend.hpp"
 
 enum OscType { Sine, Square, Triangle, Saw_Dig, WhiteNoise, PinkNoise, BrownianNoise };
 
@@ -11,16 +10,23 @@ struct Oscillator : public AudioComponent {
 	OscType type;
 
 	Oscillator() : AudioComponent() { inputs.resize(2); componentName = "Oscillator"; }
+
+	std::shared_ptr<AudioComponent> clone() const override {
+		auto c = std::make_shared<Oscillator>();
+		c->type = type;
+		return c;
+	}
+
 	double pink_b0 = 0, pink_b1 = 0, pink_b2 = 0;
 	double brownLast = 0.0;
 
-	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	double process(const AudioInfos& audioInfos) override
 	{
 		if (inputs[frequency].size() <= 0)
 			return 0.0;
 
-		double frequencyValue = getInputsValue(frequency, audioInfos, keyPressed, currentKey);
-		double phaseValue = getInputsValue(phase, audioInfos, keyPressed, currentKey);
+		double frequencyValue = getInputsValue(frequency, audioInfos);
+		double phaseValue = getInputsValue(phase, audioInfos);
 
 		double value = osc(frequencyValue, M_PI * phaseValue, time, type);
 

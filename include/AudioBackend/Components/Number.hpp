@@ -7,7 +7,13 @@ struct Number : public AudioComponent {
 
 	Number() : AudioComponent() { componentName = "Number"; }
 
-	double process(const AudioInfos& audioInfos, std::vector<MidiInfo>& keyPressed, int currentKey = 0) override
+	std::shared_ptr<AudioComponent> clone() const override {
+		auto c = std::make_shared<Number>();
+		c->number = number;
+		return c;
+	}
+
+	double process(const AudioInfos& audioInfos) override
 	{
 		return number;
 	}

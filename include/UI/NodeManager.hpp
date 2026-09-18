@@ -102,7 +102,7 @@ void NodeManager::registerNode(const std::string& nodeName) {
 	};
 
 	// Register function to convert UI Node to its associated AudioComponent
-	info.convertNodeToAudioComponent = [](const Node* node) -> AudioComponentType* {
+	info.convertNodeToAudioComponent = [](Node* node) -> AudioComponentType* {
 		AudioComponentType* audioComponent = new AudioComponentType;
 		node->assignToAudioComponent(audioComponent);
 		return audioComponent;

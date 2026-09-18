@@ -38,8 +38,8 @@
 typedef std::chrono::time_point<std::chrono::high_resolution_clock> time_point;
 
 struct AudioComponent;
-typedef std::forward_list<AudioComponent*> Components;
-typedef std::vector<AudioComponent*> ComponentInput;
+//typedef std::forward_list<AudioComponent*> Components;
+//typedef std::vector<AudioComponent*> ComponentInput;
 
 struct sEnvelopeADSR;
 struct Master;
@@ -61,6 +61,17 @@ struct MidiInfo
 	int keyIndex;
 	int velocity; // between 0 and 255
 	bool risingEdge; // Only true for the first frame, becomes false when holding key
+};
+
+struct MidiEvent
+{
+	enum Type { NoteOn, NoteOff };
+	Type type;
+	int note;
+	int velocity;
+
+	static MidiEvent noteOn(int note, int velocity) { return { NoteOn, note, velocity }; }
+	static MidiEvent noteOff(int note) { return { NoteOff, note, 0 }; }
 };
 
 // Move to a dedicated file

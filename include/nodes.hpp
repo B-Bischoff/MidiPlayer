@@ -89,7 +89,7 @@ struct Node
 
 	virtual ~Node() {}
 
-	virtual void assignToAudioComponent(AudioComponent* audioComponentId) const
+	virtual void assignToAudioComponent(AudioComponent* audioComponentId)
 	{
 		// Default method for nodes that do not have members to be copied
 	}
@@ -288,7 +288,7 @@ struct NumberNode : public Node
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 
-	void assignToAudioComponent(AudioComponent* audioComponent) const override
+	void assignToAudioComponent(AudioComponent* audioComponent) override
 	{
 		Number* number = dynamic_cast<Number*>(audioComponent); assert(number);
 		number->number = value;
@@ -344,7 +344,7 @@ struct OscNode : public Node
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 
-	void assignToAudioComponent(AudioComponent* audioComponent) const override
+	void assignToAudioComponent(AudioComponent* audioComponent) override
 	{
 		Oscillator* oscillator = dynamic_cast<Oscillator*>(audioComponent); assert(oscillator);
 		oscillator->type = oscType;
@@ -429,16 +429,11 @@ struct ADSR_Node : public Node {
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 
-	void assignToAudioComponent(AudioComponent* audioComponent) const override
+	void assignToAudioComponent(AudioComponent* audioComponent) override
 	{
 		ADSR* adsr = dynamic_cast<ADSR*>(audioComponent); assert(adsr);
 		for (int i = 0; i < 8; i++)
 			adsr->reference.controlPoints[i] = controlPoints[i];
-		for (auto& envelope : adsr->envelopes)
-		{
-			for (int i = 0; i < 8; i++)
-				envelope.envelope.controlPoints[i] = controlPoints[i];
-		}
 	}
 
 	void render(std::queue<Message>& messages) override
@@ -560,6 +555,8 @@ struct SoundFontPlayerNode : public Node {
 		id = getId(idManager);
 		name = "SoundFont Player";
 
+		inputs.push_back(createPin(idManager, "> midi note", PinKind::Input, SoundFontPlayer::Inputs::midiInput));
+		inputs.push_back(createPin(idManager, "> velocity", PinKind::Input, SoundFontPlayer::Inputs::velocityInput));
 		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 
@@ -574,6 +571,12 @@ struct SoundFontPlayerNode : public Node {
 			if (soundFont.loadSoundFontFile(soundFontFilepath, audioInfos.sampleRate))
 				soundFontFilepath.clear();
 		}
+	}
+
+	void assignToAudioComponent(AudioComponent* audioComponent) override
+	{
+		SoundFontPlayer* soundFontPlayer = dynamic_cast<SoundFontPlayer*>(audioComponent); assert(soundFontPlayer);
+		soundFontPlayer->tinySoundFont = soundFont.getSoundFont();
 	}
 
 	void render(std::queue<Message>& messages) override
@@ -591,7 +594,14 @@ struct SoundFontPlayerNode : public Node {
 		}
 
 		if (audioComponent && ((SoundFontPlayer*)audioComponent)->tinySoundFont == nullptr)
-			((SoundFontPlayer*)audioComponent)->tinySoundFont = soundFont.getSoundFont();
+		{
+			tsf* loadedFont = soundFont.getSoundFont();
+			if (loadedFont != nullptr)
+			{
+				((SoundFontPlayer*)audioComponent)->tinySoundFont = loadedFont;
+				Node::propertyChanged = true;
+			}
+		}
 
 		ImGui::PushID(appendId("LoadSoundFontButton").c_str());
 		if (ImGui::Button("Load SoundFont"))
@@ -606,6 +616,17 @@ struct SoundFontPlayerNode : public Node {
 	{
 		needToUpdateSoundFontFile = true;
 		soundFontFilepath = filepath;
+	}
+};
+
+struct MidiToFreqNode : public Node {
+	MidiToFreqNode(IDManager* idManager = nullptr)
+	{
+		id = getId(idManager);
+		name = "Midi To Frequency";
+
+		inputs.push_back(createPin(idManager, "> midi note", PinKind::Input, MidiToFreq::Inputs::midiInput));
+		outputs.push_back(createPin(idManager, "output >", PinKind::Output));
 	}
 };
 

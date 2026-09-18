@@ -346,7 +346,7 @@ void UI::processEventQueue(std::queue<Message>& messageQueue)
 				break;
 			}
 			case UI_ADSR_MODIFIED : {
-				_nodeEditor.updateBackend(_selectedInstrument->master);
+				_nodeEditor.updateBackend(*_selectedInstrument);
 				break;
 			}
 			case MESSAGE_COPY : {
