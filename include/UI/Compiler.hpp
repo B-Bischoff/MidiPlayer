@@ -19,6 +19,13 @@ public:
 	void compile(Instrument& instrument, NodeManager& nodeManager, LinkManager& linkManager);
 
 private:
+	// A link resolved to its source UI node plus the specific output slot
+	// (AudioComponent output index) of that node the link is connected to.
+	struct NodeConnection {
+		std::shared_ptr<Node> node;
+		int outputIndex = 0;
+	};
+
 	// Maps UI node ID → backend AudioComponent (persists across compile calls for diffing)
 	std::unordered_map<unsigned int, std::shared_ptr<AudioComponent>> _nodeMap;
 
@@ -32,8 +39,8 @@ private:
 		LinkManager& linkManager,
 		std::unordered_set<unsigned int>& activeNodes);
 
-	// Get the UI nodes connected to each input pin of a node
-	static std::vector<std::vector<std::shared_ptr<Node>>> getNodeInputs(
+	// Get the UI nodes (and the specific output slot used) connected to each input pin of a node
+	static std::vector<std::vector<NodeConnection>> getNodeInputs(
 		const std::shared_ptr<Node>& node,
 		NodeManager& nodeManager,
 		LinkManager& linkManager);

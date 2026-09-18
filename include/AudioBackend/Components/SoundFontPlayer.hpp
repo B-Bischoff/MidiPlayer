@@ -13,7 +13,6 @@ struct SoundFontPlayer : public AudioComponent {
 	enum Inputs { midiInput, velocityInput };
 
 	tsf* tinySoundFont = nullptr;
-	double previousTime = 0.0;
 	float values[2] = {};
 
 	int noteOn = 0; // Currently sounding note (0 = none)
@@ -39,10 +38,13 @@ struct SoundFontPlayer : public AudioComponent {
 		return c;
 	}
 
-	double process(const AudioInfos& audioInfos) override
+	void computeOutputs(const AudioInfos& audioInfos) override
 	{
 		if (tinySoundFont == nullptr)
-			return 0.0;
+		{
+			outputValues[0] = 0.0;
+			return;
+		}
 
 		double midiValue = getInputsValue(midiInput, audioInfos);
 		double velocityValue = getInputsValue(velocityInput, audioInfos);
@@ -89,14 +91,11 @@ struct SoundFontPlayer : public AudioComponent {
 			noteOffSent = true;
 		}
 
-		// Render audio only once per sample, even if process() is called multiple times for the same time step (e.g stereo channels)
-		if (previousTime != time)
-		{
-			tsf_render_float(tinySoundFont, values, 1, 0);
-			previousTime = time;
-			return static_cast<double>(values[0]);
-		}
-		return static_cast<double>(values[1]);
+		// Render audio once per sample (computeOutputs() is only invoked once
+		// per real sample by the base class, even if process()/getOutput() is
+		// called multiple times, e.g. once per stereo channel).
+		tsf_render_float(tinySoundFont, values, 1, 0);
+		outputValues[0] = static_cast<double>(values[0]);
 	}
 };
 

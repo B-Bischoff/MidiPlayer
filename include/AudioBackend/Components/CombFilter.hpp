@@ -8,8 +8,6 @@ struct CombFilter : public AudioComponent {
 
 	std::vector<double> delayBuffer;
 	int bufferIndex = 0;
-	double previousTime = -1.0;
-	double lastOutput = 0.0;
 
 	CombFilter() : AudioComponent() { inputs.resize(3); componentName = "CombFilter"; }
 
@@ -17,7 +15,7 @@ struct CombFilter : public AudioComponent {
 		return std::make_shared<CombFilter>();
 	}
 
-	double process(const AudioInfos& audioInfos) override
+	void computeOutputs(const AudioInfos& audioInfos) override
 	{
 		const int delaySamplesValue = static_cast<int>(getInputsValue(delaySamples, audioInfos));
 		const double feedbackValue = std::clamp(getInputsValue(feedback, audioInfos), 0.0, 1.0);
@@ -32,23 +30,20 @@ struct CombFilter : public AudioComponent {
 		}
 
 		if (delayBuffer.empty())
-			return 0.0;
+		{
+			outputValues[0] = 0.0;
+			return;
+		}
 
-		// process() is called once per output channel (e.g. twice for stereo)
-		// with the same `time` value. The delay line must only advance/mutate
-		// once per real audio sample, or it effectively runs at double speed
-		// and desyncs between channels — so mirror SoundFontPlayer's approach
-		// and gate the stateful update on `time` actually changing.
-		if (previousTime == time)
-			return lastOutput;
-		previousTime = time;
-
+		// computeOutputs() is only invoked once per real sample (gated by the
+		// base class on `time`), so the delay line can safely advance here
+		// even though process()/getOutput() may be called multiple times per
+		// sample (e.g. once per stereo channel).
 		bufferIndex = (bufferIndex + 1) % delayBuffer.size();
 
 		double output = inputValue + feedbackValue * delayBuffer[bufferIndex];
 		delayBuffer[bufferIndex] = output;
 
-		lastOutput = output;
-		return output;
+		outputValues[0] = output;
 	}
 };

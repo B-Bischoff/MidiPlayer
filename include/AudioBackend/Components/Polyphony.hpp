@@ -23,6 +23,7 @@ struct Polyphony : public AudioComponent {
 
 	int maxVoices;
 	bool hasEnvelope = false; // True if sub-graph contains an ADSR
+	int templateOutputIndex = 0; // Which output of the template sub-graph root each voice should read
 	std::vector<Voice> voices;
 	MidiSourceComponent* midiSource = nullptr;
 
@@ -45,7 +46,9 @@ struct Polyphony : public AudioComponent {
 		if (inputs[audioTemplate].empty())
 			return;
 
-		auto& templateRoot = inputs[audioTemplate].front();
+		auto& templateConnection = inputs[audioTemplate].front();
+		auto& templateRoot = templateConnection.component;
+		templateOutputIndex = templateConnection.outputIndex;
 		hasEnvelope = containsEnvelope(templateRoot);
 
 		for (Voice& v : voices)
@@ -134,7 +137,7 @@ struct Polyphony : public AudioComponent {
 		v.noteId = -1;
 	}
 
-	double process(const AudioInfos& audioInfos) override
+	void computeOutputs(const AudioInfos& audioInfos) override
 	{
 		// Only process MIDI events once per sample (skip on second channel in stereo)
 		if (midiSource && audioInfos.currentChannel == 0)
@@ -165,7 +168,7 @@ struct Polyphony : public AudioComponent {
 			v.context.generation = v.generation;
 
 			// Pull from the cloned sub-graph (single voice)
-			double voiceValue = v.graphRoot->process(audioInfos);
+			double voiceValue = v.graphRoot->getOutput(audioInfos, templateOutputIndex);
 			sum += voiceValue;
 
 			// Deactivate releasing voices that have gone silent
@@ -186,7 +189,7 @@ struct Polyphony : public AudioComponent {
 			activeVoiceContext = prevContext;
 		}
 
-		return sum;
+		outputValues[0] = sum;
 	}
 
 private:
@@ -203,7 +206,7 @@ private:
 		if (node->componentName == "ADSR" || node->componentName == "SoundFontPlayer") return true;
 		for (auto& slot : node->inputs)
 			for (auto& child : slot)
-				if (containsEnvelope(child)) return true;
+				if (containsEnvelope(child.component)) return true;
 		return false;
 	}
 };

@@ -11,13 +11,16 @@ struct MidiToFreq : public AudioComponent {
 		return c;
 	}
 
-	double process(const AudioInfos& audioInfos) override
+	void computeOutputs(const AudioInfos& audioInfos) override
 	{
 		if (inputs[midiInput].size() <= 0)
-			return 0.0;
+		{
+			outputValues[0] = 0.0;
+			return;
+		}
 
 		double midiValue = getInputsValue(midiInput, audioInfos);
-		return pianoKeyFrequency(midiValue);
+		outputValues[0] = pianoKeyFrequency(midiValue);
 	}
 
 	double pianoKeyFrequency(int keyId)

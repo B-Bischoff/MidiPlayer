@@ -29,10 +29,13 @@ public:
 		return c;
 	}
 
-	double process(const AudioInfos& audioInfos) override
+	void computeOutputs(const AudioInfos& audioInfos) override
 	{
 		if (!inputs.size())
-			return 0.0;
+		{
+			outputValues[0] = 0.0;
+			return;
+		}
 
 		double inputValue = getInputsValue(input, audioInfos);
 		double triggerValue = getInputsValue(trigger, audioInfos);
@@ -83,6 +86,6 @@ public:
 
 		double amplitude = voiceEnvelope.GetAmplitude(time, noteHeld);
 
-		return inputValue * amplitude;
+		outputValues[0] = inputValue * amplitude;
 	}
 };

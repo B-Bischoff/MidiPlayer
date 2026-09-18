@@ -14,7 +14,7 @@ std::shared_ptr<AudioComponent> AudioComponent::deepClone() const
 	for (size_t i = 0; i < inputs.size(); i++)
 	{
 		for (const auto& child : inputs[i])
-			copy->inputs[i].push_back(child->deepClone());
+			copy->inputs[i].push_back({ child.component->deepClone(), child.outputIndex });
 	}
 
 	return copy;

@@ -475,7 +475,8 @@ struct KeyboardFrequencyNode : public Node {
 		name = "Keyboard Frequency";
 		type = KbFreqUI;
 
-		outputs.push_back(createPin(idManager, "frequency >", PinKind::Output));
+		outputs.push_back(createPin(idManager, "note >", PinKind::Output, KeyboardFrequency::Outputs::noteOutput));
+		outputs.push_back(createPin(idManager, "velocity >", PinKind::Output, KeyboardFrequency::Outputs::velocityOutput));
 	}
 };
 

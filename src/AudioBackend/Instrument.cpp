@@ -4,7 +4,7 @@
 
 double Instrument::process(const AudioInfos& audioInfos)
 {
-	return master.process(audioInfos) * volume;
+	return master.getOutput(audioInfos) * volume;
 }
 
 void Instrument::findKeyboardFrequencies(const std::shared_ptr<AudioComponent>& node,
@@ -26,7 +26,7 @@ void Instrument::findKeyboardFrequencies(const std::shared_ptr<AudioComponent>& 
 
 	for (auto& inputSlot : node->inputs)
 		for (auto& child : inputSlot)
-			findKeyboardFrequencies(child, result, visited);
+			findKeyboardFrequencies(child.component, result, visited);
 }
 
 void Instrument::updateMidiSources(std::vector<MidiInfo>& keyPressed)
@@ -36,7 +36,7 @@ void Instrument::updateMidiSources(std::vector<MidiInfo>& keyPressed)
 
 	for (auto& inputSlot : master.inputs)
 		for (auto& child : inputSlot)
-			findKeyboardFrequencies(child, sources, visited);
+			findKeyboardFrequencies(child.component, sources, visited);
 
 	for (KeyboardFrequency* src : sources)
 		src->setKeyPressedRef(&keyPressed);

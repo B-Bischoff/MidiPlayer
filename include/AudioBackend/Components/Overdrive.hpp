@@ -12,11 +12,11 @@ struct Overdrive : public AudioComponent {
 		return std::make_shared<Overdrive>();
 	}
 
-	double process(const AudioInfos& audioInfos) override
+	void computeOutputs(const AudioInfos& audioInfos) override
 	{
 		const double inputValue = getInputsValue(input, audioInfos);
 		const double driveValue = getInputsValue(drive, audioInfos);
 
-		return std::tanh(inputValue * driveValue);
+		outputValues[0] = std::tanh(inputValue * driveValue);
 	}
 };

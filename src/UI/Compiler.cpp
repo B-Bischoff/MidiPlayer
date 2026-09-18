@@ -29,13 +29,13 @@ void Compiler::compile(Instrument& instrument, NodeManager& nodeManager, LinkMan
 
 		for (auto& inputNode : masterInputs[pinIdx])
 		{
-			auto component = compileNode(inputNode, nodeManager, linkManager, activeNodes);
+			auto component = compileNode(inputNode.node, nodeManager, linkManager, activeNodes);
 			if (!component) continue;
 
 			// If sub-tree contains a MIDI source, wrap in Polyphony
 			if (containsMidiSource(component))
 			{
-				unsigned int polyKey = inputNode->id;
+				unsigned int polyKey = inputNode.node->id;
 				activePolyKeys.insert(polyKey);
 
 				auto polyIt = _polyMap.find(polyKey);
@@ -47,7 +47,7 @@ void Compiler::compile(Instrument& instrument, NodeManager& nodeManager, LinkMan
 					poly = polyIt->second;
 					poly->clearInputs();
 					poly->midiSource = findMidiSource(component);
-					poly->addInput(Polyphony::audioTemplate, component);
+					poly->addInput(Polyphony::audioTemplate, component, inputNode.outputIndex);
 					// Recompile voice clones so they reflect the current template
 					poly->compileVoices();
 				}
@@ -56,14 +56,14 @@ void Compiler::compile(Instrument& instrument, NodeManager& nodeManager, LinkMan
 					poly = std::make_shared<Polyphony>();
 					_polyMap[polyKey] = poly;
 					poly->midiSource = findMidiSource(component);
-					poly->addInput(Polyphony::audioTemplate, component);
+					poly->addInput(Polyphony::audioTemplate, component, inputNode.outputIndex);
 					poly->compileVoices();
 				}
 				instrument.master.addInput(inputId, poly);
 			}
 			else
 			{
-				instrument.master.addInput(inputId, component);
+				instrument.master.addInput(inputId, component, inputNode.outputIndex);
 			}
 		}
 	}
@@ -89,7 +89,7 @@ void Compiler::compile(Instrument& instrument, NodeManager& nodeManager, LinkMan
 	// Debug: print the compiled backend tree
 	for (auto& slot : instrument.master.inputs)
 		for (auto& child : slot)
-			debugPrintTree(child);
+			debugPrintTree(child.component);
 }
 
 std::shared_ptr<AudioComponent> Compiler::compileNode(
@@ -146,31 +146,35 @@ std::shared_ptr<AudioComponent> Compiler::compileNode(
 
 		for (auto& childUiNode : inputs[pinIdx])
 		{
-			auto childComponent = compileNode(childUiNode, nodeManager, linkManager, activeNodes);
+			auto childComponent = compileNode(childUiNode.node, nodeManager, linkManager, activeNodes);
 			if (childComponent)
-				component->addInput(inputId, childComponent);
+				component->addInput(inputId, childComponent, childUiNode.outputIndex);
 		}
 	}
 
 	return component;
 }
 
-std::vector<std::vector<std::shared_ptr<Node>>> Compiler::getNodeInputs(
+std::vector<std::vector<Compiler::NodeConnection>> Compiler::getNodeInputs(
 	const std::shared_ptr<Node>& node,
 	NodeManager& nodeManager,
 	LinkManager& linkManager)
 {
-	std::vector<std::vector<std::shared_ptr<Node>>> inputs;
+	std::vector<std::vector<NodeConnection>> inputs;
 
 	for (Pin& pin : node->inputs)
 	{
 		std::list<LinkInfo> links = linkManager.findPinLinks(pin.id, 1);
-		std::vector<std::shared_ptr<Node>> inputNodes;
+		std::vector<NodeConnection> inputNodes;
 
 		for (LinkInfo& link : links)
 		{
 			std::shared_ptr<Node>& inputNode = nodeManager.findNodeByPinId(link.OutputId);
-			inputNodes.push_back(inputNode);
+			Pin& outputPin = nodeManager.findPinById(link.OutputId);
+			// Output pins on old/legacy nodes default inputId to -1 (unused);
+			// normalize that to output slot 0 (the default/main output).
+			int outputIndex = outputPin.inputId < 0 ? 0 : outputPin.inputId;
+			inputNodes.push_back({ inputNode, outputIndex });
 		}
 
 		inputs.push_back(inputNodes);
@@ -186,7 +190,7 @@ MidiSourceComponent* Compiler::findMidiSource(const std::shared_ptr<AudioCompone
 	if (auto* ms = dynamic_cast<MidiSourceComponent*>(node.get())) return ms;
 	for (auto& input : node->inputs)
 		for (auto& child : input)
-			if (auto* ms = findMidiSource(child)) return ms;
+			if (auto* ms = findMidiSource(child.component)) return ms;
 	return nullptr;
 }
 
@@ -202,5 +206,5 @@ void Compiler::debugPrintTree(const std::shared_ptr<AudioComponent>& node, int d
 	// Logger::log("Compiler", Debug) << indent << node->componentName << " (id=" << node->id << ")" << std::endl;
 	for (size_t i = 0; i < node->inputs.size(); i++)
 		for (auto& child : node->inputs[i])
-			debugPrintTree(child, depth + 1);
+			debugPrintTree(child.component, depth + 1);
 }

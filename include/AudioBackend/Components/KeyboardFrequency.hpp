@@ -8,7 +8,9 @@ struct KeyboardFrequency : public MidiSourceComponent {
 
 	std::vector<MidiInfo>* keyPressedRef = nullptr;
 
-	KeyboardFrequency() : MidiSourceComponent() { componentName = "KeyboardFrequency"; }
+	enum Outputs { noteOutput, velocityOutput };
+
+	KeyboardFrequency() : MidiSourceComponent() { outputValues.resize(2, 0.0); componentName = "KeyboardFrequency"; }
 
 	std::shared_ptr<AudioComponent> clone() const override {
 		auto c = std::make_shared<KeyboardFrequency>();
@@ -18,16 +20,21 @@ struct KeyboardFrequency : public MidiSourceComponent {
 
 	void setKeyPressedRef(std::vector<MidiInfo>* ref) { keyPressedRef = ref; }
 
-	// Audio output: convert note to frequence
-	double process(const AudioInfos& audioInfos) override
+	// Audio outputs: the current voice's MIDI note (0) and velocity (1)
+	void computeOutputs(const AudioInfos& audioInfos) override
 	{
 		// Inside a polyphonic voice — use voice context note
 		if (activeVoiceContext && activeVoiceContext->noteInfo.keyIndex > 0)
-			return activeVoiceContext->noteInfo.keyIndex;
+		{
+			outputValues[noteOutput] = activeVoiceContext->noteInfo.keyIndex;
+			outputValues[velocityOutput] = activeVoiceContext->noteInfo.velocity;
+			return;
+		}
 
 		assert(0 && "KeyboardFrequency should be used inside a Polyphony voice context or with a MIDI source upstream.");
 
-		return 0.0;
+		outputValues[noteOutput] = 0.0;
+		outputValues[velocityOutput] = 0.0;
 	}
 
 	// MIDI output: generate NoteOn/NoteOff events for Polyphony

@@ -20,17 +20,18 @@ struct Oscillator : public AudioComponent {
 	double pink_b0 = 0, pink_b1 = 0, pink_b2 = 0;
 	double brownLast = 0.0;
 
-	double process(const AudioInfos& audioInfos) override
+	void computeOutputs(const AudioInfos& audioInfos) override
 	{
 		if (inputs[frequency].size() <= 0)
-			return 0.0;
+		{
+			outputValues[0] = 0.0;
+			return;
+		}
 
 		double frequencyValue = getInputsValue(frequency, audioInfos);
 		double phaseValue = getInputsValue(phase, audioInfos);
 
-		double value = osc(frequencyValue, M_PI * phaseValue, time, type);
-
-		return value;
+		outputValues[0] = osc(frequencyValue, M_PI * phaseValue, time, type);
 	}
 
 	double freqToAngularVelocity(double hertz)

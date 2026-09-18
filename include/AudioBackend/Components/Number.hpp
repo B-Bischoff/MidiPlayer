@@ -13,8 +13,8 @@ struct Number : public AudioComponent {
 		return c;
 	}
 
-	double process(const AudioInfos& audioInfos) override
+	void computeOutputs(const AudioInfos& audioInfos) override
 	{
-		return number;
+		outputValues[0] = number;
 	}
 };

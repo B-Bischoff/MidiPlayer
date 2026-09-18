@@ -16,7 +16,7 @@ public:
 		return std::make_shared<Master>();
 	}
 
-	double process(const AudioInfos& audioInfos) override
+	void computeOutputs(const AudioInfos& audioInfos) override
 	{
 		if (!inputs.size())
 		{
@@ -25,7 +25,8 @@ public:
 				showWarning = false;
 				Logger::log("Audio", Warning) << "No input plugged to master." << std::endl;
 			}
-			return 0;
+			outputValues[0] = 0;
+			return;
 		}
 
 		showWarning = true;
@@ -33,8 +34,8 @@ public:
 		double value = 0.0;
 
 		for (auto& child : inputs[input])
-			value += child->process(audioInfos);
+			value += child.component->getOutput(audioInfos, child.outputIndex);
 
-		return value;
+		outputValues[0] = value;
 	}
 };

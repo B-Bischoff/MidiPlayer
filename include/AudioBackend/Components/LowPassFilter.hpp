@@ -15,7 +15,7 @@ struct LowPassFilter : public AudioComponent {
 		return std::make_shared<LowPassFilter>();
 	}
 
-	double process(const AudioInfos& audioInfos) override
+	void computeOutputs(const AudioInfos& audioInfos) override
 	{
 		const double cutoffValue = std::clamp(getInputsValue(cutoff, audioInfos), 0.01, 0.99);
 		const double resonanceValue = std::clamp(getInputsValue(resonance, audioInfos), 0.00, 0.95);
@@ -25,6 +25,6 @@ struct LowPassFilter : public AudioComponent {
 		band += cutoffValue * high;
 		low += cutoffValue * band;
 
-		return low;
+		outputValues[0] = low;
 	}
 };
