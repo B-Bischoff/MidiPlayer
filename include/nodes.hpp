@@ -643,6 +643,7 @@ CEREAL_REGISTER_TYPE(HighPassFilterNode)
 CEREAL_REGISTER_TYPE(CombFilterNode)
 CEREAL_REGISTER_TYPE(OverdriveNode)
 CEREAL_REGISTER_TYPE(SoundFontPlayerNode)
+CEREAL_REGISTER_TYPE(MidiToFreqNode)
 
 // Register child class if it does not have serialization method.
 // This indicate cereal to use Node serialization method.
@@ -654,3 +655,4 @@ CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, HighPassFilterNode)
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, CombFilterNode)
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, OverdriveNode)
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, SoundFontPlayerNode)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Node, MidiToFreqNode)
