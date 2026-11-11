@@ -577,7 +577,7 @@ struct SoundFontPlayerNode : public Node {
 	void assignToAudioComponent(AudioComponent* audioComponent) override
 	{
 		SoundFontPlayer* soundFontPlayer = dynamic_cast<SoundFontPlayer*>(audioComponent); assert(soundFontPlayer);
-		soundFontPlayer->tinySoundFont = soundFont.getSoundFont();
+		soundFontPlayer->setSoundFont(soundFont.getSoundFont());
 	}
 
 	void render(std::queue<Message>& messages) override
@@ -591,15 +591,15 @@ struct SoundFontPlayerNode : public Node {
 			if (soundFont.loadSoundFontFile(soundFontFilepath, audioInfos.sampleRate))
 				soundFontFilepath.clear();
 			if (audioComponent)
-				((SoundFontPlayer*)audioComponent)->tinySoundFont = nullptr;
+				((SoundFontPlayer*)audioComponent)->setSoundFont(nullptr);
 		}
 
-		if (audioComponent && ((SoundFontPlayer*)audioComponent)->tinySoundFont == nullptr)
+		if (audioComponent && !((SoundFontPlayer*)audioComponent)->hasSoundFont())
 		{
 			tsf* loadedFont = soundFont.getSoundFont();
 			if (loadedFont != nullptr)
 			{
-				((SoundFontPlayer*)audioComponent)->tinySoundFont = loadedFont;
+				((SoundFontPlayer*)audioComponent)->setSoundFont(loadedFont);
 				Node::propertyChanged = true;
 			}
 		}

@@ -2,6 +2,10 @@
 
 void Compiler::compile(Instrument& instrument, NodeManager& nodeManager, LinkManager& linkManager)
 {
+	// Components of nodes no longer reachable from Master are freed by this
+	// compile; reachable nodes get their pointer back in compileNode().
+	nodeManager.clearAudioComponentPointers();
+
 	const auto& masterNode = nodeManager.getMasterNode();
 	masterNode->audioComponentId = instrument.master.id;
 	masterNode->audioComponent = &instrument.master;

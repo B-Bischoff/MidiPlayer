@@ -9,10 +9,19 @@
 // standalone (driven directly by a note-number input, e.g. a Number node)
 // and inside a Polyphony-cloned voice (driven by activeVoiceContext) through
 // a single unified trigger path — see process() below.
+//
+// Each SoundFontPlayer owns a private tsf instance created with tsf_copy():
+// the font data (presets, samples) is shared and ref-counted, but the
+// voice/render state is per instance. This is required because every
+// Polyphony voice gets its own SoundFontPlayer clone, and rendering a shared
+// tsf from each clone would advance the synth once per voice per sample.
 struct SoundFontPlayer : public AudioComponent {
+private:
+	tsf* tinySoundFont = nullptr; // Owned copy, released in the destructor
+
+public:
 	enum Inputs { midiInput, velocityInput };
 
-	tsf* tinySoundFont = nullptr;
 	float values[2] = {};
 
 	int noteOn = 0; // Currently sounding note (0 = none)
@@ -32,11 +41,29 @@ struct SoundFontPlayer : public AudioComponent {
 		inputs.resize(2); componentName = "SoundFontPlayer";
 	}
 
+	~SoundFontPlayer() override { tsf_close(tinySoundFont); }
+
+	// Owns a raw tsf pointer: copying would double-free it
+	SoundFontPlayer(const SoundFontPlayer&) = delete;
+	SoundFontPlayer& operator=(const SoundFontPlayer&) = delete;
+
 	std::shared_ptr<AudioComponent> clone() const override {
 		auto c = std::make_shared<SoundFontPlayer>();
-		c->tinySoundFont = tinySoundFont; // Share the loaded soundfont
+		c->setSoundFont(tinySoundFont); // Shares font data, fresh voice state
 		return c;
 	}
+
+	// Replace the instrument with a private copy of `source` (nullptr unloads it).
+	// The caller keeps ownership of `source` and may close it afterwards.
+	void setSoundFont(tsf* source)
+	{
+		tsf_close(tinySoundFont);
+		tinySoundFont = source ? tsf_copy(source) : nullptr;
+		noteOn = 0;
+		noteOffSent = false;
+	}
+
+	bool hasSoundFont() const { return tinySoundFont != nullptr; }
 
 	void computeOutputs(const AudioInfos& audioInfos) override
 	{
@@ -49,6 +76,13 @@ struct SoundFontPlayer : public AudioComponent {
 		double midiValue = getInputsValue(midiInput, audioInfos);
 		double velocityValue = getInputsValue(velocityInput, audioInfos);
 
+		// The note input can be any signal (e.g. a note scaled by a Multiplier):
+		// snap it to the nearest key and treat anything outside the MIDI key
+		// range as "no note" (0), since tsf can't play it anyway.
+		int note = static_cast<int>(std::lround(midiValue));
+		if (note < 1 || note > 127)
+			note = 0;
+
 		bool noteHeld;
 		unsigned int gen;
 
@@ -58,19 +92,19 @@ struct SoundFontPlayer : public AudioComponent {
 			// whole lifetime of the voice (release tail included), so we
 			// can't edge-detect note-off from the input value alone. Use the
 			// voice's own generation/releasing flags instead.
-			noteHeld = midiValue != 0.0 && !activeVoiceContext->releasing;
+			noteHeld = note != 0 && !activeVoiceContext->releasing;
 			gen = activeVoiceContext->generation;
 		}
 		else
 		{
 			// Standalone usage: derive an equivalent generation/held pair
 			// directly from the input signal.
-			bool held = midiValue != 0.0;
-			bool changed = held && standaloneLastNote != (int)midiValue;
+			bool held = note != 0;
+			bool changed = held && standaloneLastNote != note;
 			if ((held && !standaloneHeld) || changed)
 				standaloneGeneration++;
 			standaloneHeld = held;
-			if (held) standaloneLastNote = (int)midiValue;
+			if (held) standaloneLastNote = note;
 			noteHeld = held;
 			gen = standaloneGeneration;
 		}
@@ -81,8 +115,8 @@ struct SoundFontPlayer : public AudioComponent {
 			lastSeenGeneration = gen;
 			if (noteOn != 0)
 				tsf_note_off(tinySoundFont, 0, noteOn); // Stop previous note before starting the new one
-			tsf_note_on(tinySoundFont, 0, (int)midiValue, (double)velocityValue / 255.0f);
-			noteOn = (int)midiValue;
+			tsf_note_on(tinySoundFont, 0, note, (double)velocityValue / 255.0f);
+			noteOn = note;
 			noteOffSent = false;
 		}
 		else if (!noteHeld && !noteOffSent && noteOn != 0)

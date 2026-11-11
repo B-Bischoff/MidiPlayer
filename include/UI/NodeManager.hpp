@@ -49,6 +49,14 @@ public:
 	std::shared_ptr<Node>& getMasterNode();
 	std::list<std::shared_ptr<Node>> getHiddenNodes();
 
+	// Detach every node from its backend component (called before a backend
+	// recompile, so nodes left out of the new graph don't keep dangling pointers)
+	void clearAudioComponentPointers()
+	{
+		for (auto& node : _nodes)
+			node->clearAudioComponentPointerAndId();
+	}
+
 	template<typename T>
 	std::list<std::shared_ptr<Node>> getNodeOfType();
 
