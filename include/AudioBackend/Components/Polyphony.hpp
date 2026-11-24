@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <utility>
 #include "AudioComponent.hpp"
 #include "MidiSourceComponent.hpp"
 #include "AudioBackend/VoiceContext.hpp"
@@ -13,6 +14,10 @@ struct Polyphony : public AudioComponent {
 	// Safety net: a releasing voice is freed after this long even if its
 	// release-tail components never report finished
 	static constexpr double MAX_RELEASE_SECONDS = 10.0;
+
+	// A stolen voice is faded out over this duration before the new note starts on it,
+	// avoiding the click of an instant pitch/amplitude jump
+	static constexpr double STEAL_FADE_SECONDS = 0.003;
 
 	struct Voice {
 		int noteId = -1;
@@ -28,6 +33,13 @@ struct Polyphony : public AudioComponent {
 		// Components of graphRoot with a release stage (non-owning, kept alive by graphRoot).
 		// A released voice is freed once all of them have finished their release.
 		std::vector<AudioComponent*> releaseNodes;
+
+		// Voice stealing: the current note fades out, then pendingNote starts on a fresh graph.
+		// pendingNote is -1 if that note was released before the fade ended.
+		bool stealing = false;
+		double stealStartTime = 0.0;
+		int pendingNote = -1;
+		int pendingVelocity = 0;
 	};
 
 	int maxVoices;
@@ -69,7 +81,12 @@ struct Polyphony : public AudioComponent {
 		// Re-trigger if note already assigned
 		for (Voice& v : voices)
 		{
-			if ((v.active || v.releasing) && v.noteId == note)
+			if (v.stealing && v.pendingNote == note)
+			{
+				v.pendingVelocity = velocity;
+				return;
+			}
+			if (!v.stealing && (v.active || v.releasing) && v.noteId == note)
 			{
 				startVoice(v, note, velocity, false);
 				return;
@@ -87,19 +104,38 @@ struct Polyphony : public AudioComponent {
 		}
 
 		// Voice stealing: prefer the oldest release tail, then the oldest held note
-		Voice* stolen = findOldest([](const Voice& v) { return v.releasing; }, &Voice::releaseStartTime);
+		Voice* stolen = findOldest([](const Voice& v) { return !v.stealing && v.releasing; }, &Voice::releaseStartTime);
 		if (!stolen)
-			stolen = findOldest([](const Voice& v) { return v.active; }, &Voice::assignOrder);
+			stolen = findOldest([](const Voice& v) { return !v.stealing && v.active; }, &Voice::assignOrder);
+		// Every voice is already fading out for a steal: the newest note replaces the oldest pending one
+		if (!stolen)
+			stolen = findOldest([](const Voice& v) { return v.stealing; }, &Voice::stealStartTime);
 
 		if (stolen)
-			startVoice(*stolen, note, velocity, true);
+		{
+			if (!stolen->stealing)
+			{
+				stolen->stealing = true;
+				stolen->stealStartTime = time;
+			}
+			stolen->pendingNote = note;
+			stolen->pendingVelocity = velocity;
+		}
 	}
 
 	void releaseVoice(int note)
 	{
 		for (Voice& v : voices)
 		{
-			if (v.active && v.noteId == note)
+			// The pending note of a stolen voice was released before it could start
+			if (v.stealing && v.pendingNote == note)
+			{
+				v.pendingNote = -1;
+				return;
+			}
+
+			// A stealing voice's own note was stolen: its note-off must not affect the voice anymore
+			if (!v.stealing && v.active && v.noteId == note)
 			{
 				v.active = false;
 				if (!v.releaseNodes.empty())
@@ -122,6 +158,8 @@ struct Polyphony : public AudioComponent {
 	{
 		v.active = false;
 		v.releasing = false;
+		v.stealing = false;
+		v.pendingNote = -1;
 		v.noteId = -1;
 	}
 
@@ -156,12 +194,27 @@ struct Polyphony : public AudioComponent {
 			v.context.generation = v.generation;
 
 			// Pull from the cloned sub-graph (single voice)
-			sum += v.graphRoot->getOutput(audioInfos, templateOutputIndex);
+			double voiceValue = v.graphRoot->getOutput(audioInfos, templateOutputIndex);
 
+			if (v.stealing)
+			{
+				const double gain = 1.0 - (time - v.stealStartTime) / STEAL_FADE_SECONDS;
+				if (gain > 0.0)
+					voiceValue *= gain;
+				else
+				{
+					// Fade done: start the pending note on a fresh copy of the graph,
+					// so every component (envelopes, filters, ...) starts from silence
+					voiceValue = 0.0;
+					finishSteal(v);
+				}
+			}
 			// Free releasing voices once every release stage has ended
 			// (their state was just updated by the getOutput() call above)
-			if (v.releasing && (releaseFinished(v) || time - v.releaseStartTime > MAX_RELEASE_SECONDS))
+			else if (v.releasing && (releaseFinished(v) || time - v.releaseStartTime > MAX_RELEASE_SECONDS))
 				deactivateVoice(v);
+
+			sum += voiceValue;
 
 			activeVoiceContext = prevContext;
 		}
@@ -182,6 +235,16 @@ private:
 		v.assignOrder = ++_assignCounter;
 		if (clearContext)
 			v.context.clear();
+	}
+
+	void finishSteal(Voice& v)
+	{
+		const int note = std::exchange(v.pendingNote, -1);
+
+		buildVoiceGraph(v);
+		deactivateVoice(v);
+		if (note >= 0)
+			startVoice(v, note, v.pendingVelocity, true);
 	}
 
 	void buildVoiceGraph(Voice& v)

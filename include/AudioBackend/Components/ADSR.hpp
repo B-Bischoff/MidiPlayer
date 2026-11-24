@@ -73,12 +73,17 @@ public:
 
 			if (wasActive)
 			{
-				// Retrigger: keep current envelope state (amplitude, phase)
-				// but update control points from reference in case they changed.
-				// The envelope's built-in retrigger logic will ramp from the
-				// current amplitude to peak.
+				// Retrigger: keep current envelope state (amplitude, phase) but update
+				// control points from reference in case they changed. The envelope's
+				// Retrigger phase then ramps from the current amplitude to peak.
 				for (int i = 0; i < 8; i++)
 					voiceEnvelope.controlPoints[i] = reference.controlPoints[i];
+
+				// Re-assigned while the gate is still high (e.g. a mono retrigger mode):
+				// release for this sample so the GetAmplitude() call below sees a new
+				// note-on, otherwise the envelope would stay in Sustain.
+				if (noteHeld && voiceEnvelope.noteOn)
+					voiceEnvelope.GetAmplitude(time, false);
 			}
 			else
 			{
