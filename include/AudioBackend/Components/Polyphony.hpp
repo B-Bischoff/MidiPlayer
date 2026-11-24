@@ -10,19 +10,27 @@ struct Polyphony : public AudioComponent {
 
 	static constexpr int DEFAULT_MAX_VOICES = 8;
 
+	// Safety net: a releasing voice is freed after this long even if its
+	// release-tail components never report finished
+	static constexpr double MAX_RELEASE_SECONDS = 10.0;
+
 	struct Voice {
 		int noteId = -1;
 		bool active = false;
 		bool releasing = false;
-		int releaseSamples = 0;
+		double releaseStartTime = 0.0;
+		unsigned long assignOrder = 0; // Higher = assigned more recently
 		unsigned int generation = 0; // Incremented on each voice assignment
 		MidiInfo info = {};
 		VoiceContext context;
 		std::shared_ptr<AudioComponent> graphRoot;
+
+		// Components of graphRoot with a release stage (non-owning, kept alive by graphRoot).
+		// A released voice is freed once all of them have finished their release.
+		std::vector<AudioComponent*> releaseNodes;
 	};
 
 	int maxVoices;
-	bool hasEnvelope = false; // True if sub-graph contains an ADSR
 	int templateOutputIndex = 0; // Which output of the template sub-graph root each voice should read
 	std::vector<Voice> voices;
 	MidiSourceComponent* midiSource = nullptr;
@@ -46,18 +54,13 @@ struct Polyphony : public AudioComponent {
 		if (inputs[audioTemplate].empty())
 			return;
 
-		auto& templateConnection = inputs[audioTemplate].front();
-		auto& templateRoot = templateConnection.component;
-		templateOutputIndex = templateConnection.outputIndex;
-		hasEnvelope = containsEnvelope(templateRoot);
+		templateOutputIndex = inputs[audioTemplate].front().outputIndex;
 
 		for (Voice& v : voices)
 		{
-			v.graphRoot = templateRoot->deepClone();
+			buildVoiceGraph(v);
 			v.context.clear();
-			v.active = false;
-			v.releasing = false;
-			v.noteId = -1;
+			deactivateVoice(v);
 		}
 	}
 
@@ -68,10 +71,7 @@ struct Polyphony : public AudioComponent {
 		{
 			if ((v.active || v.releasing) && v.noteId == note)
 			{
-				v.active = true;
-				v.releasing = false;
-				v.info = { note, velocity, true };
-				v.generation++;
+				startVoice(v, note, velocity, false);
 				return;
 			}
 		}
@@ -81,29 +81,18 @@ struct Polyphony : public AudioComponent {
 		{
 			if (!v.active && !v.releasing)
 			{
-				v.active = true;
-				v.releasing = false;
-				v.noteId = note;
-				v.info = { note, velocity, true };
-				v.generation++;
-				v.context.clear();
+				startVoice(v, note, velocity, true);
 				return;
 			}
 		}
 
-		// Voice stealing: replace first active voice
-		for (Voice& v : voices)
-		{
-			if (v.active)
-			{
-				v.noteId = note;
-				v.info = { note, velocity, true };
-				v.releasing = false;
-				v.generation++;
-				v.context.clear();
-				return;
-			}
-		}
+		// Voice stealing: prefer the oldest release tail, then the oldest held note
+		Voice* stolen = findOldest([](const Voice& v) { return v.releasing; }, &Voice::releaseStartTime);
+		if (!stolen)
+			stolen = findOldest([](const Voice& v) { return v.active; }, &Voice::assignOrder);
+
+		if (stolen)
+			startVoice(*stolen, note, velocity, true);
 	}
 
 	void releaseVoice(int note)
@@ -113,15 +102,15 @@ struct Polyphony : public AudioComponent {
 			if (v.active && v.noteId == note)
 			{
 				v.active = false;
-				if (hasEnvelope)
+				if (!v.releaseNodes.empty())
 				{
-					// Let ADSR release tail play out
+					// Let the release tail play out
 					v.releasing = true;
-					v.releaseSamples = 0;
+					v.releaseStartTime = time;
 				}
 				else
 				{
-					// No envelope — stop immediately
+					// No release stage — stop immediately
 					deactivateVoice(v);
 				}
 				return;
@@ -133,7 +122,6 @@ struct Polyphony : public AudioComponent {
 	{
 		v.active = false;
 		v.releasing = false;
-		v.releaseSamples = 0;
 		v.noteId = -1;
 	}
 
@@ -168,23 +156,12 @@ struct Polyphony : public AudioComponent {
 			v.context.generation = v.generation;
 
 			// Pull from the cloned sub-graph (single voice)
-			double voiceValue = v.graphRoot->getOutput(audioInfos, templateOutputIndex);
-			sum += voiceValue;
+			sum += v.graphRoot->getOutput(audioInfos, templateOutputIndex);
 
-			// Deactivate releasing voices that have gone silent
-			if (v.releasing)
-			{
-				// Count consecutive near-silent samples to avoid false positives
-				// from oscillator zero-crossings
-				if (std::abs(voiceValue) < 1e-6)
-					v.releaseSamples++;
-				else
-					v.releaseSamples = 0;
-
-				// Require sustained silence (~5ms at 44100Hz) before deactivating
-				if (v.releaseSamples > 220)
-					deactivateVoice(v);
-			}
+			// Free releasing voices once every release stage has ended
+			// (their state was just updated by the getOutput() call above)
+			if (v.releasing && (releaseFinished(v) || time - v.releaseStartTime > MAX_RELEASE_SECONDS))
+				deactivateVoice(v);
 
 			activeVoiceContext = prevContext;
 		}
@@ -193,20 +170,57 @@ struct Polyphony : public AudioComponent {
 	}
 
 private:
-	// [TODO] Audio components that needs to play out their release tail should
-	// be marked with a flag, instead of hardcoding the check for specific component names.
-	//
-	// True if the sub-graph has its own release-tail mechanism, so on note-off
-	// we should let it fade out (releasing state) instead of cutting instantly.
-	// This covers both ADSR (explicit envelope) and SoundFontPlayer (whose
-	// underlying tsf/sf2 engine handles its own release stage internally).
-	static bool containsEnvelope(const std::shared_ptr<AudioComponent>& node)
+	unsigned long _assignCounter = 0;
+
+	void startVoice(Voice& v, int note, int velocity, bool clearContext)
 	{
-		if (!node) return false;
-		if (node->componentName == "ADSR" || node->componentName == "SoundFontPlayer") return true;
+		v.active = true;
+		v.releasing = false;
+		v.noteId = note;
+		v.info = { note, velocity, true };
+		v.generation++;
+		v.assignOrder = ++_assignCounter;
+		if (clearContext)
+			v.context.clear();
+	}
+
+	void buildVoiceGraph(Voice& v)
+	{
+		v.graphRoot = inputs[audioTemplate].front().component->deepClone();
+		v.releaseNodes.clear();
+		collectReleaseNodes(v.graphRoot, v.releaseNodes);
+	}
+
+	// Oldest voice matching `eligible`, compared on `age` (smaller = older), or nullptr
+	template<typename Eligible, typename Age>
+	Voice* findOldest(Eligible eligible, Age Voice::* age)
+	{
+		Voice* oldest = nullptr;
+		for (Voice& v : voices)
+		{
+			if (eligible(v) && (!oldest || v.*age < oldest->*age))
+				oldest = &v;
+		}
+		return oldest;
+	}
+
+	static bool releaseFinished(const Voice& v)
+	{
+		for (const AudioComponent* node : v.releaseNodes)
+		{
+			if (!node->isReleaseFinished())
+				return false;
+		}
+		return true;
+	}
+
+	static void collectReleaseNodes(const std::shared_ptr<AudioComponent>& node, std::vector<AudioComponent*>& result)
+	{
+		if (!node) return;
+		if (node->hasReleaseTail())
+			result.push_back(node.get());
 		for (auto& slot : node->inputs)
 			for (auto& child : slot)
-				if (containsEnvelope(child.component)) return true;
-		return false;
+				collectReleaseNodes(child.component, result);
 	}
 };

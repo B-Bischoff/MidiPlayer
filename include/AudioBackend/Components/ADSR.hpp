@@ -29,6 +29,9 @@ public:
 		return c;
 	}
 
+	bool hasReleaseTail() const override { return true; }
+	bool isReleaseFinished() const override { return voiceEnvelope.phase == Phase::Inactive; }
+
 	void computeOutputs(const AudioInfos& audioInfos) override
 	{
 		if (!inputs.size())

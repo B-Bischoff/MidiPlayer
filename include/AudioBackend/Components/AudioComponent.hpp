@@ -45,6 +45,11 @@ struct AudioComponent {
 
 	bool isMidiSource() const;
 
+	// Components with their own release stage (ADSR, SoundFontPlayer) override
+	// these so Polyphony knows when a released voice can be freed.
+	virtual bool hasReleaseTail() const { return false; }
+	virtual bool isReleaseFinished() const { return true; }
+
 	void clearInputs()
 	{
 		for (auto& input : inputs)
