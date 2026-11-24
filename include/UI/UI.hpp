@@ -25,12 +25,14 @@
 
 #include "UI/Colors.hpp"
 #include "UI/Log.hpp"
+#include "UI/VoicesUI.hpp"
 
 #include "UI/fonts/RobotoRegular.h"
 
 struct WindowsState {
 	bool showLog;
 	bool showSettings;
+	bool showVoices;
 };
 
 class UI {
@@ -45,6 +47,7 @@ private:
 	ImFont* _font;
 
 	Log _log;
+	VoicesUI _voices;
 
 	WindowsState _windowsState;
 

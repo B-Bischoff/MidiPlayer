@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <limits>
 #include <utility>
 #include "AudioComponent.hpp"
 #include "MidiSourceComponent.hpp"
@@ -23,6 +24,7 @@ struct Polyphony : public AudioComponent {
 		int noteId = -1;
 		bool active = false;
 		bool releasing = false;
+		double assignTime = 0.0;
 		double releaseStartTime = 0.0;
 		unsigned long assignOrder = 0; // Higher = assigned more recently
 		unsigned int generation = 0; // Incremented on each voice assignment
@@ -40,12 +42,14 @@ struct Polyphony : public AudioComponent {
 		double stealStartTime = 0.0;
 		int pendingNote = -1;
 		int pendingVelocity = 0;
+		double lastStealTime = std::numeric_limits<double>::lowest(); // When the last steal on this voice completed
 	};
 
 	int maxVoices;
 	int templateOutputIndex = 0; // Which output of the template sub-graph root each voice should read
 	std::vector<Voice> voices;
 	MidiSourceComponent* midiSource = nullptr;
+	unsigned long stealCount = 0; // Number of notes that had to steal a busy voice
 
 	Polyphony(int maxVoices = DEFAULT_MAX_VOICES)
 		: AudioComponent(), maxVoices(maxVoices)
@@ -113,6 +117,7 @@ struct Polyphony : public AudioComponent {
 
 		if (stolen)
 		{
+			stealCount++;
 			if (!stolen->stealing)
 			{
 				stolen->stealing = true;
@@ -233,6 +238,7 @@ private:
 		v.info = { note, velocity, true };
 		v.generation++;
 		v.assignOrder = ++_assignCounter;
+		v.assignTime = time;
 		if (clearContext)
 			v.context.clear();
 	}
@@ -243,6 +249,7 @@ private:
 
 		buildVoiceGraph(v);
 		deactivateVoice(v);
+		v.lastStealTime = time;
 		if (note >= 0)
 			startVoice(v, note, v.pendingVelocity, true);
 	}

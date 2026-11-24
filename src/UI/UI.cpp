@@ -38,6 +38,7 @@ UI::UI(GLFWwindow* window, Audio& audio, const ApplicationPath& path)
 	// Windows state init
 	_windowsState.showLog = false;
 	_windowsState.showSettings = false;
+	_windowsState.showVoices = false;
 
 	Node::audioInfos = {
 		.sampleRate = audio.getSampleRate(),
@@ -171,6 +172,9 @@ void UI::update(Window& window, Audio& audio, std::vector<Instrument>& instrumen
 	if (_windowsState.showSettings)
 		updateSettings(audio, inputManager, settings, messageQueue);
 
+	if (_windowsState.showVoices)
+		_voices.draw("Voices", _selectedInstrument, &_windowsState.showVoices);
+
 	endUpdate();
 }
 
@@ -190,6 +194,8 @@ void UI::updateMenuBar()
 			_windowsState.showSettings = !_windowsState.showSettings;
 		if (ImGui::Button("Log"))
 			_windowsState.showLog = !_windowsState.showLog;
+		if (ImGui::Button("Voices"))
+			_windowsState.showVoices = !_windowsState.showVoices;
 
 		ImGui::PopStyleColor(3);
 		ImGui::PopStyleVar(2);

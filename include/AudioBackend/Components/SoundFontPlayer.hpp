@@ -65,6 +65,8 @@ public:
 
 	bool hasSoundFont() const { return tinySoundFont != nullptr; }
 
+	int activeVoiceCount() const { return tinySoundFont ? tsf_active_voice_count(tinySoundFont) : 0; }
+
 	bool hasReleaseTail() const override { return true; }
 	// tsf keeps counting a voice as active until its release stage has ended
 	bool isReleaseFinished() const override { return !tinySoundFont || tsf_active_voice_count(tinySoundFont) == 0; }
